@@ -1,0 +1,15 @@
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+	<vType vClass = "passenger" accel="3.0" decel="2.5" id="Car" length="5.0"
+              maxSpeed="10" sigma="0.5" carFollowModel = "CACC" />
+	<vType vClass = "passenger" accel="3.0" decel="2.5" id="Car01" length="5.0" 
+              maxSpeed="10" sigma="0.5" carFollowModel = "CACC" speedControlGainCACC = "-0.4" 
+              gapClosingControlGainGap = "0.005" gapClosingControlGainGapDot = "0.05"
+              gapControlGainGap = "0.45" gapControlGainGapDot = "0.0125" 
+              collisionAvoidanceGainGap = "0.45" collisionAvoidanceGainGapDot = "0.05" />
+		<route id="route01" edges="e1 e2 e3 e4"/>
+		<vehicle id="0" type="Car" route="route01" depart="0" color="1,0,1"/>
+		<vehicle id="1" type="Car" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="2" type="Car" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="3" type="Car" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="4" type="Car" route="route01" depart="0" color="0,1,1"/>
+</routes>
