@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 07/06/21 15:29:51 by Eclipse SUMO netedit Version 1.8.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <output>
+        <output-file value="C:\Users\bioni\Sumo\2021-07-06\practice0.net.xml"/>
+    </output>
+
+    <processing>
+        <offset.disable-normalization value="true"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+    </junctions>
+
+    <netedit>
+        <route-files value="C:\Users\bioni\Sumo\2021-07-06\practice0.rou.xml"/>
+    </netedit>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <!--route edges="-gneE8 -gneE7 gneE6 gneE2 gneE1 gneE0" color="yellow" id="route_0"/>
+    <route edges="-gneE8 -gneE7 -gneE10 -gneE11 -gneE12" color="yellow" id="route_1"/>
+    <route edges="gneE12 gneE11 gneE10 gneE6 -gneE3 -gneE4 gneE5" color="cyan" id="route_2"/>
+    <route edges="gneE12 gneE11 gneE10 gneE7 gneE8 gneE9" color="cyan" id="route_3"/>
+    <route edges="gneE11 gneE10 gneE6 gneE2 gneE1 gneE0" color="cyan" id="route_4"/>
+    <route edges="-gneE0 -gneE1 -gneE2 -gneE6 gneE7 gneE8 gneE9" color="cyan" id="route_5"/>
+    <route edges="-gneE0 -gneE1 -gneE2 -gneE3 -gneE4 gneE5" color="magenta" id="route_6"/>
+    <route edges="-gneE0 -gneE1 -gneE2 -gneE6 -gneE10 -gneE11 -gneE12" color="magenta" id="route_7"/>
+    <trip id="vehicle_0" depart="0.00" from="-gneE8" to="-gneE12" via="-gneE7 -gneE10 -gneE11"/>
+    <trip id="vehicle_1" depart="0.00" from="gneE12" to="gneE9" via="gneE11 gneE10 gneE7 gneE8"/>
+    <trip id="vehicle_2" depart="0.00" from="-gneE5" to="gneE9" via="gneE4 gneE3 -gneE6 gneE7 gneE8"/>
+    <trip id="vehicle_3" depart="0.00" from="-gneE0" to="gneE9" via="-gneE1 -gneE2 -gneE6 gneE7 gneE8"/-->
+
+<vType vClass = "passenger" accel="3.0" decel="2.5" id="Car"
+    length="5.0" minGap="1" maxSpeed="2" sigma="0.5" carFollowModel = "CACC" collisionAvoidanceGainGap = "1"/>
+<!--vType vClass = "passenger" accel="3.0" decel="2.5" id="Car2"
+    length="5.0" minGap="2.5" maxSpeed="50.0" sigma="0.5" />
+<vType vClass = "emergency" accel="5.0" decel="2.5" id="EV"
+    guiShape = "emergency" length="7.5" color = "red" tau = "0.5" lcAssertive = "3" minGap="0.5" maxSpeed="50.0" sigma="0.5" /-->
+
+<route id="route01" edges="e1 e2 e3 e4"/>
+<route id="route02" edges="e7 e2 e3 e4"/>
+
+
+
+<flow id="carflow0" type="Car" begin="0" end="0" from="e1" to="e4" departLane="0" number="5" />
+<!--flow id="carflow1" type="Car" begin="0" end="3600" vehsPerHour = "1800" from="e1" to="e4" departLane="1"/>
+<flow id="carflow2" type="Car" begin="0" end="3600" vehsPerHour = "1800" from="e1" to="e4" departLane="2"/>
+<flow id="carflow3" type="Car" begin="0" end="3600" vehsPerHour = "1800" from="e7" to="e4"/>
+<flow id="carflow4" type="Car2" begin="200" end="260" vehsPerHour = "6" from="e1" to="e4" departLane="0"/>
+<flow id="evflow" type="EV" begin="600" end="3600" vehsPerHour = "3" from="e1" to="e4"/-->
+
+
+
+
+</routes>
