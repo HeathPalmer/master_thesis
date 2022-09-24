@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2021-12-08 21:25:43 by Eclipse SUMO sumo Version 1.10.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="/home/daniel/sumotry/roundy.net.xml"/>
+        <route-files value="20211208_tripInfo/045.rou.xml"/>
+    </input>
+
+    <output>
+        <tripinfo-output value="20211208_tripInfo/045_tripinfo.xml"/>
+    </output>
+
+    <processing>
+        <collision.mingap-factor value="0"/>
+    </processing>
+
+    <traci_server>
+        <remote-port value="60975"/>
+    </traci_server>
+
+</configuration>
+-->
+
+<tripinfos xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/tripinfo_file.xsd">
+</tripinfos>

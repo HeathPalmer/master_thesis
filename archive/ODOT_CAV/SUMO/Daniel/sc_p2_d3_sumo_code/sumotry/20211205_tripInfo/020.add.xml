@@ -1,0 +1,7 @@
+<additional>
+	<additional>
+		<inductionLoop id="myLoop0" lane="e3_0" pos="10" freq="60" file="020_induction.xml" />
+		<inductionLoop id="myLoop1" lane="e3_1" pos="10" freq="60" file="020_induction.xml" />
+		<inductionLoop id="myLoop2" lane="e3_2" pos="10" freq="60" file="020_induction.xml" />
+	</additional>
+</additional>

@@ -1,0 +1,4 @@
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+	<trip id="vehicle_0" depart="0.00" from="gneE40" to="gneE30"/>
+	<trip id="vehicle_1" depart="0.00" from="gneE37" to="gneE30"/>
+</routes>

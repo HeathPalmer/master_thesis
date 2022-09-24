@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 12/21/21 09:35:39 by Eclipse SUMO sumo Version 1.8.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="roundy.net.xml"/>
+        <route-files value="20211221_tripInfo\004.rou.xml"/>
+    </input>
+
+    <output>
+        <tripinfo-output value="20211221_tripInfo\004_tripinfo.xml"/>
+    </output>
+
+    <processing>
+        <collision.mingap-factor value="0"/>
+    </processing>
+
+    <traci_server>
+        <remote-port value="54432"/>
+    </traci_server>
+
+</configuration>
+-->
+
+<tripinfos xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/tripinfo_file.xsd">
+    <tripinfo id="vehicle_1" depart="0.00" departLane="gneE37_0" departPos="5.10" departSpeed="0.00" departDelay="0.00" arrival="13.00" arrivalLane="gneE29_0" arrivalPos="38.53" arrivalSpeed="12.77" duration="13.00" routeLength="133.29" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="2.62" rerouteNo="1" devices="tripinfo_vehicle_1 routing_vehicle_1" vType="DEFAULT_VEHTYPE" speedFactor="0.94" vaporized=""/>
+    <tripinfo id="vehicle_0" depart="0.00" departLane="gneE40_0" departPos="5.10" departSpeed="0.00" departDelay="0.00" arrival="26.00" arrivalLane="gneE29_0" arrivalPos="38.53" arrivalSpeed="9.85" duration="26.00" routeLength="126.19" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="16.82" rerouteNo="1" devices="tripinfo_vehicle_0 routing_vehicle_0" vType="DEFAULT_VEHTYPE@vehicle_0" speedFactor="1.06" vaporized=""/>
+</tripinfos>
