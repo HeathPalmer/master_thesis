@@ -3,11 +3,14 @@
 #distance detector anomaly
 
 ##############################################
-import os
-import sys
-import optparse
-import time
+import csv
 import ntpath
+import os
+import optparse
+import pandas as pd
+import sys
+import time
+import xml.etree.ElementTree as ET
 
 #necessary to import xml2csv file from a different directory
 #source:https://www.codegrepper.com/code-examples/python/import+script+from+another+folder+python
@@ -112,7 +115,7 @@ if __name__ == "__main__":
     timestr = time.strftime("%Y%m%d")
     
     #create subdirectory or join it
-    subdirectory = f"{timestr} {fileName} _tripInfo"
+    subdirectory = f"{timestr}_{fileName}_tripInfo"
     try:
         os.mkdir(subdirectory)
     except Exception:
@@ -152,7 +155,7 @@ if __name__ == "__main__":
     ssmFileName = os.path.join(subdirectory,"{}_ssm.xml".format(recnum))
     tripInfoFileName = os.path.join(subdirectory,"{}_tripinfo.xml".format(recnum))
     fullTripInfoFileName = os.path.join(subdirectory,"{}_fullout.xml".format(recnum))
-    fcdOutInfoFileName = os.path.join(subdirectory,"{}_fcdout.xml".format(recnum))
+    fcdOutInfoFileName = f"{subdirectory}\{recnum}_fcdout.xml"
     emissionsInfoFileName = os.path.join(subdirectory,"{}_emissions.xml".format(recnum))
     inductionLoopFileName = os.path.join(subdirectory,"{}_induction.xml".format(recnum))
     xml2csv.main([ssmFileName])
@@ -161,3 +164,58 @@ if __name__ == "__main__":
     xml2csv.main([fcdOutInfoFileName])
     xml2csv.main([emissionsInfoFileName])
     xml2csv.main([inductionLoopFileName])
+
+    fcdOutCSV = os.path.splitext(fcdOutInfoFileName)[0]+'.csv'
+    # tree = ET.parse(routeFileName)
+    # root = tree.getroot()
+    # time_list = []
+    # vehicle_list = []
+    # speed_list = []
+    # for timestep in sumolib.xml.parse(fcdOutInfoFileName, "timestep"):
+    #     time_list.append(timestep.time)
+    # for vehicle in sumolib.xml.parse(fcdOutInfoFileName, "vehicle"):
+    #     speed_list.append(vehicle.speed)
+
+    # #print(len(speed_list))
+    # with open(f'{fcdOutCSV}', newline='') as csvfile:
+    #     reader = csv.DictReader(csvfile)
+    #     for row in reader:
+
+    #         #print(row['timestep_time'], row['vehicle_pos'])
+    #         vehicle_pos = row['vehicle_pos']
+
+    df = pd.read_csv (f'{fcdOutCSV}')
+    #print(df)
+    veh0Position = []
+    veh1Position = []
+    veh2Position = []
+    veh3Position = []
+    veh4Position = []
+    veh0Velocity = []
+    veh1Velocity = []
+    veh2Velocity = []
+    veh3Velocity = []
+    veh4Velocity = []
+    for index, row in df.iterrows():
+        #print(row["vehicle_id"], row["vehicle_pos"])
+        if row["vehicle_id"] == 0:
+            veh0Position.append(row["vehicle_pos"])
+            veh0Velocity.append(row["vehicle_speed"])
+        elif row["vehicle_id"] == 1:
+            veh1Position.append(row["vehicle_pos"])
+            veh1Velocity.append(row["vehicle_speed"])
+        elif row["vehicle_id"] == 2:
+            veh2Position.append(row["vehicle_pos"])
+            veh2Velocity.append(row["vehicle_speed"])
+        elif row["vehicle_id"] == 3:
+            veh3Position.append(row["vehicle_pos"])
+            veh3Velocity.append(row["vehicle_speed"])
+        elif row["vehicle_id"] == 4:
+            veh4Position.append(row["vehicle_pos"])
+            veh4Velocity.append(row["vehicle_speed"])
+    #print(veh0Position)
+    print(len(veh0Position), len(veh0Velocity))
+    print(len(veh1Position), len(veh1Velocity))
+    print(len(veh2Position), len(veh2Velocity))
+    print(len(veh3Position), len(veh3Velocity))
+    print(len(veh4Position), len(veh4Velocity))
