@@ -4,7 +4,10 @@
 
 ##############################################
 import csv
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import ntpath
+import numpy as np 
 import os
 import optparse
 import pandas as pd
@@ -12,13 +15,12 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 
+
 #necessary to import xml2csv file from a different directory
 #source:https://www.codegrepper.com/code-examples/python/import+script+from+another+folder+python
 sys.path.append('C:/Program Files (x86)/Eclipse/Sumo/tools/xml')
+
 import xml2csv
-
-import numpy as np 
-
 
 #used for writing xml files (better than examples)
 #import xml.etree.ElementTree as ET
@@ -45,7 +47,39 @@ def get_options():
 def get_noise():
     mu, sigma = 0, 0.5 
     # creating a noise with the same dimension as the dataset (2,2)
-    noise = np.random.normal(mu, sigma) 
+    noise = np.random.normal(mu, sigma)
+
+def pull_Results(fcdOutCSV):
+    df_FCD = pd.read_csv (f'{fcdOutCSV}')
+    #print(df_FCD)
+    veh0Position = []
+    veh1Position = []
+    veh2Position = []
+    veh3Position = []
+    veh4Position = []
+    veh0Velocity = []
+    veh1Velocity = []
+    veh2Velocity = []
+    veh3Velocity = []
+    veh4Velocity = []
+    for index, row in df_FCD.iterrows():
+        #print(row["vehicle_id"], row["vehicle_pos"])
+        if row["vehicle_id"] == 0:
+            veh0Position.append(row["vehicle_pos"])
+            veh0Velocity.append(row["vehicle_speed"])
+        elif row["vehicle_id"] == 1:
+            veh1Position.append(row["vehicle_pos"])
+            veh1Velocity.append(row["vehicle_speed"])
+        elif row["vehicle_id"] == 2:
+            veh2Position.append(row["vehicle_pos"])
+            veh2Velocity.append(row["vehicle_speed"])
+        elif row["vehicle_id"] == 3:
+            veh3Position.append(row["vehicle_pos"])
+            veh3Velocity.append(row["vehicle_speed"])
+        elif row["vehicle_id"] == 4:
+            veh4Position.append(row["vehicle_pos"])
+            veh4Velocity.append(row["vehicle_speed"])
+    return (veh0Position, veh1Position, veh2Position, veh3Position, veh4Position, veh0Velocity, veh1Velocity, veh2Velocity, veh3Velocity, veh4Velocity)
 
 # look up a new way to generate xml file.
 # https://www.codegrepper.com/code-examples/python/python+string+to+xml
@@ -61,7 +95,7 @@ def generate_routefile(routeFileName):
         print("""\t<vType vClass = "passenger" id="Car01" length="5.0" 
               maxSpeed="33.528" />""" , file=route)
         print('\t\t<route id="route01" edges="e0 e1 e2"/>', file=route)
-        print('\t\t<vehicle id="0" type="Car01" route="route01" depart="0" color="1,0,1"/>', file=route)
+        print('\t\t<vehicle id="0" type="Car" route="route01" depart="0" color="1,0,1"/>', file=route)
         print('\t\t<vehicle id="1" type="Car" route="route01" depart="0" color="0,1,1"/>', file=route)
         print('\t\t<vehicle id="2" type="Car" route="route01" depart="0" color="0,1,1"/>', file=route)
         print('\t\t<vehicle id="3" type="Car" route="route01" depart="0" color="0,1,1"/>', file=route)
@@ -89,6 +123,9 @@ def run():
         if step == 60: # with the current map, this stop happens between 1/2 or 2/3 was down the road.
             traci.vehicle.slowDown("0", "0", "9") #a time of 8 seconds with a decel of 9m/s causes the leading vehicle to travel for ~68meters before stoping
             #DEFAULT_THRESHOLD_TTC is 3 seconds according to: https://github.com/eclipse/sumo/blob/main/src/microsim/devices/MSDevice_SSM.cpp
+            
+        #if step == 120:
+        #    traci.vehicle.setAccel("0", "1")
         step += 1
         
     #coome back to poi add
@@ -112,10 +149,11 @@ if __name__ == "__main__":
     else:#run sumo with gui
         sumoBinary = checkBinary('sumo-gui')
     fileName = ntpath.basename(__file__)
+    fileName_No_Suffix = os.path.splitext(fileName)[0] #
     timestr = time.strftime("%Y%m%d")
     
     #create subdirectory or join it
-    subdirectory = f"{timestr}_{fileName}_tripInfo"
+    subdirectory = f"{timestr}_{fileName_No_Suffix}_tripInfo"
     try:
         os.mkdir(subdirectory)
     except Exception:
@@ -129,63 +167,47 @@ if __name__ == "__main__":
     #another way to seperate new log files: https://sumo.dlr.de/docs/Simulation/Output/index.html#separating_outputs_of_repeated_runs
     
     #generate route file
-    routeFileName = os.path.join(subdirectory,"{}.rou.xml".format(recnum))
+    routeFileName = os.path.join(f"{subdirectory}\{recnum}.rou.xml")
     #inductionLoopFileName = "{}_induction.xml".format(recnum)
     generate_routefile(routeFileName)
     
     #generate additional file
-    additionalFileName = os.path.join(subdirectory,"{}.add.xml".format(recnum))
-    inductionLoopFileName = "{}_induction.xml".format(recnum)
+    additionalFileName = os.path.join(f"{subdirectory}\{recnum}.add.xml")
+    inductionLoopFileName = f"{recnum}_induction.xml"
     generate_additionalfile(additionalFileName, inductionLoopFileName)
     
-    
+    ssmFileName = f"{subdirectory}\{recnum}_ssm.xml"
+    tripInfoFileName = f"{subdirectory}\{recnum}_tripinfo.xml"
+    fcdOutInfoFileName = f"{subdirectory}\{recnum}_fcdout.xml"
+    amitranInforFileName = f"{subdirectory}\{recnum}_amitran.xml"
     # traci starts sumo as a subprocess and then this script connects and runs
-    traci.start([sumoBinary, "-c", "cacc_platooning_a1.sumocfg", "--route-files", routeFileName,
+    traci.start([sumoBinary, "-c", "cacc_Single_Lane.sumocfg", "--route-files", routeFileName,
                              "--additional-files", additionalFileName,
                              #"--collision.mingap-factor", "0",
                              "--device.ssm.probability", "1",
-                             "--device.ssm.file", os.path.join(subdirectory,"{}_ssm.xml".format(recnum)),
-                             "--tripinfo-output", os.path.join(subdirectory,"{}_tripinfo.xml".format(recnum)),
-                             "--full-output", os.path.join(subdirectory,"{}_fullout.xml".format(recnum)),
-                             "--fcd-output", os.path.join(subdirectory,"{}_fcdout.xml".format(recnum)),
-                             "--emission-output",os.path.join(subdirectory,"{}_emissions.xml".format(recnum))])
+                             "--device.ssm.file", ssmFileName,
+                             "--tripinfo-output", tripInfoFileName,
+                             "--fcd-output", fcdOutInfoFileName, "--fcd-output.acceleration"])
     run()
 
     #convert new xml file to csv
-    ssmFileName = os.path.join(subdirectory,"{}_ssm.xml".format(recnum))
-    tripInfoFileName = os.path.join(subdirectory,"{}_tripinfo.xml".format(recnum))
-    fullTripInfoFileName = os.path.join(subdirectory,"{}_fullout.xml".format(recnum))
-    fcdOutInfoFileName = f"{subdirectory}\{recnum}_fcdout.xml"
-    emissionsInfoFileName = os.path.join(subdirectory,"{}_emissions.xml".format(recnum))
-    inductionLoopFileName = os.path.join(subdirectory,"{}_induction.xml".format(recnum))
-    xml2csv.main([ssmFileName])
-    xml2csv.main([tripInfoFileName])
-    xml2csv.main([fullTripInfoFileName])
+    
+    #inductionLoopFileName = f"{subdirectory}\{recnum}_induction.xml"
+    #xml2csv.main([ssmFileName])
+    #xml2csv.main([tripInfoFileName])
     xml2csv.main([fcdOutInfoFileName])
-    xml2csv.main([emissionsInfoFileName])
-    xml2csv.main([inductionLoopFileName])
+    #xml2csv.main([inductionLoopFileName])
 
     fcdOutCSV = os.path.splitext(fcdOutInfoFileName)[0]+'.csv'
-    # tree = ET.parse(routeFileName)
-    # root = tree.getroot()
-    # time_list = []
-    # vehicle_list = []
-    # speed_list = []
-    # for timestep in sumolib.xml.parse(fcdOutInfoFileName, "timestep"):
-    #     time_list.append(timestep.time)
-    # for vehicle in sumolib.xml.parse(fcdOutInfoFileName, "vehicle"):
-    #     speed_list.append(vehicle.speed)
+    #test = pull_Results(fcdOutCSV)
+    #print(test.veh0Position)
 
-    # #print(len(speed_list))
-    # with open(f'{fcdOutCSV}', newline='') as csvfile:
-    #     reader = csv.DictReader(csvfile)
-    #     for row in reader:
-
-    #         #print(row['timestep_time'], row['vehicle_pos'])
-    #         vehicle_pos = row['vehicle_pos']
-
-    df = pd.read_csv (f'{fcdOutCSV}')
-    #print(df)
+    df_FCD = pd.read_csv (f'{fcdOutCSV}')
+    time0 = []
+    time1 = []
+    time2 = []
+    time3 = []
+    time4 = []
     veh0Position = []
     veh1Position = []
     veh2Position = []
@@ -196,26 +218,59 @@ if __name__ == "__main__":
     veh2Velocity = []
     veh3Velocity = []
     veh4Velocity = []
-    for index, row in df.iterrows():
+    veh0Acceleration = []
+    veh1Acceleration = []
+    veh2Acceleration = []
+    veh3Acceleration = []
+    veh4Acceleration = []
+    for index, row in df_FCD.iterrows():
         #print(row["vehicle_id"], row["vehicle_pos"])
         if row["vehicle_id"] == 0:
-            veh0Position.append(row["vehicle_pos"])
+            time0.append(row["timestep_time"])
+            veh0Position.append(row["vehicle_x"])
             veh0Velocity.append(row["vehicle_speed"])
+            veh0Acceleration.append(row["vehicle_acceleration"])
         elif row["vehicle_id"] == 1:
-            veh1Position.append(row["vehicle_pos"])
+            time1.append(row["timestep_time"])
+            veh1Position.append(row["vehicle_x"])
             veh1Velocity.append(row["vehicle_speed"])
+            veh1Acceleration.append(row["vehicle_acceleration"])
         elif row["vehicle_id"] == 2:
-            veh2Position.append(row["vehicle_pos"])
+            time2.append(row["timestep_time"])
+            veh2Position.append(row["vehicle_x"])
             veh2Velocity.append(row["vehicle_speed"])
+            veh2Acceleration.append(row["vehicle_acceleration"])
         elif row["vehicle_id"] == 3:
-            veh3Position.append(row["vehicle_pos"])
+            time3.append(row["timestep_time"])
+            veh3Position.append(row["vehicle_x"])
             veh3Velocity.append(row["vehicle_speed"])
+            veh3Acceleration.append(row["vehicle_acceleration"])
         elif row["vehicle_id"] == 4:
-            veh4Position.append(row["vehicle_pos"])
+            time4.append(row["timestep_time"])
+            veh4Position.append(row["vehicle_x"])
             veh4Velocity.append(row["vehicle_speed"])
-    #print(veh0Position)
-    print(len(veh0Position), len(veh0Velocity))
-    print(len(veh1Position), len(veh1Velocity))
-    print(len(veh2Position), len(veh2Velocity))
-    print(len(veh3Position), len(veh3Velocity))
-    print(len(veh4Position), len(veh4Velocity))
+            veh4Acceleration.append(row["vehicle_acceleration"])
+
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    ax.plot(time0, veh0Velocity, label="Vehicle 0")  # Plot some data on the axes.
+    ax.plot(time1, veh1Velocity, label="Vehicle 1")
+    ax.plot(time2, veh2Velocity, label="Vehicle 2")
+    ax.plot(time3, veh3Velocity, label="Vehicle 3")
+    ax.plot(time4, veh4Velocity, label="Vehicle 4")
+    ax.set_xlabel('Time_Step')
+    ax.set_ylabel('Velocity')
+    ax.legend()
+    ax.set_title("CACC Vehcile Velocity vs Time")
+    fig.savefig('vehicle_velocity.png')
+
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    ax.plot(time0, veh0Acceleration, label="Vehicle 0")  # Plot some data on the axes.
+    ax.plot(time1, veh1Acceleration, label="Vehicle 1")
+    ax.plot(time2, veh2Acceleration, label="Vehicle 2")
+    ax.plot(time3, veh3Acceleration, label="Vehicle 3")
+    ax.plot(time4, veh4Acceleration, label="Vehicle 4")
+    ax.set_xlabel('Time_Step')
+    ax.set_ylabel('Acceleration')
+    ax.legend()
+    ax.set_title("CACC Vehcile Acceleration vs Time")
+    fig.savefig('vehicle_acceleration.png')
