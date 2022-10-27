@@ -284,7 +284,7 @@ if __name__ == "__main__":
     ax.set_ylabel('Position')
     ax.legend()
     ax.set_title("CACC Vehcile Position vs Time")
-    fig.savefig('/images/vehicle_position.png')
+    fig.savefig('../images/vehicle_position.png')
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(time0, veh0Velocity, label="Vehicle 0")
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     ax.set_ylabel('Velocity')
     ax.legend()
     ax.set_title("CACC Vehcile Velocity vs Time")
-    fig.savefig('/images/vehicle_velocity.png')
+    fig.savefig('../images/vehicle_velocity.png')
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(time0, veh0Acceleration, label="Vehicle 0")
@@ -308,4 +308,4 @@ if __name__ == "__main__":
     ax.set_ylabel('Acceleration')
     ax.legend()
     ax.set_title("CACC Vehcile Acceleration vs Time")
-    fig.savefig('/images/vehicle_acceleration.png')
+    fig.savefig('../images/vehicle_acceleration.png')
