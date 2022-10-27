@@ -1,0 +1,5 @@
+<additional>
+	<additional>
+		<inductionLoop id="myLoop0" lane="e2_0" pos="10"             freq="60" file="001_induction.xml" />
+	</additional>
+</additional>
