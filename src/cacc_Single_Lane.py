@@ -172,7 +172,7 @@ if __name__ == "__main__":
     timestr = time.strftime("%Y%m%d")
 
     # create subdirectory or join it
-    subdirectory = f"{timestr}_{fileName_No_Suffix}_tripInfo"
+    subdirectory = f"/results/{timestr}_{fileName_No_Suffix}_tripInfo"
     try:
         os.mkdir(subdirectory)
     except Exception:
