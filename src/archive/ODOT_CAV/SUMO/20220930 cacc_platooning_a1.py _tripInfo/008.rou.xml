@@ -1,0 +1,12 @@
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+	<vType vClass = "passenger" id="Car" length="5.0"
+              maxSpeed="33.528" carFollowModel = "CACC" />
+	<vType vClass = "passenger" id="Car01" length="5.0" 
+              maxSpeed="33.528" />
+		<route id="route01" edges="e0 e1 e2"/>
+		<vehicle id="0" type="Car01" route="route01" depart="0" color="1,0,1"/>
+		<vehicle id="1" type="Car" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="2" type="Car" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="3" type="Car" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="4" type="Car" route="route01" depart="0" color="0,1,1"/>
+</routes>
