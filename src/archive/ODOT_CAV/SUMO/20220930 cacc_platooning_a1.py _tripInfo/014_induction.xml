@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 09/30/22 19:48:02 by Eclipse SUMO sumo Version 1.8.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="cacc_platooning_a1_full.net.xml"/>
+        <route-files value="20220930%20cacc_platooning_a1.py%20_tripInfo\014.rou.xml"/>
+        <additional-files value="20220930%20cacc_platooning_a1.py%20_tripInfo\014.add.xml"/>
+    </input>
+
+    <output>
+        <emission-output value="20220930%20cacc_platooning_a1.py%20_tripInfo\014_emissions.xml"/>
+        <fcd-output value="20220930%20cacc_platooning_a1.py%20_tripInfo\014_fcdout.xml"/>
+        <full-output value="20220930%20cacc_platooning_a1.py%20_tripInfo\014_fullout.xml"/>
+        <tripinfo-output value="20220930%20cacc_platooning_a1.py%20_tripInfo\014_tripinfo.xml"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="10000"/>
+    </time>
+
+    <processing>
+        <time-to-teleport value="-1"/>
+    </processing>
+
+    <ssm_device>
+        <device.ssm.probability value="1"/>
+        <device.ssm.file value="20220930 cacc_platooning_a1.py _tripInfo\014_ssm.xml"/>
+    </ssm_device>
+
+    <traci_server>
+        <remote-port value="52748"/>
+    </traci_server>
+
+</configuration>
+-->
+
+<detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e1_file.xsd">
+    <interval begin="0.00" end="60.00" id="myLoop0" nVehContrib="0" flow="0.00" occupancy="0.00" speed="-1.00" harmonicMeanSpeed="-1.00" length="-1.00" nVehEntered="0"/>
+    <interval begin="60.00" end="120.00" id="myLoop0" nVehContrib="0" flow="0.00" occupancy="0.00" speed="-1.00" harmonicMeanSpeed="-1.00" length="-1.00" nVehEntered="0"/>
+    <interval begin="120.00" end="172.00" id="myLoop0" nVehContrib="5" flow="346.15" occupancy="1.52" speed="31.68" harmonicMeanSpeed="31.67" length="5.00" nVehEntered="5"/>
+</detector>
