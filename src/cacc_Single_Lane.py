@@ -1,13 +1,7 @@
 #!/usr/bin/env python
-# cacc platooning method - anomaly 0
-# distance detector anomaly
 
-##############################################
-# import csv
-# import matplotlib as mpl
 import matplotlib.pyplot as plt
 import ntpath
-# import numpy as np
 import os
 import optparse
 import pandas as pd
@@ -19,33 +13,16 @@ from sumolib import checkBinary  # Checks for the binary in environ vars
 # necessary to import xml2csv file from a different directory
 # source:https://www.codegrepper.com/code-examples/python/import+script+from+another+folder+python
 sys.path.append('C:/Program Files (x86)/Eclipse/Sumo/tools/xml')
-import xml2csv
+import xml2csv  # noqa: E402
 # used for writing xml files (better than examples)
 # import xml.etree.ElementTree as ET
 
-# we need to import some python modules from the $SUMO_HOME/tools directory
+# need to import some python modules from the $SUMO_HOME/tools directory
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(tools)
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
-
-# import sumolib
-
-
-def get_options():
-    opt_parser = optparse.OptionParser()
-    opt_parser.add_option("--nogui", action="store_true",
-                          default=False, help="run the commandline \
-                          version of sumo")
-    options, args = opt_parser.parse_args()
-    return options
-
-
-# def get_noise():
-#    mu, sigma = 0, 0.5
-#    # creating a noise with the same dimension as the dataset (2,2)
-#    noise = np.random.normal(mu, sigma)
 
 
 def pull_Results(fcdOutCSV):
@@ -127,6 +104,15 @@ def generate_additionalfile(additionalFileName, inductionLoopFileName):
             freq="60" file="%s" />' % (inductionLoopFileName), file=additional)
         print('\t</additional>', file=additional)
         print('</additional>', file=additional)
+
+
+def get_options():
+    opt_parser = optparse.OptionParser()
+    opt_parser.add_option("-ng", "--nogui", action="store_true",
+                          default=False, help="run the commandline \
+                          version of sumo")
+    options, args = opt_parser.parse_args()
+    return options
 
 
 # contains TraCI control loop
