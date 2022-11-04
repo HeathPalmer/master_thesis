@@ -27,7 +27,7 @@ class FuzzyHWClass:
         # setup the 12 output membership functions
         self.y['4ExSmall'] = fuzz.trimf(self.y.universe, [-0.05, 0.15, 0.25])
         self.y['3ExSmall'] = fuzz.trimf(self.y.universe, [0.25, 0.35, 0.45])
-        self.y['ExtraExtraSmall'] = fuzz.trimf(self.y.universe, [0.3, 0.4, 0.5])
+        self.y['ExtraExtraSmall'] = fuzz.trimf(self.y.universe, [0.3, 0.4, 0.5])  # noqa: E501
         self.y['ExtraSmall'] = fuzz.trimf(self.y.universe, [0.4, 0.5, 0.6])
         self.y['Small'] = fuzz.trimf(self.y.universe, [0.5, 0.6, 0.7])
         self.y['SmallMedium'] = fuzz.trimf(self.y.universe, [0.6, 0.7, 0.8])
