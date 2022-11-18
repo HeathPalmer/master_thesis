@@ -121,7 +121,10 @@ def run():
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
-        print(step)
+
+        if step >= 30 and step < 150:
+            veh1_position = traci.vehicle.getPosition("0")
+            print(veh1_position)
         # close lanes so vehicles do not attmept to pass the slow leader:
         if step == 60:
             # with the current map, this stop happens between \1/2 or \
