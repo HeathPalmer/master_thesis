@@ -108,7 +108,7 @@ def generate_additionalfile(additionalFileName, inductionLoopFileName):
 
 def get_options():
     opt_parser = optparse.OptionParser()
-    opt_parser.add_option("-ng", "--nogui", action="store_true",
+    opt_parser.add_option("--nogui", action="store_true",
                           default=False, help="run the commandline \
                           version of sumo")
     options, args = opt_parser.parse_args()
@@ -121,7 +121,7 @@ def run():
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
-        # print(step)
+        print(step)
         # close lanes so vehicles do not attmept to pass the slow leader:
         if step == 60:
             # with the current map, this stop happens between \1/2 or \
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     timestr = time.strftime("%Y%m%d")
 
     # create subdirectory or join it
-    subdirectory = f"/results/{timestr}_{fileName_No_Suffix}_tripInfo"
+    subdirectory = f"./results/{timestr}_{fileName_No_Suffix}_tripInfo"
     try:
         os.mkdir(subdirectory)
     except Exception:
@@ -174,14 +174,14 @@ if __name__ == "__main__":
     # https://sumo.dlr.de/docs/Simulation/Output/index.html#separating_outputs_of_repeated_runs
 
     # generate route file
-    routeFileName = os.path.join(rf"{subdirectory}\{recnum}.rou.xml")
+    routeFileName = f"{fileName_No_Suffix}.rou.xml"
     # inductionLoopFileName = "{}_induction.xml".format(recnum)
-    generate_routefile(routeFileName)
+    # generate_routefile(routeFileName)
 
     # generate additional file
-    additionalFileName = os.path.join(rf"{subdirectory}\{recnum}.add.xml")
-    inductionLoopFileName = f"{recnum}_induction.xml"
-    generate_additionalfile(additionalFileName, inductionLoopFileName)
+    additionalFileName = f"{fileName_No_Suffix}.add.xml"
+    inductionLoopFileName = f"./results/{recnum}_induction.xml"
+    # generate_additionalfile(additionalFileName, inductionLoopFileName)
 
     ssmFileName = rf"{subdirectory}\{recnum}_ssm.xml"
     tripInfoFileName = rf"{subdirectory}\{recnum}_tripinfo.xml"
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     ax.set_ylabel('Position')
     ax.legend()
     ax.set_title("CACC Vehcile Position vs Time")
-    fig.savefig('../images/vehicle_position.png')
+    fig.savefig('./images/vehicle_position.png')
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(time0, veh0Velocity, label="Vehicle 0")
@@ -282,7 +282,7 @@ if __name__ == "__main__":
     ax.set_ylabel('Velocity')
     ax.legend()
     ax.set_title("CACC Vehcile Velocity vs Time")
-    fig.savefig('../images/vehicle_velocity.png')
+    fig.savefig('./images/vehicle_velocity.png')
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(time0, veh0Acceleration, label="Vehicle 0")
@@ -294,4 +294,4 @@ if __name__ == "__main__":
     ax.set_ylabel('Acceleration')
     ax.legend()
     ax.set_title("CACC Vehcile Acceleration vs Time")
-    fig.savefig('../images/vehicle_acceleration.png')
+    fig.savefig('./images/vehicle_acceleration.png')
