@@ -8,19 +8,17 @@ class FuzzyHWClass:
 
     def fuzzyHW(self, input: float):
         # initialize fuzy variables
-        self.gap_error = ctrl.Antecedent(np.linspace(16, 118), 'gap-error-value')  # noqa: E501
+        self.gap_error = ctrl.Antecedent(np.linspace(-35, 85), 'gap-error-value')  # noqa: E501
         self.gap_error_rate = ctrl.Antecedent(np.linspace(-6, 6), 'gap-error-change-rate-value')  # noqa: E501
 
         # output acceleration
         self.y = ctrl.Consequent(np.linspace(-5, 5), 'acceleration-value')
         # Function for fuzz.trimf(input,left edge, center edge, right edge)
-        self.gap_error['ExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, [16, 16.764, 33.528])  # noqa: E501
-        self.gap_error['ExtraSmall'] = fuzz.trimf(self.gap_error.universe, [16.764, 33.528, 50.292])
-        self.gap_error['Small'] = fuzz.trimf(self.gap_error.universe, [33.528, 50.292, 67.056])
-        self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, [50.292, 67.056, 83.82])
-        self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, [67.056, 83.82, 100.584])
-        self.gap_error['ExtraLarge'] = fuzz.trimf(self.gap_error.universe, [83.82, 100.584, 117.48])
-        self.gap_error['ExtraExtraLarge'] = fuzz.trimf(self.gap_error.universe, [100.584, 117.48, 118])
+        self.gap_error['ExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-33.528, -16.764, 0])  # noqa: E501
+        self.gap_error['ExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-16.764, 0, 16.764])
+        self.gap_error['Small'] = fuzz.trimf(self.gap_error.universe, [0, 16.764, 33.528])
+        self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, [16.764, 33.528, 50.292])
+        self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, [33.528, 67.056, 83.82])
         print(self.gap_error.view())
 
         self.gap_error_rate['ExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-6, -5.36, -2.235])  # noqa: E501
