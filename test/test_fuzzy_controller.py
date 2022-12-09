@@ -1,27 +1,29 @@
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
-import matplotlib.pyplot as plt
+import pandas as pd
 
 
 class FuzzyHWClass:
 
-    def fuzzyHW(self, input: float):
+    def fuzzyHW(self, input):
         # initialize fuzy variables
-        self.gap_error = ctrl.Antecedent(np.linspace(-35, 85), 'gap-error-value')  # noqa: E501
-        self.gap_error_rate = ctrl.Antecedent(np.linspace(-6, 6), 'gap-error-change-rate-value')  # noqa: E501
+        self.gap_error = ctrl.Antecedent(np.arange(-1.5, 2.6, 0.1), 'gap-error-value')  # noqa: E501
+        self.gap_error_rate = ctrl.Antecedent(np.arange(-6, 6.1, 0.1), 'gap-error-change-rate-value')  # noqa: E501
 
         # output acceleration
-        self.y = ctrl.Consequent(np.linspace(-5, 5), 'acceleration-value')
+        self.acceleration = ctrl.Consequent(np.arange(-5, 5.1, 0.1), 'acceleration-value')
+
         # Function for fuzz.trimf(input,left edge, center edge, right edge)
-        self.gap_error['ExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-33.528, -16.764, 0])  # noqa: E501
-        self.gap_error['ExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-16.764, 0, 16.764])
-        self.gap_error['Small'] = fuzz.trimf(self.gap_error.universe, [0, 16.764, 33.528])
-        self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, [16.764, 33.528, 50.292])
-        self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, [33.528, 67.056, 83.82])
+        self.gap_error['ExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-1.5, -1, -0.5])  # noqa: E501
+        self.gap_error['ExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-1, -0.5, 0])
+        self.gap_error['Small'] = fuzz.trimf(self.gap_error.universe, [-0.5, 0, 0.5])
+        self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, [0, 0.5, 1])
+        self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, [0.5, 1, 2])
+        self.gap_error['ExtraLarge'] = fuzz.trimf(self.gap_error.universe, [1, 2, 2.5])
         print(self.gap_error.view())
 
-        self.gap_error_rate['ExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-6, -5.36, -2.235])  # noqa: E501
+        self.gap_error_rate['ExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-6, -5.36, -2.235])
         self.gap_error_rate['ExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-5.36, -2.235, -0.447])
         self.gap_error_rate['Small'] = fuzz.trimf(self.gap_error_rate.universe, [-2.235, -0.447, 0])
         self.gap_error_rate['Medium'] = fuzz.trimf(self.gap_error_rate.universe, [-0.447, 0, 0.447])
@@ -31,77 +33,171 @@ class FuzzyHWClass:
         print(self.gap_error_rate.view())
 
         # setup the 12 output membership functions
-        self.y['ExtraExtraSmall'] = fuzz.trimf(self.y.universe, [-5, -4.572, -3])  # noqa: E501
-        self.y['ExtraSmall'] = fuzz.trimf(self.y.universe, [-4.572, -3, -1.5])
-        self.y['Small'] = fuzz.trimf(self.y.universe, [-2.235, -1.5, 0])
-        self.y['Medium'] = fuzz.trimf(self.y.universe, [-1.5, 0, 1.5])
-        self.y['Large'] = fuzz.trimf(self.y.universe, [0, 1.5, 3])
-        self.y['ExtraLarge'] = fuzz.trimf(self.y.universe, [1.5, 3, 4.572])
-        self.y['ExtraExtraLarge'] = fuzz.trimf(self.y.universe, [3, 4.572, 5])
-        print(self.y.view())
-        # Function for Right fuzz.trimf(input,left edge, right edge)
+        self.acceleration['ExtraExtraSmall'] = fuzz.trimf(self.acceleration.universe, [-5, -4.572, -3])
+        self.acceleration['ExtraSmall'] = fuzz.trimf(self.acceleration.universe, [-4.572, -3, -1.5])
+        self.acceleration['Small'] = fuzz.trimf(self.acceleration.universe, [-2.235, -1.5, 0])
+        self.acceleration['Medium'] = fuzz.trimf(self.acceleration.universe, [-1.5, 0, 1.5])
+        self.acceleration['Large'] = fuzz.trimf(self.acceleration.universe, [0, 1.5, 3])
+        self.acceleration['ExtraLarge'] = fuzz.trimf(self.acceleration.universe, [1.5, 3, 4.572])
+        self.acceleration['ExtraExtraLarge'] = fuzz.trimf(self.acceleration.universe, [3, 4.572, 5])
+        print(self.acceleration.view())
 
         # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH  # noqa: E501
-        rule1 = ctrl.Rule(self.gap_error['ExtraExtraSmall'], self.y['ExtraExtraSmall'])
-        rule2 = ctrl.Rule(self.gap_error['ExtraSmall'], self.y['ExtraSmall'])
-        rule3 = ctrl.Rule(self.gap_error['Small'], self.y['Small'])
-        rule4 = ctrl.Rule(self.gap_error['Medium'], self.y['Medium'])
-        rule5 = ctrl.Rule(self.gap_error['Large'], self.y['Large'])
-        rule6 = ctrl.Rule(self.gap_error['ExtraLarge'], self.y['ExtraLarge'])
-        rule7 = ctrl.Rule(self.gap_error['ExtraExtraLarge'], self.y['ExtraExtraLarge'])  # noqa: E501
+        rule1 = ctrl.Rule(anticedent=(self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']),
+                          consequent=self.acceleration['ExtraExtraSmall'])
+
+        rule2 = ctrl.Rule(anticedent=(self.gap_error['ExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']),
+                          consequent=self.acceleration['ExtraSmall'])
+
+        rule3 = ctrl.Rule(anticedent=((self.gap_error['Small'] & self.gap_error_rate['ExtraExtraSmall']) |
+                                      (self.gap_error['Medium'] & self.gap_error_rate['ExtraExtraSmall']) |
+                                      (self.gap_error['Large'] & self.gap_error_rate['ExtraExtraSmall']) |
+                                      (self.gap_error['ExtraLarge'] & self.gap_error_rate['ExtraExtraSmall']) |
+                                      (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraSmall']) |
+                                      (self.gap_error['ExtraSmall'] & self.gap_error_rate['ExtraSmall']) |
+                                      (self.gap_error['Small'] & self.gap_error_rate['ExtraSmall']) |
+                                      (self.gap_error['Medium'] & self.gap_error_rate['ExtraSmall']) |
+                                      (self.gap_error['Large'] & self.gap_error_rate['ExtraSmall']) |
+                                      (self.gap_error['ExtraLarge'] & self.gap_error_rate['ExtraSmall']) |
+                                      (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['Small']) |
+                                      (self.gap_error['ExtraSmall'] & self.gap_error_rate['Small']) |
+                                      (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['Medium']) |
+                                      (self.gap_error['ExtraSmall'] & self.gap_error_rate['Medium'])),
+                          consequent=self.acceleration['Small'])
+
+        rule4 = ctrl.Rule(anticedent=((self.gap_error['Small'] & self.gap_error_rate['Small']) |
+                                      (self.gap_error['Medium'] & self.gap_error_rate['Small']) |
+                                      (self.gap_error['Large'] & self.gap_error_rate['Small']) |
+                                      (self.gap_error['ExtraLarge'] & self.gap_error_rate['Small']) |
+                                      (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['Large']) |
+                                      (self.gap_error['ExtraSmall'] & self.gap_error_rate['Large'])),
+                          consequent=self.acceleration['Medium'])
+
+        rule5 = ctrl.Rule(anticedent=((self.gap_error['Small'] & self.gap_error_rate['Medium']) |
+                                      (self.gap_error['Medium'] & self.gap_error_rate['Medium']) |
+                                      (self.gap_error['Large'] & self.gap_error_rate['Medium']) |
+                                      (self.gap_error['ExtraLarge'] & self.gap_error_rate['Medium']) |
+                                      (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraLarge']) |
+                                      (self.gap_error['ExtraSmall'] & self.gap_error_rate['ExtraLarge']) |
+                                      (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraExtraLarge']) |
+                                      (self.gap_error['ExtraSmall'] & self.gap_error_rate['ExtraExtraLarge'])),
+                          consequent=self.acceleration['Large'])
+
+        rule6 = ctrl.Rule(anticedent=((self.gap_error['Medium'] & self.gap_error_rate['Large']) |
+                                      (self.gap_error['Large'] & self.gap_error_rate['Large']) |
+                                      (self.gap_error['Small'] & self.gap_error_rate['ExtraLarge']) |
+                                      (self.gap_error['Medium'] & self.gap_error_rate['ExtraLarge'])),
+                          consequent=self.acceleration['ExtraLarge'])
+
+        rule7 = ctrl.Rule(anticedent=((self.gap_error['ExtraLarge'] & self.gap_error_rate['Large']) |
+                                      (self.gap_error['Large'] & self.gap_error_rate['ExtraLarge']) |
+                                      (self.gap_error['ExtraLarge'] & self.gap_error_rate['ExtraLarge']) |
+                                      (self.gap_error['Small'] & self.gap_error_rate['ExtraExtraLarge']) |
+                                      (self.gap_error['Medium'] & self.gap_error_rate['ExtraExtraLarge']) |
+                                      (self.gap_error['Large'] & self.gap_error_rate['ExtraExtraLarge']) |
+                                      (self.gap_error['ExtraLarge'] & self.gap_error_rate['ExtraExtraLarge'])),
+                          consequent=self.acceleration['ExtraExtraLarge'])
 
         # rule1.view()
 
-        HW_control = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7])  # noqa: E501
+        SUMO_control = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7])
 
-        HW = ctrl.ControlSystemSimulation(HW_control)
+        SUMO = ctrl.ControlSystemSimulation(SUMO_control)
 
-        HW.input['x-value'] = input
+        SUMO.input['gap-error-value'] = input[0]
+        SUMO.input['gap-error-change-rate-value'] = input[1]
 
-        HW.compute()
+        SUMO.compute()
 
-        result = HW.output['y-value']
+        result = SUMO.output['acceleration-value']
 
         return result
 
-    def run():
-        # input to the system
-        j = np.linspace(0, 1)
+    def vehicle_fuzzy(vehicle_inputs):
         fuzzyOut = float
-        y_val = []
+        acceleration_val = []
         # count = 0
-        for i in j:
+        for i in vehicle_inputs:
             # print(i)
             fuzzyFunction = FuzzyHWClass()
             fuzzyOut = fuzzyFunction.fuzzyHW(i)
-            y_val.append(fuzzyOut)
+            acceleration_val.append(fuzzyOut)
             # print(f"{y_val} and {fuzzyOut}")
 
-        return y_val
+        return acceleration_val
+
+    def itteration_over_df(df_excel_data, vehicle):
+        vehicle_dataframe = df_excel_data[df_excel_data.vehicle_id == vehicle]
+        return vehicle_dataframe
+
+    def run(df_excel_data):
+        fuzzyFunction = FuzzyHWClass()
+        # constants
+        ideal_gap = 2
+        # calculate the input to the system
+        vehicle_0_position = []
+        vehicle_1_position = []
+        vehicle_2_position = []
+        vehicle_3_position = []
+        vehicle_4_position = []
+
+        vehicle_1_gap = []
+        # vehicle_2_gap = []
+        # vehicle_3_gap = []
+        # vehicle_4_gap = []
+
+        vehicle_1_gap_error = []
+        # vehicle_2_gap_error = []
+        # vehicle_3_gap_error = []
+        # vehicle_4_gap_error = []
+
+        vehicle_1_acceleration = []
+        # vehicle_2_acceleration = []
+        # vehicle_3_acceleration = []
+        # vehicle_4_acceleration = []
+
+        vehicle_1 = []
+
+        vehicle_1_df = df_excel_data.vehicle_id['1']
+        print(vehicle_1_df)
+
+        for i in df_excel_data.index:
+            if df_excel_data.vehicle_id[i] == 0:
+                vehicle_0_position.append(df_excel_data.vehicle_pos[i])
+                print(i)
+                print(vehicle_0_position)
+
+            elif df_excel_data.vehicle_id[i] == 1:
+                print(i)
+                vehicle_1_position.append(df_excel_data.vehicle_pos[i])
+                vehicle_1_velocity = df_excel_data.vehicle_speed[i]
+                vehicle_1_gap.append(vehicle_0_position[i-1] - vehicle_1_position[i-1])
+                vehicle_1_gap_error.append((vehicle_1_gap/vehicle_1_velocity)-ideal_gap)
+                if i >= 2:
+                    vehicle_1_gap_error_rate = (vehicle_1_gap_error[i]-vehicle_1_gap_error[i-1])
+                else:
+                    vehicle_1_gap_error_rate = 0
+                # run fuzzy logic
+                vehicle_1_acceleration.append(fuzzyFunction.vehicle_fuzzy([vehicle_1_gap_error[i], vehicle_1_gap_error_rate]))
+                vehicle_1.append([vehicle_1_gap_error, vehicle_1_gap_error_rate, vehicle_1_acceleration])
+                print(vehicle_1)
+
+            elif df_excel_data.vehicle_id[i] == 2:
+                vehicle_2_position.append(df_excel_data.vehicle_pos)
+
+            elif df_excel_data.vehicle_id[i] == 3:
+                vehicle_3_position.append(df_excel_data.vehicle_pos)
+
+            elif df_excel_data.vehicle_id[i] == '4':
+                vehicle_4_position.append(df_excel_data.vehicle_pos)
+
+        return vehicle_1
 
 
 if __name__ == "__main__":
-    y_result = FuzzyHWClass.run()
-    # ideal non-linear function y=x^0.45
-    x_values = np.linspace(0, 1)
-    # x = 0:0.05:1
-    nonLinearFunction = []
-    for value in x_values:
-        nonLinearFunction.append(value ** 0.45)
+    # bring in the excel data
+    df_excel_data = pd.read_csv('fcdout.csv')
 
-    # Plot results from Heath's fuzzy logic
-    # fig = plt.figure(figsize=(8, 8))
-    # Plotting both the curves simultaneously
-    plt.plot(x_values, y_result, color='r', label='Fuzzy')
-    plt.plot(x_values, nonLinearFunction, color='g', label='NonLinear')
-
-    # Naming the x-axis, y-axis and the whole graph
-    plt.xlabel("x value")
-    plt.ylabel("y value")
-    plt.title("Heaths Fuzzy System Result & Actual Result")
-
-    # Adding legend, which helps us recognize the curve according to it's color  # noqa: E501
-    plt.legend(['Fuzzy Result', 'y = x^0.45'])
-
-    # To load the display window
-    plt.show()
+    print(df_excel_data)
+    vehicle_result = FuzzyHWClass.run(df_excel_data)
+    print(vehicle_result)
