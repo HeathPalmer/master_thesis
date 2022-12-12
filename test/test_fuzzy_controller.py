@@ -6,9 +6,12 @@ import pandas as pd
 
 class FuzzyHWClass:
 
-    def fuzzyHW(self, input):
+    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate):
+        input = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]
+        print(input)
+
         # initialize fuzy variables
-        self.gap_error = ctrl.Antecedent(np.arange(-1.5, 2.6, 0.1), 'gap-error-value')  # noqa: E501
+        self.gap_error = ctrl.Antecedent(np.arange(-1.5, 3, 0.1), 'gap-error-value')  # noqa: E501
         self.gap_error_rate = ctrl.Antecedent(np.arange(-6, 6.1, 0.1), 'gap-error-change-rate-value')  # noqa: E501
 
         # output acceleration
@@ -21,7 +24,7 @@ class FuzzyHWClass:
         self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, [0, 0.25, 0.5])
         self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, [0.25, 0.5, 1])
         self.gap_error['ExtraLarge'] = fuzz.trimf(self.gap_error.universe, [0.5, 1, 3])
-        print(self.gap_error.view())
+        # print(self.gap_error.view())
 
         self.gap_error_rate['ExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-6, -5.36, -2.235])
         self.gap_error_rate['ExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-5.36, -2.235, -0.447])
@@ -30,7 +33,6 @@ class FuzzyHWClass:
         self.gap_error_rate['Large'] = fuzz.trimf(self.gap_error_rate.universe, [0, 0.447, 2.235])
         self.gap_error_rate['ExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, [0.447, 2.235, 5.36])
         self.gap_error_rate['ExtraExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, [2.235, 5.36, 6])
-        print(self.gap_error_rate.view())
 
         # setup the 12 output membership functions
         self.acceleration['ExtraExtraSmall'] = fuzz.trimf(self.acceleration.universe, [-5, -4.572, -3])
@@ -40,16 +42,15 @@ class FuzzyHWClass:
         self.acceleration['Large'] = fuzz.trimf(self.acceleration.universe, [0, 1.5, 3])
         self.acceleration['ExtraLarge'] = fuzz.trimf(self.acceleration.universe, [1.5, 3, 4.572])
         self.acceleration['ExtraExtraLarge'] = fuzz.trimf(self.acceleration.universe, [3, 4.572, 5])
-        print(self.acceleration.view())
 
         # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH  # noqa: E501
-        rule1 = ctrl.Rule(anticedent=(self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']),
+        rule1 = ctrl.Rule(antecedent=(self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']),
                           consequent=self.acceleration['ExtraExtraSmall'])
 
-        rule2 = ctrl.Rule(anticedent=(self.gap_error['ExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']),
+        rule2 = ctrl.Rule(antecedent=(self.gap_error['ExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']),
                           consequent=self.acceleration['ExtraSmall'])
 
-        rule3 = ctrl.Rule(anticedent=((self.gap_error['Small'] & self.gap_error_rate['ExtraExtraSmall']) |
+        rule3 = ctrl.Rule(antecedent=((self.gap_error['Small'] & self.gap_error_rate['ExtraExtraSmall']) |
                                       (self.gap_error['Medium'] & self.gap_error_rate['ExtraExtraSmall']) |
                                       (self.gap_error['Large'] & self.gap_error_rate['ExtraExtraSmall']) |
                                       (self.gap_error['ExtraLarge'] & self.gap_error_rate['ExtraExtraSmall']) |
@@ -65,7 +66,7 @@ class FuzzyHWClass:
                                       (self.gap_error['ExtraSmall'] & self.gap_error_rate['Medium'])),
                           consequent=self.acceleration['Small'])
 
-        rule4 = ctrl.Rule(anticedent=((self.gap_error['Small'] & self.gap_error_rate['Small']) |
+        rule4 = ctrl.Rule(antecedent=((self.gap_error['Small'] & self.gap_error_rate['Small']) |
                                       (self.gap_error['Medium'] & self.gap_error_rate['Small']) |
                                       (self.gap_error['Large'] & self.gap_error_rate['Small']) |
                                       (self.gap_error['ExtraLarge'] & self.gap_error_rate['Small']) |
@@ -73,7 +74,7 @@ class FuzzyHWClass:
                                       (self.gap_error['ExtraSmall'] & self.gap_error_rate['Large'])),
                           consequent=self.acceleration['Medium'])
 
-        rule5 = ctrl.Rule(anticedent=((self.gap_error['Small'] & self.gap_error_rate['Medium']) |
+        rule5 = ctrl.Rule(antecedent=((self.gap_error['Small'] & self.gap_error_rate['Medium']) |
                                       (self.gap_error['Medium'] & self.gap_error_rate['Medium']) |
                                       (self.gap_error['Large'] & self.gap_error_rate['Medium']) |
                                       (self.gap_error['ExtraLarge'] & self.gap_error_rate['Medium']) |
@@ -83,13 +84,13 @@ class FuzzyHWClass:
                                       (self.gap_error['ExtraSmall'] & self.gap_error_rate['ExtraExtraLarge'])),
                           consequent=self.acceleration['Large'])
 
-        rule6 = ctrl.Rule(anticedent=((self.gap_error['Medium'] & self.gap_error_rate['Large']) |
+        rule6 = ctrl.Rule(antecedent=((self.gap_error['Medium'] & self.gap_error_rate['Large']) |
                                       (self.gap_error['Large'] & self.gap_error_rate['Large']) |
                                       (self.gap_error['Small'] & self.gap_error_rate['ExtraLarge']) |
                                       (self.gap_error['Medium'] & self.gap_error_rate['ExtraLarge'])),
                           consequent=self.acceleration['ExtraLarge'])
 
-        rule7 = ctrl.Rule(anticedent=((self.gap_error['ExtraLarge'] & self.gap_error_rate['Large']) |
+        rule7 = ctrl.Rule(antecedent=((self.gap_error['ExtraLarge'] & self.gap_error_rate['Large']) |
                                       (self.gap_error['Large'] & self.gap_error_rate['ExtraLarge']) |
                                       (self.gap_error['ExtraLarge'] & self.gap_error_rate['ExtraLarge']) |
                                       (self.gap_error['Small'] & self.gap_error_rate['ExtraExtraLarge']) |
@@ -110,19 +111,18 @@ class FuzzyHWClass:
         SUMO.compute()
 
         result = SUMO.output['acceleration-value']
+        print(result)
 
         return result
 
-    def vehicle_fuzzy(vehicle_inputs):
+    def vehicle_fuzzy(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate):
         fuzzyOut = float
         acceleration_val = []
         # count = 0
-        for i in vehicle_inputs:
-            # print(i)
-            fuzzyFunction = FuzzyHWClass()
-            fuzzyOut = fuzzyFunction.fuzzyHW(i)
-            acceleration_val.append(fuzzyOut)
-            # print(f"{y_val} and {fuzzyOut}")
+        fuzzyFunction = FuzzyHWClass()
+        fuzzyOut = fuzzyFunction.fuzzyHW(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate)
+        acceleration_val.append(fuzzyOut)
+        # print(f"{y_val} and {fuzzyOut}")
 
         return acceleration_val
 
@@ -151,15 +151,15 @@ class FuzzyHWClass:
         vehicle_3_gap_error = []
         vehicle_4_gap_error = []
 
+        vehicle_1_gap_error_rate = []
+        vehicle_2_gap_error_rate = []
+        vehicle_3_gap_error_rate = []
+        vehicle_4_gap_error_rate = []
+
         vehicle_1_velocity = []
         vehicle_2_velocity = []
         vehicle_3_velocity = []
         vehicle_4_velocity = []
-
-        vehicle_1_acceleration = []
-        vehicle_2_acceleration = []
-        vehicle_3_acceleration = []
-        vehicle_4_acceleration = []
 
         vehicle_1 = []
         vehicle_2 = []
@@ -170,60 +170,62 @@ class FuzzyHWClass:
 
         for i in df_excel_data.index:
             if df_excel_data.vehicle_id[i] == 0:
-                vehicle_0_position.append(df_excel_data.vehicle_pos[i])
+                vehicle_0_position.append(df_excel_data.vehicle_x[i])
             elif df_excel_data.vehicle_id[i] == 1:
-                vehicle_1_position.append(df_excel_data.vehicle_pos[i])
+                vehicle_1_position.append(df_excel_data.vehicle_x[i])
                 vehicle_1_velocity.append(df_excel_data.vehicle_speed[i])
             elif df_excel_data.vehicle_id[i] == 2:
-                vehicle_2_position.append(df_excel_data.vehicle_pos[i])
+                vehicle_2_position.append(df_excel_data.vehicle_x[i])
                 vehicle_2_velocity.append(df_excel_data.vehicle_speed[i])
             elif df_excel_data.vehicle_id[i] == 3:
-                vehicle_3_position.append(df_excel_data.vehicle_pos[i])
+                vehicle_3_position.append(df_excel_data.vehicle_x[i])
                 vehicle_3_velocity.append(df_excel_data.vehicle_speed[i])
             elif df_excel_data.vehicle_id[i] == 4:
-                vehicle_4_position.append(df_excel_data.vehicle_pos[i])
-                vehicle_3_velocity.append(df_excel_data.vehicle_speed[i])
+                vehicle_4_position.append(df_excel_data.vehicle_x[i])
+                vehicle_4_velocity.append(df_excel_data.vehicle_speed[i])
             else:
                 print("This data is not recognized")
 
             # create a lits of the inputs to the systems
-            for i in vehicle_0_position:
-                vehicle_1_gap.append(vehicle_0_position[i] - vehicle_1_position[i])
-                vehicle_1_gap_error.append((vehicle_1_gap/vehicle_1_velocity)-ideal_gap)
+        for i, val in enumerate(vehicle_0_position):
+            vehicle_1_gap.append(vehicle_0_position[i] - vehicle_1_position[i])
+            vehicle_1_gap_error.append((vehicle_1_gap[i]/vehicle_1_velocity[i])-ideal_gap)
 
-                vehicle_2_gap.append(vehicle_1_position[i] - vehicle_2_position[i])
-                vehicle_2_gap_error.append((vehicle_2_gap/vehicle_2_velocity)-ideal_gap)
+            vehicle_2_gap.append(vehicle_1_position[i] - vehicle_2_position[i])
+            vehicle_2_gap_error.append((vehicle_2_gap[i]/vehicle_2_velocity[i])-ideal_gap)
 
-                vehicle_3_gap.append(vehicle_2_position[i] - vehicle_3_position[i])
-                vehicle_3_gap_error.append((vehicle_3_gap/vehicle_3_velocity)-ideal_gap)
+            vehicle_3_gap.append(vehicle_2_position[i] - vehicle_3_position[i])
+            vehicle_3_gap_error.append((vehicle_3_gap[i]/vehicle_3_velocity[i])-ideal_gap)
 
-                vehicle_4_gap.append(vehicle_3_position[i] - vehicle_4_position[i])
-                vehicle_4_gap_error.append((vehicle_4_gap/vehicle_4_velocity)-ideal_gap)
+            vehicle_4_gap.append(vehicle_3_position[i] - vehicle_4_position[i])
+            vehicle_4_gap_error.append((vehicle_4_gap[i]/vehicle_4_velocity[i])-ideal_gap)
 
-                if i >= 1:
-                    vehicle_1_gap_error_rate = vehicle_1_velocity/(vehicle_1_gap_error[i]-vehicle_1_gap_error[i-1])
-                    vehicle_2_gap_error_rate = vehicle_2_velocity/(vehicle_2_gap_error[i]-vehicle_2_gap_error[i-1])
-                    vehicle_3_gap_error_rate = vehicle_3_velocity/(vehicle_3_gap_error[i]-vehicle_3_gap_error[i-1])
-                    vehicle_4_gap_error_rate = vehicle_4_velocity/(vehicle_4_gap_error[i]-vehicle_4_gap_error[i-1])
-                else:
-                    vehicle_1_gap_error_rate = 0
-                    vehicle_2_gap_error_rate = 0
-                    vehicle_3_gap_error_rate = 0
-                    vehicle_4_gap_error_rate = 0
+            if i >= 1:
+                vehicle_1_gap_error_rate.append((vehicle_1_gap_error[i]-vehicle_1_gap_error[i-1]) * vehicle_1_velocity[i])
+                vehicle_2_gap_error_rate.append((vehicle_2_gap_error[i]-vehicle_2_gap_error[i-1]) * vehicle_2_velocity[i])
+                vehicle_3_gap_error_rate.append((vehicle_3_gap_error[i]-vehicle_3_gap_error[i-1]) * vehicle_3_velocity[i])
+                vehicle_4_gap_error_rate.append((vehicle_4_gap_error[i]-vehicle_4_gap_error[i-1]) * vehicle_4_velocity[i])
+            else:
+                vehicle_1_gap_error_rate.append(0)
+                vehicle_2_gap_error_rate.append(0)
+                vehicle_3_gap_error_rate.append(0)
+                vehicle_4_gap_error_rate.append(0)
 
-                vehicle_1_acceleration.append(fuzzyFunction.vehicle_fuzzy([vehicle_1_gap_error[i], vehicle_1_gap_error_rate[i]]))
-                vehicle_1.append([vehicle_1_gap_error, vehicle_1_gap_error_rate, vehicle_1_acceleration])
+            vehicle_1_acceleration = fuzzyFunction.vehicle_fuzzy(1, vehicle_1_gap_error[i], vehicle_1_gap_error_rate[i])
+            vehicle_1.append([vehicle_1_gap_error[i], vehicle_1_gap_error_rate[i], vehicle_1_acceleration[0]])
 
-                vehicle_2_acceleration.append(fuzzyFunction.vehicle_fuzzy([vehicle_2_gap_error[i], vehicle_2_gap_error_rate[i]]))
-                vehicle_2.append([vehicle_2_gap_error, vehicle_2_gap_error_rate, vehicle_2_acceleration])
+            vehicle_2_acceleration = fuzzyFunction.vehicle_fuzzy(2, vehicle_2_gap_error[i], vehicle_2_gap_error_rate[i])
+            vehicle_2.append([vehicle_2_gap_error[i], vehicle_2_gap_error_rate[i], vehicle_2_acceleration[0]])
 
-                vehicle_3_acceleration.append(fuzzyFunction.vehicle_fuzzy([vehicle_3_gap_error[i], vehicle_3_gap_error_rate[i]]))
-                vehicle_3.append([vehicle_3_gap_error, vehicle_3_gap_error_rate, vehicle_3_acceleration])
+            vehicle_3_acceleration = fuzzyFunction.vehicle_fuzzy(3, vehicle_3_gap_error[i], vehicle_3_gap_error_rate[i])
+            vehicle_3.append([vehicle_3_gap_error[i], vehicle_3_gap_error_rate[i], vehicle_3_acceleration[0]])
 
-                vehicle_4_acceleration.append(fuzzyFunction.vehicle_fuzzy([vehicle_4_gap_error[i], vehicle_4_gap_error_rate[i]]))
-                vehicle_4.append([vehicle_4_gap_error, vehicle_4_gap_error_rate, vehicle_4_acceleration])
+            vehicle_4_acceleration = fuzzyFunction.vehicle_fuzzy(4, vehicle_4_gap_error[i], vehicle_4_gap_error_rate[i])
+            vehicle_4.append([vehicle_4_gap_error[i], vehicle_4_gap_error_rate[i], vehicle_4_acceleration[0]])
 
-        return vehicle_1
+            print(i)
+
+        return vehicle_1, vehicle_2, vehicle_3, vehicle_4
 
 
 if __name__ == "__main__":
@@ -231,5 +233,4 @@ if __name__ == "__main__":
     df_excel_data = pd.read_csv('fcdout.csv')
 
     print(df_excel_data)
-    vehicle_result = FuzzyHWClass.run(df_excel_data)
-    print(vehicle_result)
+    vehicle_1, vehicle_2, vehicle_3, vehicle_4 = FuzzyHWClass.run(df_excel_data)
