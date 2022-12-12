@@ -78,7 +78,7 @@ def generate_routefile(routeFileName):
         # collisionAvoidanceGainGap = "0.45" collisionAvoidanceGainGapDot \
         # = "0.05"/>""", file=route)  #\t used to indent in a print statement
         print("""\t<vType vClass = "passenger" id="Car01" length="5.0"
-              maxSpeed="33.528" />""", file=route)
+              maxSpeed="31.292" />""", file=route)
         print('\t\t<route id="route01" edges="e0 e1 e2"/>', file=route)
         print('\t\t<vehicle id="0" type="Car" route="route01" depart="0" \
             color="1,0,1"/>', file=route)
