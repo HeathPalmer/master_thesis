@@ -134,7 +134,7 @@ class FuzzyHWClass:
     def run(df_excel_data):
         fuzzyFunction = FuzzyHWClass()
         # constants
-        ideal_gap = 2
+        ideal_gap = 1
         # calculate the input to the system
         vehicle_0_position = []
         vehicle_1_position = []
