@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
@@ -8,7 +9,7 @@ class FuzzyHWClass:
 
     def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate):
         input = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]
-        print(input)
+        # print(input)
 
         # initialize fuzy variables
         self.gap_error = ctrl.Antecedent(np.arange(-1.5, 3, 0.1), 'gap-error-value')  # noqa: E501
@@ -111,7 +112,7 @@ class FuzzyHWClass:
         SUMO.compute()
 
         result = SUMO.output['acceleration-value']
-        print(result)
+        # print(result)
 
         return result
 
@@ -223,14 +224,32 @@ class FuzzyHWClass:
             vehicle_4_acceleration = fuzzyFunction.vehicle_fuzzy(4, vehicle_4_gap_error[i], vehicle_4_gap_error_rate[i])
             vehicle_4.append([vehicle_4_gap_error[i], vehicle_4_gap_error_rate[i], vehicle_4_acceleration[0]])
 
-            print(i)
+            # print(i)
 
         return vehicle_1, vehicle_2, vehicle_3, vehicle_4
+
+
+def save_data(vehicle_id, vehicle_array):
+    df_vehicle = pd.DataFrame(vehicle_array)
+    filepath = f'./vehicle_{vehicle_id}.csv'
+    df_vehicle.to_csv(filepath, index=False)
 
 
 if __name__ == "__main__":
     # bring in the excel data
     df_excel_data = pd.read_csv('fcdout.csv')
 
-    print(df_excel_data)
+    # print(df_excel_data)
     vehicle_1, vehicle_2, vehicle_3, vehicle_4 = FuzzyHWClass.run(df_excel_data)
+    vehicle_1_array = np.array(vehicle_1)
+    vehicle_2_array = np.array(vehicle_2)
+    vehicle_3_array = np.array(vehicle_3)
+    vehicle_4_array = np.array(vehicle_4)
+
+    save_data(1, vehicle_1_array)
+    save_data(2, vehicle_2_array)
+    save_data(3, vehicle_3_array)
+    save_data(4, vehicle_4_array)
+
+    plt.plot(range(72), vehicle_1_array[:, 1])
+    plt.show()
