@@ -166,9 +166,6 @@ class FuzzyHWClass:
         vehicle_3 = []
         vehicle_4 = []
 
-        vehicle_1_df = df_excel_data.vehicle_id['1']
-        print(vehicle_1_df)
-
         # trying to use itteration_over_df() to separate the dataframe per vehicle.
 
         for i in df_excel_data.index:
