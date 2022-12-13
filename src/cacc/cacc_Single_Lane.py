@@ -121,6 +121,8 @@ def run():
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
+        # traci.vehicle.setTau("Car01", "1")
+        # traci.vehicle.setTau("Car", "1")
 
         if step >= 30 and step < 150:
             veh1_position = traci.vehicle.getPosition("0")
