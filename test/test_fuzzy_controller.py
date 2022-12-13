@@ -135,6 +135,7 @@ class FuzzyHWClass:
         fuzzyFunction = FuzzyHWClass()
         # constants
         ideal_gap = 1
+        vehicle_length = 5
         # calculate the input to the system
         vehicle_0_position = []
         vehicle_1_position = []
@@ -189,16 +190,17 @@ class FuzzyHWClass:
 
             # create a lits of the inputs to the systems
         for i, val in enumerate(vehicle_0_position):
-            vehicle_1_gap.append(vehicle_0_position[i] - vehicle_1_position[i])
+            # vehicle_gap = previous vehicle position - vehicle length - ego vehicle position
+            vehicle_1_gap.append(vehicle_0_position[i] - vehicle_length - vehicle_1_position[i])
             vehicle_1_gap_error.append((vehicle_1_gap[i]/vehicle_1_velocity[i])-ideal_gap)
 
-            vehicle_2_gap.append(vehicle_1_position[i] - vehicle_2_position[i])
+            vehicle_2_gap.append(vehicle_1_position[i] - vehicle_length - vehicle_2_position[i])
             vehicle_2_gap_error.append((vehicle_2_gap[i]/vehicle_2_velocity[i])-ideal_gap)
 
-            vehicle_3_gap.append(vehicle_2_position[i] - vehicle_3_position[i])
+            vehicle_3_gap.append(vehicle_2_position[i] - vehicle_length - vehicle_3_position[i])
             vehicle_3_gap_error.append((vehicle_3_gap[i]/vehicle_3_velocity[i])-ideal_gap)
 
-            vehicle_4_gap.append(vehicle_3_position[i] - vehicle_4_position[i])
+            vehicle_4_gap.append(vehicle_3_position[i] - vehicle_length - vehicle_4_position[i])
             vehicle_4_gap_error.append((vehicle_4_gap[i]/vehicle_4_velocity[i])-ideal_gap)
 
             if i >= 1:
