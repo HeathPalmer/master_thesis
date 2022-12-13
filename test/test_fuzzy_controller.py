@@ -8,8 +8,8 @@ import pandas as pd
 class FuzzyHWClass:
 
     def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate):
-        input = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]
-        # print(input)
+        inputs = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]
+        # print(inputs)
 
         # initialize fuzy variables
         self.gap_error = ctrl.Antecedent(np.arange(-1.5, 3, 0.1), 'gap-error-value')  # noqa: E501
@@ -106,8 +106,8 @@ class FuzzyHWClass:
 
         SUMO = ctrl.ControlSystemSimulation(SUMO_control)
 
-        SUMO.input['gap-error-value'] = input[0]
-        SUMO.input['gap-error-change-rate-value'] = input[1]
+        SUMO.input['gap-error-value'] = inputs[1]
+        SUMO.input['gap-error-change-rate-value'] = inputs[2]
 
         SUMO.compute()
 
@@ -202,10 +202,10 @@ class FuzzyHWClass:
             vehicle_4_gap_error.append((vehicle_4_gap[i]/vehicle_4_velocity[i])-ideal_gap)
 
             if i >= 1:
-                vehicle_1_gap_error_rate.append((vehicle_1_gap_error[i]-vehicle_1_gap_error[i-1]) * vehicle_1_velocity[i])
-                vehicle_2_gap_error_rate.append((vehicle_2_gap_error[i]-vehicle_2_gap_error[i-1]) * vehicle_2_velocity[i])
-                vehicle_3_gap_error_rate.append((vehicle_3_gap_error[i]-vehicle_3_gap_error[i-1]) * vehicle_3_velocity[i])
-                vehicle_4_gap_error_rate.append((vehicle_4_gap_error[i]-vehicle_4_gap_error[i-1]) * vehicle_4_velocity[i])
+                vehicle_1_gap_error_rate.append((vehicle_1_gap_error[i]-vehicle_1_gap_error[i-1]) * (vehicle_1_velocity[i] - vehicle_1_velocity[i-1]))
+                vehicle_2_gap_error_rate.append((vehicle_2_gap_error[i]-vehicle_2_gap_error[i-1]) * (vehicle_2_velocity[i] - vehicle_2_velocity[i-1]))
+                vehicle_3_gap_error_rate.append((vehicle_3_gap_error[i]-vehicle_3_gap_error[i-1]) * (vehicle_3_velocity[i] - vehicle_3_velocity[i-1]))
+                vehicle_4_gap_error_rate.append((vehicle_4_gap_error[i]-vehicle_4_gap_error[i-1]) * (vehicle_4_velocity[i] - vehicle_4_velocity[i-1]))
             else:
                 vehicle_1_gap_error_rate.append(0)
                 vehicle_2_gap_error_rate.append(0)
@@ -237,7 +237,7 @@ def save_data(vehicle_id, vehicle_array):
 
 if __name__ == "__main__":
     # bring in the excel data
-    df_excel_data = pd.read_csv('fcdout.csv')
+    df_excel_data = pd.read_csv('005_fcdout.csv')
 
     # print(df_excel_data)
     vehicle_1, vehicle_2, vehicle_3, vehicle_4 = FuzzyHWClass.run(df_excel_data)
@@ -251,5 +251,5 @@ if __name__ == "__main__":
     save_data(3, vehicle_3_array)
     save_data(4, vehicle_4_array)
 
-    plt.plot(range(72), vehicle_1_array[:, 1])
+    plt.plot(range(60), vehicle_1_array[:, 2])
     plt.show()
