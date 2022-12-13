@@ -22,9 +22,9 @@ class FuzzyHWClass:
         self.gap_error['ExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-0.6, -0.5, -0.25])  # noqa: E501
         self.gap_error['ExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-0.5, -0.25, 0])
         self.gap_error['Small'] = fuzz.trimf(self.gap_error.universe, [-0.25, 0, 0.25])
-        self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, [0, 0.25, 0.5])
-        self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, [0.25, 0.5, 1])
-        self.gap_error['ExtraLarge'] = fuzz.trimf(self.gap_error.universe, [0.5, 1, 3])
+        self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, [0, 0.5, 1])
+        self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, [0.5, 1, 1.5])
+        self.gap_error['ExtraLarge'] = fuzz.trimf(self.gap_error.universe, [1, 1.5, 3])
         # print(self.gap_error.view())
 
         self.gap_error_rate['ExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-6, -5.36, -2.235])
@@ -172,6 +172,7 @@ class FuzzyHWClass:
 
         for i in df_excel_data.index:
             if df_excel_data.vehicle_id[i] == 0:
+                # position (0x42) | position Returns the position(two doubles) of the named vehicle (center of the front bumper) within the last step [m,m]; error value: [-2^30, -2^30].
                 vehicle_0_position.append(df_excel_data.vehicle_x[i])
             elif df_excel_data.vehicle_id[i] == 1:
                 vehicle_1_position.append(df_excel_data.vehicle_x[i])
@@ -239,7 +240,7 @@ def save_data(vehicle_id, vehicle_array):
 
 if __name__ == "__main__":
     # bring in the excel data
-    df_excel_data = pd.read_csv('005_fcdout.csv')
+    df_excel_data = pd.read_csv('004_fcdout.csv')
 
     # print(df_excel_data)
     vehicle_1, vehicle_2, vehicle_3, vehicle_4 = FuzzyHWClass.run(df_excel_data)
