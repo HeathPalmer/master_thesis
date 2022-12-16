@@ -126,12 +126,12 @@ def run():
 
         if step >= 30 and step < 150:
             veh1_position = traci.vehicle.getPosition("0")
-            print(veh1_position)
+            # print(veh1_position)
         # close lanes so vehicles do not attmept to pass the slow leader:
-        # if step == 60:
-        #     # with the current map, this stop happens between \1/2 or \
-        #     # 2/3 was down the road.
-        #     traci.vehicle.slowDown("0", "0", "9")
+        if step == 120:
+            # with the current map, this stop happens between \1/2 or \
+            # 2/3 was down the road.
+            traci.vehicle.slowDown("0", "0", "9")
             # a time of 8 seconds with a decel of 9m/s causes the leading \
             # vehicle to travel for ~68meters before stoping
             # DEFAULT_THRESHOLD_TTC is 3 seconds according to: \
