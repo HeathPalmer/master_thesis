@@ -139,37 +139,26 @@ class FuzzyHWClass:
         # constants
         ideal_gap = 1
         vehicle_length = 5
-        # calculate the input to the system
-
-        vehicle_gap = []
-
-        vehicle_gap_error = []
-
-        vehicle_gap_error_rate = []
-
-        vehicle_velocity = []
-
-        vehicle = []
 
         # trying to use itteration_over_df() to separate the dataframe per vehicle.
         count = 0
 
         # create a lits of the inputs to the systems
         # vehicle_gap = previous vehicle position - vehicle length - ego vehicle position
-        vehicle_gap.append(previous_vehicles_position - vehicle_length - vehicle_position)
+        vehicle_gap = previous_vehicles_position - vehicle_length - vehicle_position
 
-        if vehicle_velocity > 0:
-            vehicle_gap_error.append((vehicle_gap/vehicle_velocity)-ideal_gap)
+        # if vehicle_velocity > 0:
+        #     vehicle_gap_error.append((vehicle_gap/vehicle_velocity)-ideal_gap)
+        # else:
+        if vehicle_gap-previous_gap > 0:
+            vehicle_gap_error = (vehicle_gap/(vehicle_gap-previous_gap))-ideal_gap
         else:
-            if vehicle_gap-previous_gap > 0:
-                vehicle_gap_error.append((vehicle_gap/(vehicle_gap-previous_gap))-ideal_gap)
-            else:
-                vehicle_gap_error.append(0)
+            vehicle_gap_error = vehicle_gap-ideal_gap  # changed from 0
 
-        vehicle_gap_error_rate.append((vehicle_gap_error-vehicle_gap_error) * (vehicle_velocity - vehicle_velocity))
+        vehicle_gap_error_rate = (vehicle_gap_error-vehicle_gap_error) * (vehicle_gap-previous_gap)
 
-        print(count)
-        print(vehicle_id, vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate)
+        # print(count)
+        # print(vehicle_id, vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate)
 
         vehicle_acceleration = fuzzyFunction.vehicle_fuzzy(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate)
         vehicle = [vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate, vehicle_acceleration[0]]

@@ -26,87 +26,6 @@ else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
 
-def pull_Results(fcdOutCSV):
-    df_FCD = pd.read_csv(f'{fcdOutCSV}')
-    # print(df_FCD)
-    veh0Position = []
-    veh1Position = []
-    veh2Position = []
-    veh3Position = []
-    veh4Position = []
-    veh0Velocity = []
-    veh1Velocity = []
-    veh2Velocity = []
-    veh3Velocity = []
-    veh4Velocity = []
-    for index, row in df_FCD.iterrows():
-        # print(row["vehicle_id"], row["vehicle_pos"])
-        if row["vehicle_id"] == 0:
-            veh0Position.append(row["vehicle_pos"])
-            veh0Velocity.append(row["vehicle_speed"])
-        elif row["vehicle_id"] == 1:
-            veh1Position.append(row["vehicle_pos"])
-            veh1Velocity.append(row["vehicle_speed"])
-        elif row["vehicle_id"] == 2:
-            veh2Position.append(row["vehicle_pos"])
-            veh2Velocity.append(row["vehicle_speed"])
-        elif row["vehicle_id"] == 3:
-            veh3Position.append(row["vehicle_pos"])
-            veh3Velocity.append(row["vehicle_speed"])
-        elif row["vehicle_id"] == 4:
-            veh4Position.append(row["vehicle_pos"])
-            veh4Velocity.append(row["vehicle_speed"])
-    return (veh0Position, veh1Position, veh2Position, veh3Position,
-            veh4Position, veh0Velocity, veh1Velocity, veh2Velocity,
-            veh3Velocity, veh4Velocity)
-
-
-# look up a new way to generate xml file.
-# https://www.codegrepper.com/code-examples/python/python+string+to+xml
-def generate_routefile(routeFileName):
-    # creating the route file.
-    with open(routeFileName, "w") as route:
-        # os.path.join(subdirectory,"{}add.xml".format(recnum))
-        print('<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
-                xsi:noNamespaceSchemaLocation=\
-                "http://sumo.dlr.de/xsd/routes_file.xsd">', file=route)
-        print("""\t<vType vClass = "passenger" id="Car00" length="5.0"
-              maxSpeed="33.528" carFollowModel = "CACC" />""", file=route)
-        # speedControlGainCACC = "-0.4"
-        # gapClosingControlGainGap = "0.005" gapClosingControlGainGapDot \
-        # = "0.05"
-        # gapControlGainGap = "0.45" gapControlGainGapDot = "0.0125"
-        # collisionAvoidanceGainGap = "0.45" collisionAvoidanceGainGapDot \
-        # = "0.05"/>""", file=route)  #\t used to indent in a print statement
-        print("""\t<vType vClass = "passenger" id="Car01" length="5.0"
-              maxSpeed="31.292" />""", file=route)
-        print('\t\t<route id="route01" edges="e0 e1 e2"/>', file=route)
-        print('\t\t<vehicle id="0" type="Car01" route="route01" depart="0" \
-            color="1,0,1"/>', file=route)
-        print('\t\t<vehicle id="1" type="Car00" route="route01" depart="0" \
-            color="0,1,1"/>', file=route)
-        print('\t\t<vehicle id="2" type="Car00" route="route01" depart="0" \
-            color="0,1,1"/>', file=route)
-        print('\t\t<vehicle id="3" type="Car00" route="route01" depart="0" \
-            color="0,1,1"/>', file=route)
-        print('\t\t<vehicle id="4" type="Car00" route="route01" depart="0" \
-            color="0,1,1"/>', file=route)
-        print('</routes>', file=route)
-
-
-def generate_additionalfile(additionalFileName, inductionLoopFileName):
-    # creating the rout file.
-    with open(additionalFileName, "w") as additional:
-        # os.path.join(subdirectory,"{}add.xml".format(recnum))
-        print('<additional>', file=additional)
-        print('\t<additional>', file=additional)
-        # \t used to indent in a print statement
-        print('\t\t<inductionLoop id="myLoop0" lane="e2_0" pos="10" \
-            freq="60" file="%s" />' % (inductionLoopFileName), file=additional)
-        print('\t</additional>', file=additional)
-        print('</additional>', file=additional)
-
-
 def get_options():
     opt_parser = optparse.OptionParser()
     opt_parser.add_option("--nogui", action="store_true",
@@ -120,24 +39,45 @@ def get_options():
 def run():
     fuzzyLogic = FuzzyHWClass()
     step = 0
-    veh1Previous_Gap = 0
+    veh1Previous_Gap = 1
+    veh2Previous_Gap = 1
+    veh3Previous_Gap = 1
+    veh4Previous_Gap = 1
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
         # traci.vehicle.setTau("Car01", "1")
         # traci.vehicle.setTau("Car", "1")
-        if step >= 30:
+        if 59 < step < 150:
             vehPosition = []
             vehSpeed = []
             for ind in traci.vehicle.getIDList():
                 vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                 vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
 
-            veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0], veh1Previous_Gap, vehPosition[1], vehSpeed[1])
+            veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1])
             veh1Previous_Gap = veh1[0]
             veh1Acceleration = veh1[3]
+            veh1Speed = vehSpeed[1] + veh1Acceleration
+            traci.vehicle.setSpeed("1", f"{veh1Speed}")
 
-            traci.vehicle.setAcceleration("1", f"{veh1Acceleration}", "1")
+            veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2])
+            veh2Previous_Gap = veh2[0]
+            veh2Acceleration = veh2[3]
+            veh2Speed = vehSpeed[2] + veh2Acceleration
+            traci.vehicle.setSpeed("2", f"{veh2Speed}")
+
+            veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3])
+            veh3Previous_Gap = veh3[0]
+            veh3Acceleration = veh3[3]
+            veh3Speed = vehSpeed[3] + veh3Acceleration
+            traci.vehicle.setSpeed("3", f"{veh3Speed}")
+
+            veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4])
+            veh4Previous_Gap = veh4[0]
+            veh4Acceleration = veh4[3]
+            veh4Speed = vehSpeed[4] + veh4Acceleration
+            traci.vehicle.setSpeed("4", f"{veh4Speed}")
 
         # if step >= 30 and step < 150:
             # veh1_position = traci.vehicle.getPosition("0")
@@ -230,7 +170,7 @@ if __name__ == "__main__":
     fcdOutCSV = os.path.splitext(fcdOutInfoFileName)[0]+'.csv'
     # test = pull_Results(fcdOutCSV)
     # print(test.veh0Position)
-
+    print(fcdOutCSV)
     df_FCD = pd.read_csv(f'{fcdOutCSV}')
     time0 = []
     time1 = []
