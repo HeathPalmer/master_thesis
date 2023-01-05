@@ -137,25 +137,25 @@ class FuzzyHWClass:
     def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed):
         fuzzyFunction = FuzzyHWClass()
         # constants
-        ideal_gap = 1
-        vehicle_length = 5
+        ideal_gap = 1  # second
+        vehicle_length = 5  # meters
 
         # trying to use itteration_over_df() to separate the dataframe per vehicle.
         count = 0
 
         # create a lits of the inputs to the systems
         # vehicle_gap = previous vehicle position - vehicle length - ego vehicle position
-        vehicle_gap = previous_vehicles_position - vehicle_length - vehicle_position
-
+        # unit: seconds
+        vehicle_gap = (previous_vehicles_position - vehicle_length - vehicle_position) / vehicle_speed  # updated 1/4/2023
         # if vehicle_velocity > 0:
         #     vehicle_gap_error.append((vehicle_gap/vehicle_velocity)-ideal_gap)
         # else:
-        if vehicle_gap-previous_gap > 0:
-            vehicle_gap_error = (vehicle_gap/(vehicle_gap-previous_gap))-ideal_gap
-        else:
-            vehicle_gap_error = vehicle_gap-ideal_gap  # changed from 0
+        # unit: seconds
+        previous_gap_error = previous_gap-ideal_gap
+        vehicle_gap_error = vehicle_gap-ideal_gap
 
-        vehicle_gap_error_rate = (vehicle_gap_error-vehicle_gap_error) * (vehicle_gap-previous_gap)
+        # unit: m/s
+        vehicle_gap_error_rate = (vehicle_gap_error-previous_gap_error) * vehicle_speed  # updated 1/4/2023
 
         # print(count)
         # print(vehicle_id, vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate)

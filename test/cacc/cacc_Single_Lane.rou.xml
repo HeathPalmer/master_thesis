@@ -5,8 +5,8 @@
               maxSpeed="31.292" tau = "1" />
 		<route id="route01" edges="e0 e1 e2"/>
 		<vehicle id="0" type="Car01" route="route01" depart="0" color="1,0,1"/>
-		<vehicle id="1" type="Car" route="route01" depart="0" color="0,1,1"/>
-		<vehicle id="2" type="Car" route="route01" depart="0" color="0,1,1"/>
-		<vehicle id="3" type="Car" route="route01" depart="0" color="0,1,1"/>
-		<vehicle id="4" type="Car" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="1" type="Car01" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="2" type="Car01" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="3" type="Car01" route="route01" depart="0" color="0,1,1"/>
+		<vehicle id="4" type="Car01" route="route01" depart="0" color="0,1,1"/>
 </routes>

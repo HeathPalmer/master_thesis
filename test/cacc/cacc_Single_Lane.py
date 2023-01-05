@@ -39,16 +39,32 @@ def get_options():
 def run():
     fuzzyLogic = FuzzyHWClass()
     step = 0
-    veh1Previous_Gap = 1
-    veh2Previous_Gap = 1
-    veh3Previous_Gap = 1
-    veh4Previous_Gap = 1
+
+    veh1_gap = []
+    veh2_gap = []
+    veh3_gap = []
+    veh4_gap = []
+
+    veh1_gap_error = []
+    veh2_gap_error = []
+    veh3_gap_error = []
+    veh4_gap_error = []
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
         # traci.vehicle.setTau("Car01", "1")
         # traci.vehicle.setTau("Car", "1")
-        if 59 < step < 150:
+        vehPosition = []
+        vehSpeed = []
+        if 30 < step < 60:
+            for ind in traci.vehicle.getIDList():
+                vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+            veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
+            veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+            veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+            veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+        elif 59 < step < 150:
             vehPosition = []
             vehSpeed = []
             for ind in traci.vehicle.getIDList():
@@ -57,27 +73,35 @@ def run():
 
             veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1])
             veh1Previous_Gap = veh1[0]
+            veh1_gap.append(veh1[0])
             veh1Acceleration = veh1[3]
             veh1Speed = vehSpeed[1] + veh1Acceleration
-            traci.vehicle.setSpeed("1", f"{veh1Speed}")
+            veh1_gap_error.append(veh1[1])
+            traci.vehicle.setSpeed("1", veh1Speed)
 
             veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2])
             veh2Previous_Gap = veh2[0]
+            veh2_gap.append(veh2[0])
             veh2Acceleration = veh2[3]
             veh2Speed = vehSpeed[2] + veh2Acceleration
-            traci.vehicle.setSpeed("2", f"{veh2Speed}")
+            veh2_gap_error.append(veh2[1])
+            traci.vehicle.setSpeed("2", veh2Speed)
 
             veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3])
             veh3Previous_Gap = veh3[0]
+            veh3_gap.append(veh3[0])
             veh3Acceleration = veh3[3]
             veh3Speed = vehSpeed[3] + veh3Acceleration
-            traci.vehicle.setSpeed("3", f"{veh3Speed}")
+            veh3_gap_error.append(veh3[1])
+            traci.vehicle.setSpeed("3", veh3Speed)
 
             veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4])
             veh4Previous_Gap = veh4[0]
+            veh4_gap.append(veh4[0])
             veh4Acceleration = veh4[3]
             veh4Speed = vehSpeed[4] + veh4Acceleration
-            traci.vehicle.setSpeed("4", f"{veh4Speed}")
+            veh4_gap_error.append(veh4[1])
+            traci.vehicle.setSpeed("4", veh4Speed)
 
         # if step >= 30 and step < 150:
             # veh1_position = traci.vehicle.getPosition("0")
@@ -100,6 +124,7 @@ def run():
     # print(traci.vehicle.wantsAndCouldChangeLane("1", "2", state=None))
     traci.close()
     sys.stdout.flush()
+    return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error
 
 
 # main entry point
@@ -157,8 +182,7 @@ if __name__ == "__main__":
                  "--tripinfo-output", tripInfoFileName,
                  "--fcd-output", fcdOutInfoFileName,
                  "--fcd-output.acceleration"])
-    run()
-
+    veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error = run()
     # convert new xml file to csv
 
     # inductionLoopFileName = f"{subdirectory}\{recnum}_induction.xml"
@@ -182,11 +206,13 @@ if __name__ == "__main__":
     veh2Position = []
     veh3Position = []
     veh4Position = []
+
     veh0Velocity = []
     veh1Velocity = []
     veh2Velocity = []
     veh3Velocity = []
     veh4Velocity = []
+
     veh0Acceleration = []
     veh1Acceleration = []
     veh2Acceleration = []
@@ -220,6 +246,10 @@ if __name__ == "__main__":
             veh4Velocity.append(row["vehicle_speed"])
             veh4Acceleration.append(row["vehicle_acceleration"])
 
+    try:
+        os.mkdir(f'./{subdirectory}/images/')
+    except Exception:
+        pass
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(time0, veh0Position, label="Vehicle 0")
     ax.plot(time1, veh1Position, label="Vehicle 1")
@@ -229,8 +259,11 @@ if __name__ == "__main__":
     ax.set_xlabel('Time_Step')
     ax.set_ylabel('Position')
     ax.legend()
-    ax.set_title("CACC Vehcile Position vs Time")
-    fig.savefig('./images/vehicle_position.png')
+    ax.set_title("FIS Vehcile Position vs Time")
+    posFile = f'./{subdirectory}/images/vehicle_position.png'
+    if os.path.isfile(posFile):
+        os.unlink(posFile)
+    fig.savefig(f'{posFile}')
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(time0, veh0Velocity, label="Vehicle 0")
@@ -241,8 +274,11 @@ if __name__ == "__main__":
     ax.set_xlabel('Time_Step')
     ax.set_ylabel('Velocity')
     ax.legend()
-    ax.set_title("CACC Vehcile Velocity vs Time")
-    fig.savefig('./images/vehicle_velocity.png')
+    ax.set_title("FIS Vehcile Velocity vs Time")
+    velFile = f'./{subdirectory}/images/vehicle_velocity.png'
+    if os.path.isfile(velFile):
+        os.unlink(velFile)
+    fig.savefig(f'{velFile}')
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(time0, veh0Acceleration, label="Vehicle 0")
@@ -253,5 +289,22 @@ if __name__ == "__main__":
     ax.set_xlabel('Time_Step')
     ax.set_ylabel('Acceleration')
     ax.legend()
-    ax.set_title("CACC Vehcile Acceleration vs Time")
-    fig.savefig('./images/vehicle_acceleration.png')
+    ax.set_title("FIS Vehcile Acceleration vs Time")
+    accelFile = f'./{subdirectory}/images/vehicle_acceleration.png'
+    if os.path.isfile(accelFile):
+        os.unlink(accelFile)
+    fig.savefig(f'{accelFile}')
+
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    ax.plot(range(90), veh1_gap_error, label="Vehicle 1")
+    ax.plot(range(90), veh2_gap_error, label="Vehicle 2")
+    ax.plot(range(90), veh3_gap_error, label="Vehicle 3")
+    ax.plot(range(90), veh4_gap_error, label="Vehicle 4")
+    ax.set_xlabel('Time_Step')
+    ax.set_ylabel('Gap Error')
+    ax.legend()
+    ax.set_title("FIS Vehcile Gap Error vs Time")
+    gapErrFile = f'./{subdirectory}/images/vehicle_gap.png'
+    if os.path.isfile(gapErrFile):
+        os.unlink(gapErrFile)
+    fig.savefig(f'{gapErrFile}')
