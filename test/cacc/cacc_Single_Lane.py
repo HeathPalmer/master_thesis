@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import ntpath
+import numpy as np
 import os
 import optparse
 import pandas as pd
@@ -31,6 +32,8 @@ def get_options():
     opt_parser.add_option("--nogui", action="store_true",
                           default=False, help="run the commandline \
                           version of sumo")
+    opt_parser.add_option("--krauss", action="store_true",
+                          default=False, help="run the simulation using the human driver model")
     options, args = opt_parser.parse_args()
     return options
 
@@ -56,52 +59,75 @@ def run():
         # traci.vehicle.setTau("Car", "1")
         vehPosition = []
         vehSpeed = []
-        if 30 < step < 60:
-            for ind in traci.vehicle.getIDList():
-                vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
-            veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
-            veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
-            veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
-            veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
-        elif 59 < step < 150:
-            vehPosition = []
-            vehSpeed = []
-            for ind in traci.vehicle.getIDList():
-                vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+        if options.krauss:
+            if 30 < step < 150:
+                for ind in traci.vehicle.getIDList():
+                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
+                veh1_gap_error.append(veh1Previous_Gap-1)
+                veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                veh2_gap_error.append(veh2Previous_Gap-1)
+                veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                veh3_gap_error.append(veh3Previous_Gap-1)
+                veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                veh4_gap_error.append(veh4Previous_Gap-1)
+            else:
+                veh1_gap_error.append(np.nan)
+                veh2_gap_error.append(np.nan)
+                veh3_gap_error.append(np.nan)
+                veh4_gap_error.append(np.nan)
+        else:
+            if 30 < step < 60:
+                for ind in traci.vehicle.getIDList():
+                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
+                veh1_gap_error.append(veh1Previous_Gap-1)
+                veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                veh2_gap_error.append(veh2Previous_Gap-1)
+                veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                veh3_gap_error.append(veh3Previous_Gap-1)
+                veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                veh4_gap_error.append(veh4Previous_Gap-1)
+            elif 59 < step < 150:
+                vehPosition = []
+                vehSpeed = []
+                for ind in traci.vehicle.getIDList():
+                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
 
-            veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1])
-            veh1Previous_Gap = veh1[0]
-            veh1_gap.append(veh1[0])
-            veh1Acceleration = veh1[3]
-            veh1Speed = vehSpeed[1] + veh1Acceleration
-            veh1_gap_error.append(veh1[1])
-            traci.vehicle.setSpeed("1", veh1Speed)
+                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1])
+                veh1Previous_Gap = veh1[0]
+                veh1_gap.append(veh1[0])
+                veh1Acceleration = veh1[3]
+                veh1Speed = vehSpeed[1] + veh1Acceleration
+                veh1_gap_error.append(veh1[1])
+                traci.vehicle.setSpeed("1", veh1Speed)
 
-            veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2])
-            veh2Previous_Gap = veh2[0]
-            veh2_gap.append(veh2[0])
-            veh2Acceleration = veh2[3]
-            veh2Speed = vehSpeed[2] + veh2Acceleration
-            veh2_gap_error.append(veh2[1])
-            traci.vehicle.setSpeed("2", veh2Speed)
+                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2])
+                veh2Previous_Gap = veh2[0]
+                veh2_gap.append(veh2[0])
+                veh2Acceleration = veh2[3]
+                veh2Speed = vehSpeed[2] + veh2Acceleration
+                veh2_gap_error.append(veh2[1])
+                traci.vehicle.setSpeed("2", veh2Speed)
 
-            veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3])
-            veh3Previous_Gap = veh3[0]
-            veh3_gap.append(veh3[0])
-            veh3Acceleration = veh3[3]
-            veh3Speed = vehSpeed[3] + veh3Acceleration
-            veh3_gap_error.append(veh3[1])
-            traci.vehicle.setSpeed("3", veh3Speed)
+                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3])
+                veh3Previous_Gap = veh3[0]
+                veh3_gap.append(veh3[0])
+                veh3Acceleration = veh3[3]
+                veh3Speed = vehSpeed[3] + veh3Acceleration
+                veh3_gap_error.append(veh3[1])
+                traci.vehicle.setSpeed("3", veh3Speed)
 
-            veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4])
-            veh4Previous_Gap = veh4[0]
-            veh4_gap.append(veh4[0])
-            veh4Acceleration = veh4[3]
-            veh4Speed = vehSpeed[4] + veh4Acceleration
-            veh4_gap_error.append(veh4[1])
-            traci.vehicle.setSpeed("4", veh4Speed)
+                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4])
+                veh4Previous_Gap = veh4[0]
+                veh4_gap.append(veh4[0])
+                veh4Acceleration = veh4[3]
+                veh4Speed = vehSpeed[4] + veh4Acceleration
+                veh4_gap_error.append(veh4[1])
+                traci.vehicle.setSpeed("4", veh4Speed)
 
         # if step >= 30 and step < 150:
             # veh1_position = traci.vehicle.getPosition("0")
@@ -195,6 +221,11 @@ if __name__ == "__main__":
     # test = pull_Results(fcdOutCSV)
     # print(test.veh0Position)
     print(fcdOutCSV)
+
+    if options.krauss:
+        title = "Krauss"
+    else:
+        title = "FIS"
     df_FCD = pd.read_csv(f'{fcdOutCSV}')
     time0 = []
     time1 = []
@@ -259,8 +290,8 @@ if __name__ == "__main__":
     ax.set_xlabel('Time_Step')
     ax.set_ylabel('Position')
     ax.legend()
-    ax.set_title("FIS Vehcile Position vs Time")
-    posFile = f'./{subdirectory}/images/vehicle_position.png'
+    ax.set_title(f"{title} Vehcile Position vs Time")
+    posFile = f'./{subdirectory}/images/{title}_vehicle_position.png'
     if os.path.isfile(posFile):
         os.unlink(posFile)
     fig.savefig(f'{posFile}')
@@ -274,8 +305,8 @@ if __name__ == "__main__":
     ax.set_xlabel('Time_Step')
     ax.set_ylabel('Velocity')
     ax.legend()
-    ax.set_title("FIS Vehcile Velocity vs Time")
-    velFile = f'./{subdirectory}/images/vehicle_velocity.png'
+    ax.set_title(f"{title} Vehcile Velocity vs Time")
+    velFile = f'./{subdirectory}/images/{title}_vehicle_velocity.png'
     if os.path.isfile(velFile):
         os.unlink(velFile)
     fig.savefig(f'{velFile}')
@@ -289,22 +320,22 @@ if __name__ == "__main__":
     ax.set_xlabel('Time_Step')
     ax.set_ylabel('Acceleration')
     ax.legend()
-    ax.set_title("FIS Vehcile Acceleration vs Time")
-    accelFile = f'./{subdirectory}/images/vehicle_acceleration.png'
+    ax.set_title(f"{title} Vehcile Acceleration vs Time")
+    accelFile = f'./{subdirectory}/images/{title}_vehicle_acceleration.png'
     if os.path.isfile(accelFile):
         os.unlink(accelFile)
     fig.savefig(f'{accelFile}')
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(range(90), veh1_gap_error, label="Vehicle 1")
-    ax.plot(range(90), veh2_gap_error, label="Vehicle 2")
-    ax.plot(range(90), veh3_gap_error, label="Vehicle 3")
-    ax.plot(range(90), veh4_gap_error, label="Vehicle 4")
+    ax.plot(range(len(veh1_gap_error)), veh1_gap_error, label="Vehicle 1")
+    ax.plot(range(len(veh2_gap_error)), veh2_gap_error, label="Vehicle 2")
+    ax.plot(range(len(veh3_gap_error)), veh3_gap_error, label="Vehicle 3")
+    ax.plot(range(len(veh4_gap_error)), veh4_gap_error, label="Vehicle 4")
     ax.set_xlabel('Time_Step')
     ax.set_ylabel('Gap Error')
     ax.legend()
-    ax.set_title("FIS Vehcile Gap Error vs Time")
-    gapErrFile = f'./{subdirectory}/images/vehicle_gap.png'
+    ax.set_title(f"{title} Vehcile Gap Error vs Time")
+    gapErrFile = f'./{subdirectory}/images/{title}_vehicle_gap.png'
     if os.path.isfile(gapErrFile):
         os.unlink(gapErrFile)
     fig.savefig(f'{gapErrFile}')
