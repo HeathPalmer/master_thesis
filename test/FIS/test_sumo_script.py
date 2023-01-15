@@ -27,6 +27,7 @@ else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
 
+# UPDATE how this args/options parser is structured. set up similar to graphvi args were parsed
 def get_options():
     opt_parser = optparse.OptionParser()
     opt_parser.add_option("--nogui", action="store_true",
@@ -34,12 +35,14 @@ def get_options():
                           version of sumo")
     opt_parser.add_option("--krauss", action="store_true",
                           default=False, help="run the simulation using the human driver model")
+    opt_parser.add_option("--highway_1", action="store_true",
+                          default=False, help="run the simulation using the second highway configuration")
     options, args = opt_parser.parse_args()
     return options
 
 
 # contains TraCI control loop
-def run():
+def run(fis_start_time, end_time):
     fuzzyLogic = FuzzyHWClass()
     step = 0
 
@@ -60,7 +63,7 @@ def run():
         vehPosition = []
         vehSpeed = []
         if options.krauss:
-            if 30 < step < 600:
+            if 30 < step < end_time:
                 for ind in traci.vehicle.getIDList():
                     vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                     vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -78,7 +81,7 @@ def run():
                 veh3_gap_error.append(np.nan)
                 veh4_gap_error.append(np.nan)
         else:
-            if 30 < step < 301:
+            if 30 < step < fis_start_time + 1:
                 for ind in traci.vehicle.getIDList():
                     vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                     vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -90,7 +93,8 @@ def run():
                 veh3_gap_error.append(veh3Previous_Gap-1)
                 veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
                 veh4_gap_error.append(veh4Previous_Gap-1)
-            elif 300 < step < 600:
+
+            elif fis_start_time < step < end_time:
                 vehPosition = []
                 vehSpeed = []
                 for ind in traci.vehicle.getIDList():
@@ -165,7 +169,15 @@ if __name__ == "__main__":
         # run sumo with gui
         sumoBinary = checkBinary('sumo-gui')
     fileName = ntpath.basename(__file__)
-    fileName_No_Suffix = "highway_0"
+    if options.highway_1:
+        fileName_No_Suffix = "highway_1"
+        fis_start_time = 300
+        end_time = 900
+    else:
+        fileName_No_Suffix = "highway_0"
+        fis_start_time = 300
+        end_time = 700
+
     timestr = time.strftime("%Y%m%d")
 
     # create subdirectory or join it
@@ -182,8 +194,7 @@ if __name__ == "__main__":
 
     # set the file name based on increamenting value
     i = 0
-    while os.path.exists(os.path.join(subdirectory,
-                         "%s_tripinfo.xml" % format(int(i), '03d'))):
+    while os.path.exists(os.path.join(subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
         i += 1
     recnum = format(int(i), '03d')
     # another way to seperate new log files:
@@ -211,7 +222,7 @@ if __name__ == "__main__":
                  "--device.ssm.file", ssmFileName,
                  "--fcd-output", fcdOutInfoFileName,
                  "--fcd-output.acceleration"])
-    veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error = run()
+    veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error = run(fis_start_time, end_time)
     # convert new xml file to csv
 
     xml2csv.main([fcdOutInfoFileName])
