@@ -4,8 +4,8 @@
 
     <input>
         <net-file value="cacc_Single_Lane_full.net.xml"/>
-        <!--route-files value="cacc_platooning_a1.rou.xml"/-->
-        <!--additional-files value="oneLane1.add.xml"/-->
+        <!-- <route-files value="cacc_Single_Lane.rou.xml">
+        <additional-files value="cacc_Single_Lane.add.xml"> -->
     </input>
 
     <time>

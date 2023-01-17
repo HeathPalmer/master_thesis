@@ -69,7 +69,7 @@ def generate_routefile(routeFileName):
         print('<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
                 xsi:noNamespaceSchemaLocation=\
                 "http://sumo.dlr.de/xsd/routes_file.xsd">', file=route)
-        print("""\t<vType vClass = "passenger" id="Car" length="5.0"
+        print("""\t<vType vClass = "passenger" id="Car00" length="5.0"
               maxSpeed="33.528" carFollowModel = "CACC" />""", file=route)
         # speedControlGainCACC = "-0.4"
         # gapClosingControlGainGap = "0.005" gapClosingControlGainGapDot \
@@ -78,17 +78,17 @@ def generate_routefile(routeFileName):
         # collisionAvoidanceGainGap = "0.45" collisionAvoidanceGainGapDot \
         # = "0.05"/>""", file=route)  #\t used to indent in a print statement
         print("""\t<vType vClass = "passenger" id="Car01" length="5.0"
-              maxSpeed="33.528" />""", file=route)
+              maxSpeed="31.292" />""", file=route)
         print('\t\t<route id="route01" edges="e0 e1 e2"/>', file=route)
-        print('\t\t<vehicle id="0" type="Car" route="route01" depart="0" \
+        print('\t\t<vehicle id="0" type="Car01" route="route01" depart="0" \
             color="1,0,1"/>', file=route)
-        print('\t\t<vehicle id="1" type="Car" route="route01" depart="0" \
+        print('\t\t<vehicle id="1" type="Car00" route="route01" depart="0" \
             color="0,1,1"/>', file=route)
-        print('\t\t<vehicle id="2" type="Car" route="route01" depart="0" \
+        print('\t\t<vehicle id="2" type="Car00" route="route01" depart="0" \
             color="0,1,1"/>', file=route)
-        print('\t\t<vehicle id="3" type="Car" route="route01" depart="0" \
+        print('\t\t<vehicle id="3" type="Car00" route="route01" depart="0" \
             color="0,1,1"/>', file=route)
-        print('\t\t<vehicle id="4" type="Car" route="route01" depart="0" \
+        print('\t\t<vehicle id="4" type="Car00" route="route01" depart="0" \
             color="0,1,1"/>', file=route)
         print('</routes>', file=route)
 
@@ -121,12 +121,14 @@ def run():
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
+        # traci.vehicle.setTau("Car01", "1")
+        # traci.vehicle.setTau("Car", "1")
 
         if step >= 30 and step < 150:
             veh1_position = traci.vehicle.getPosition("0")
-            print(veh1_position)
+            # print(veh1_position)
         # close lanes so vehicles do not attmept to pass the slow leader:
-        if step == 60:
+        if step == 120:
             # with the current map, this stop happens between \1/2 or \
             # 2/3 was down the road.
             traci.vehicle.slowDown("0", "0", "9")
