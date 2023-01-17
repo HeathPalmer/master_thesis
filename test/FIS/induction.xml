@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 01/09/23 21:10:53 by Eclipse SUMO GUI Version 1.8.0
+<!-- generated on 01/13/23 16:08:15 by Eclipse SUMO GUI Version 1.8.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -10,17 +10,17 @@
     </input>
 
     <output>
-        <fcd-output value="./results/20230109_highway_0_tripInfo\000_fcdout.xml"/>
+        <fcd-output value="./results/20230113_highway_0_tripInfo\000_fcdout.xml"/>
         <fcd-output.acceleration value="true"/>
     </output>
 
     <ssm_device>
         <device.ssm.probability value="1"/>
-        <device.ssm.file value="./results/20230109_highway_0_tripInfo\000_ssm.xml"/>
+        <device.ssm.file value="./results/20230113_highway_0_tripInfo\000_ssm.xml"/>
     </ssm_device>
 
     <traci_server>
-        <remote-port value="55799"/>
+        <remote-port value="50784"/>
     </traci_server>
 
 </configuration>

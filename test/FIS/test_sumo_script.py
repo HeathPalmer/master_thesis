@@ -180,21 +180,33 @@ if __name__ == "__main__":
 
     timestr = time.strftime("%Y%m%d")
 
-    # create subdirectory or join it
+    # create *_subdirectory or join it
     try:
-        os.mkdir("./results")
+        os.mkdir("./results/spreadsheet")
     except Exception:
         pass
 
-    subdirectory = f"./results/{timestr}_{fileName_No_Suffix}_tripInfo"
     try:
-        os.mkdir(subdirectory)
+        os.mkdir("./results/images")
+    except Exception:
+        pass
+
+    spreadsheet_subdirectory = f"./results/spreadsheet/{timestr}_{fileName_No_Suffix}_tripInfo"
+    images_subdirectory = f"./results/images/{timestr}_{fileName_No_Suffix}_tripInfo"
+
+    try:
+        os.mkdir(spreadsheet_subdirectory)
+    except Exception:
+        pass
+
+    try:
+        os.mkdir(images_subdirectory)
     except Exception:
         pass
 
     # set the file name based on increamenting value
     i = 0
-    while os.path.exists(os.path.join(subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
+    while os.path.exists(os.path.join(spreadsheet_subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
         i += 1
     recnum = format(int(i), '03d')
     # another way to seperate new log files:
@@ -209,10 +221,10 @@ if __name__ == "__main__":
     # inductionLoopFileName = f"./results/{recnum}_induction.xml"
     # generate_additionalfile(additionalFileName, inductionLoopFileName)
 
-    ssmFileName = rf"{subdirectory}\{recnum}_ssm.xml"
-    # tripInfoFileName = rf"{subdirectory}\{recnum}_tripinfo.xml"
-    fcdOutInfoFileName = rf"{subdirectory}\{recnum}_fcdout.xml"
-    amitranInforFileName = rf"{subdirectory}\{recnum}_amitran.xml"
+    ssmFileName = rf"{spreadsheet_subdirectory}\{recnum}_ssm.xml"
+    # tripInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_tripinfo.xml"
+    fcdOutInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_fcdout.xml"
+    amitranInforFileName = rf"{spreadsheet_subdirectory}\{recnum}_amitran.xml"
     # traci starts sumo as a subprocess and then this script connects and runs
     traci.start([sumoBinary, "-c", f"{fileName_No_Suffix}.sumocfg",
                 "--route-files", routeFileName,
@@ -286,10 +298,10 @@ if __name__ == "__main__":
             veh4Velocity.append(row["vehicle_speed"])
             veh4Acceleration.append(row["vehicle_acceleration"])
 
-    try:
-        os.mkdir(f'./{subdirectory}/images/')
-    except Exception:
-        pass
+    # try:
+    #     os.mkdir(f'./{images_subdirectory}/')
+    # except Exception:
+    #     pass
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(time0, veh0Position, label="Vehicle 0")
     ax.plot(time1, veh1Position, label="Vehicle 1")
@@ -300,7 +312,7 @@ if __name__ == "__main__":
     ax.set_ylabel('Position')
     ax.legend()
     ax.set_title(f"{title} Vehcile Position vs Time")
-    posFile = f'./{subdirectory}/images/{title}_vehicle_position.png'
+    posFile = f'./{images_subdirectory}/{title}_vehicle_position.png'
     if os.path.isfile(posFile):
         os.unlink(posFile)
     fig.savefig(f'{posFile}')
@@ -315,7 +327,7 @@ if __name__ == "__main__":
     ax.set_ylabel('Velocity')
     ax.legend()
     ax.set_title(f"{title} Vehcile Velocity vs Time")
-    velFile = f'./{subdirectory}/images/{title}_vehicle_velocity.png'
+    velFile = f'./{images_subdirectory}/{title}_vehicle_velocity.png'
     if os.path.isfile(velFile):
         os.unlink(velFile)
     fig.savefig(f'{velFile}')
@@ -330,7 +342,7 @@ if __name__ == "__main__":
     ax.set_ylabel('Acceleration')
     ax.legend()
     ax.set_title(f"{title} Vehcile Acceleration vs Time")
-    accelFile = f'./{subdirectory}/images/{title}_vehicle_acceleration.png'
+    accelFile = f'./{images_subdirectory}/{title}_vehicle_acceleration.png'
     if os.path.isfile(accelFile):
         os.unlink(accelFile)
     fig.savefig(f'{accelFile}')
@@ -344,7 +356,7 @@ if __name__ == "__main__":
     ax.set_ylabel('Gap Error')
     ax.legend()
     ax.set_title(f"{title} Vehcile Gap Error vs Time")
-    gapErrFile = f'./{subdirectory}/images/{title}_vehicle_gap.png'
+    gapErrFile = f'./{images_subdirectory}/{title}_vehicle_gap.png'
     if os.path.isfile(gapErrFile):
         os.unlink(gapErrFile)
     fig.savefig(f'{gapErrFile}')
