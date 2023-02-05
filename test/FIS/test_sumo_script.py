@@ -241,7 +241,7 @@ if __name__ == "__main__":
     # generate_additionalfile(additionalFileName, inductionLoopFileName)
 
     ssmFileName = rf"{spreadsheet_subdirectory}\{recnum}_ssm.xml"
-    # tripInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_tripinfo.xml"
+    fullOutFileName = rf"{spreadsheet_subdirectory}\{recnum}_fullout.xml"
     fcdOutInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_fcdout.xml"
     amitranInforFileName = rf"{spreadsheet_subdirectory}\{recnum}_amitran.xml"
     # traci starts sumo as a subprocess and then this script connects and runs
@@ -250,27 +250,32 @@ if __name__ == "__main__":
                  "--additional-files", additionalFileName,
                  "--device.ssm.probability", "1",
                  "--device.ssm.file", ssmFileName,
+                 "--full-output", fullOutFileName,
                  "--fcd-output", fcdOutInfoFileName,
                  "--fcd-output.acceleration"])
     veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error = run(fis_start_time, end_time)
     # convert new xml file to csv
 
     xml2csv.main([fcdOutInfoFileName])
+    xml2csv.main([fullOutFileName])
 
     fcdOutCSV = os.path.splitext(fcdOutInfoFileName)[0]+'.csv'
+    fullOutCSV = os.path.splitext(fullOutFileName)[0]+'.csv'
 
-    print(fcdOutCSV)
+    print(f"The FCD outfile file was generate: {fcdOutCSV}")
 
     if options.krauss:
         title = "Krauss"
     else:
         title = "FIS"
     df_FCD = pd.read_csv(f'{fcdOutCSV}')
+    df_Full = pd.read_csv(f'{fullOutCSV}')
     time0 = []
     time1 = []
     time2 = []
     time3 = []
     time4 = []
+
     veh0Position = []
     veh1Position = []
     veh2Position = []
@@ -288,6 +293,31 @@ if __name__ == "__main__":
     veh2Acceleration = []
     veh3Acceleration = []
     veh4Acceleration = []
+
+    fullTime0 = []
+    fullTime1 = []
+    fullTime2 = []
+    fullTime3 = []
+    fullTime4 = []
+
+    veh0CO2 = []
+    veh1CO2 = []
+    veh2CO2 = []
+    veh3CO2 = []
+    veh4CO2 = []
+
+    veh0CO = []
+    veh1CO = []
+    veh2CO = []
+    veh3CO = []
+    veh4CO = []
+
+    veh0Fuel = []
+    veh1Fuel = []
+    veh2Fuel = []
+    veh3Fuel = []
+    veh4Fuel = []
+
     for index, row in df_FCD.iterrows():
         # print(row["vehicle_id"], row["vehicle_pos"])
         if row["vehicle_id"] == 0:
@@ -316,6 +346,39 @@ if __name__ == "__main__":
             veh4Velocity.append(row["vehicle_speed"])
             veh4Acceleration.append(row["vehicle_acceleration"])
 
+    for index, row in df_Full.iterrows():
+        # print(row["vehicle_id"], row["vehicle_pos"])
+        if row["vehicle_id"] == 0:
+            fullTime0.append(row["data_timestep"])
+            veh0CO2.append(row["vehicle_CO2"])
+            veh0CO.append(row["vehicle_CO"])
+            veh0Fuel.append(row["vehicle_fuel"])
+        elif row["vehicle_id"] == 1:
+            fullTime1.append(row["data_timestep"])
+            veh1CO2.append(row["vehicle_CO2"])
+            veh1CO.append(row["vehicle_CO"])
+            veh1Fuel.append(row["vehicle_fuel"])
+        elif row["vehicle_id"] == 2:
+            fullTime2.append(row["data_timestep"])
+            veh2CO2.append(row["vehicle_CO2"])
+            veh2CO.append(row["vehicle_CO"])
+            veh2Fuel.append(row["vehicle_fuel"])
+        elif row["vehicle_id"] == 3:
+            fullTime3.append(row["data_timestep"])
+            veh3CO2.append(row["vehicle_CO2"])
+            veh3CO.append(row["vehicle_CO"])
+            veh3Fuel.append(row["vehicle_fuel"])
+        elif row["vehicle_id"] == 4:
+            fullTime4.append(row["data_timestep"])
+            veh4CO2.append(row["vehicle_CO2"])
+            veh4CO.append(row["vehicle_CO"])
+            veh4Fuel.append(row["vehicle_fuel"])
+
+    veh0CO2Sum = sum(veh0CO2)
+    veh1CO2Sum = sum(veh1CO2)
+    veh2CO2Sum = sum(veh2CO2)
+    veh3CO2Sum = sum(veh3CO2)
+    veh4CO2Sum = sum(veh4CO2)
     # try:
     #     os.mkdir(f'./{images_subdirectory}/')
     # except Exception:
@@ -351,11 +414,12 @@ if __name__ == "__main__":
     fig.savefig(f'{velFile}')
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(time0, veh0Acceleration, label="Vehicle 0")
-    ax.plot(time1, veh1Acceleration, label="Vehicle 1")
-    ax.plot(time2, veh2Acceleration, label="Vehicle 2")
-    ax.plot(time3, veh3Acceleration, label="Vehicle 3")
-    ax.plot(time4, veh4Acceleration, label="Vehicle 4")
+    ax.plot(time0, veh0Acceleration, label="Krauss Lead Vehicle")
+    ax.plot(time1, veh1Acceleration, label=f"{title} Follower 1")
+    ax.plot(time2, veh2Acceleration, label=f"{title} Follower 2")
+    ax.plot(time3, veh3Acceleration, label=f"{title} Follower 2")
+    ax.plot(time4, veh4Acceleration, label=f"{title} Follower 2")
+    ax.axhline(y=0.93, color='r', linestyle='-', label="Discomfort Threshold")
     ax.set_xlabel('Time_Step')
     ax.set_ylabel('Acceleration')
     ax.legend()
@@ -378,3 +442,33 @@ if __name__ == "__main__":
     if os.path.isfile(gapErrFile):
         os.unlink(gapErrFile)
     fig.savefig(f'{gapErrFile}')
+
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    ax.scatter(fullTime0, veh0CO2, label="Krauss Lead Vehicle")
+    ax.scatter(fullTime1, veh1CO2, label=f"{title} Follower 1")
+    ax.scatter(fullTime2, veh2CO2, label=f"{title} Follower 2")
+    ax.scatter(fullTime3, veh3CO2, label=f"{title} Follower 3")
+    ax.scatter(fullTime4, veh4CO2, label=f"{title} Follower 4")
+    ax.set_xlabel('Time_Step')
+    ax.set_ylabel('Vehicle CO2 Emission')
+    ax.legend()
+    ax.set_title(f"{title} Vehcile CO2 Emission vs Time")
+    co2File = f'./{images_subdirectory}/{title}_vehicle_co2.png'
+    if os.path.isfile(co2File):
+        os.unlink(co2File)
+    fig.savefig(f'{co2File}')
+
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    ax.scatter(0, veh0CO2Sum, label="Krauss Lead Vehicle")
+    ax.scatter(1, veh1CO2Sum, label=f"{title} Follower 1")
+    ax.scatter(2, veh2CO2Sum, label=f"{title} Follower 2")
+    ax.scatter(3, veh3CO2Sum, label=f"{title} Follower 3")
+    ax.scatter(4, veh4CO2Sum, label=f"{title} Follower 4")
+    ax.set_xlabel('Vehicle')
+    ax.set_ylabel('Total Vehicle CO2 Emission')
+    ax.legend()
+    ax.set_title(f"{title} Total Vehcile CO2 Emission")
+    co2FileTotal = f'./{images_subdirectory}/{title}_vehicle_total_co2.png'
+    if os.path.isfile(co2FileTotal):
+        os.unlink(co2FileTotal)
+    fig.savefig(f'{co2FileTotal}')
