@@ -37,6 +37,8 @@ def get_options():
                           default=False, help="run the simulation using the human driver model")
     opt_parser.add_option("--highway_1", action="store_true",
                           default=False, help="run the simulation using the second highway configuration")
+    opt_parser.add_option("--slow_down_midway", action="store_true",
+                          default=False, help="slows the leading human model vehicle halfway during the sim")
     options, args = opt_parser.parse_args()
     return options
 
@@ -75,6 +77,16 @@ def run(fis_start_time, end_time):
                 veh3_gap_error.append(veh3Previous_Gap-1)
                 veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
                 veh4_gap_error.append(veh4Previous_Gap-1)
+                if options.slow_down_midway:
+                    if 525 < step < 615:
+                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        # traci.vehicle.setSpeed("0", 20.1168)
+                    elif 614 < step < 675:
+                        traci.vehicle.slowDown("0", 31.292, 60)
+                    else:
+                        pass
+                else:
+                    pass
             else:
                 veh1_gap_error.append(np.nan)
                 veh2_gap_error.append(np.nan)
@@ -133,6 +145,17 @@ def run(fis_start_time, end_time):
                 veh4_gap_error.append(veh4[1])
                 traci.vehicle.setSpeed("4", veh4Speed)
 
+                if options.slow_down_midway:
+                    if 525 < step < 615:
+                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        # traci.vehicle.setSpeed("0", 20.1168)
+                    elif 614 < step < 675:
+                        traci.vehicle.slowDown("0", 31.292, 60)
+                    else:
+                        pass
+                else:
+                    pass
+
         # if step >= 30 and step < 150:
             # veh1_position = traci.vehicle.getPosition("0")
             # print(veh1_position)
@@ -169,14 +192,10 @@ if __name__ == "__main__":
         # run sumo with gui
         sumoBinary = checkBinary('sumo-gui')
     fileName = ntpath.basename(__file__)
-    if options.highway_1:
-        fileName_No_Suffix = "highway_1"
-        fis_start_time = 300
-        end_time = 900
-    else:
-        fileName_No_Suffix = "highway_0"
-        fis_start_time = 300
-        end_time = 700
+
+    fileName_No_Suffix = "highway_1"
+    fis_start_time = 300
+    end_time = 900
 
     timestr = time.strftime("%Y%m%d")
 
@@ -229,7 +248,6 @@ if __name__ == "__main__":
     traci.start([sumoBinary, "-c", f"{fileName_No_Suffix}.sumocfg",
                 "--route-files", routeFileName,
                  "--additional-files", additionalFileName,
-                 # "--collision.mingap-factor", "0",
                  "--device.ssm.probability", "1",
                  "--device.ssm.file", ssmFileName,
                  "--fcd-output", fcdOutInfoFileName,
