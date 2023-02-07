@@ -347,7 +347,7 @@ if __name__ == "__main__":
             veh4Acceleration.append(row["vehicle_acceleration"])
 
     for index, row in df_Full.iterrows():
-        # print(row["vehicle_id"], row["vehicle_pos"])
+        # if 299 < row["data_timestep"] < 901:
         if row["vehicle_id"] == 0:
             fullTime0.append(row["data_timestep"])
             veh0CO2.append(row["vehicle_CO2"])
