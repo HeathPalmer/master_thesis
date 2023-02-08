@@ -180,6 +180,29 @@ def run(fis_start_time, end_time):
     return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error
 
 
+def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    xLength = len(x)
+    for i in range(xLength):
+        if i == 0:
+            ax.plot(x[i], y[i], label="Krauss Vehicle")
+        else:
+            ax.plot(x[i], y[i], label=f"{modelType} Vehicle")
+    if plotModification:
+        exec(plotModification[0])
+    else:
+        pass
+    ax.set_xlabel(f'{xLabel}')
+    ax.set_ylabel(f'{yLabel}')
+    ax.legend()
+    ax.set_title(f"{title} Vehcile {yLabel} vs {xLabel}")
+    lowerYLabel = yLabel.lower()
+    posFile = f'./{images_subdirectory}/{title}_vehicle_{lowerYLabel}.png'
+    if os.path.isfile(posFile):
+        os.unlink(posFile)
+    fig.savefig(f'{posFile}')
+
+
 # main entry point
 if __name__ == "__main__":
     options = get_options()
@@ -211,6 +234,7 @@ if __name__ == "__main__":
         pass
 
     spreadsheet_subdirectory = f"./results/spreadsheet/{timestr}_{fileName_No_Suffix}_tripInfo"
+    global images_subdirectory
     images_subdirectory = f"./results/images/{timestr}_{fileName_No_Suffix}_tripInfo"
 
     try:
@@ -383,80 +407,34 @@ if __name__ == "__main__":
     #     os.mkdir(f'./{images_subdirectory}/')
     # except Exception:
     #     pass
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(time0, veh0Position, label="Vehicle 0")
-    ax.plot(time1, veh1Position, label="Vehicle 1")
-    ax.plot(time2, veh2Position, label="Vehicle 2")
-    ax.plot(time3, veh3Position, label="Vehicle 3")
-    ax.plot(time4, veh4Position, label="Vehicle 4")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Position')
-    ax.legend()
-    ax.set_title(f"{title} Vehcile Position vs Time")
-    posFile = f'./{images_subdirectory}/{title}_vehicle_position.png'
-    if os.path.isfile(posFile):
-        os.unlink(posFile)
-    fig.savefig(f'{posFile}')
+    x = [time0, time1, time2, time3, time4]
+    yPosition = [veh0Position, veh1Position, veh2Position, veh3Position, veh4Position]
+    yVelocity = [veh0Velocity, veh1Velocity, veh2Velocity, veh3Velocity, veh4Velocity]
+    yAcceleration = [veh0Acceleration, veh1Acceleration, veh2Acceleration, veh3Acceleration, veh4Acceleration]
 
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(time0, veh0Velocity, label="Vehicle 0")
-    ax.plot(time1, veh1Velocity, label="Vehicle 1")
-    ax.plot(time2, veh2Velocity, label="Vehicle 2")
-    ax.plot(time3, veh3Velocity, label="Vehicle 3")
-    ax.plot(time4, veh4Velocity, label="Vehicle 4")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Velocity')
-    ax.legend()
-    ax.set_title(f"{title} Vehcile Velocity vs Time")
-    velFile = f'./{images_subdirectory}/{title}_vehicle_velocity.png'
-    if os.path.isfile(velFile):
-        os.unlink(velFile)
-    fig.savefig(f'{velFile}')
+    xGapError = [range(len(veh1_gap_error)), range(len(veh2_gap_error)), range(len(veh3_gap_error)), range(len(veh4_gap_error))]
+    yGapError = [veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error]
 
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(time0, veh0Acceleration, label="Krauss Lead Vehicle")
-    ax.plot(time1, veh1Acceleration, label=f"{title} Follower 1")
-    ax.plot(time2, veh2Acceleration, label=f"{title} Follower 2")
-    ax.plot(time3, veh3Acceleration, label=f"{title} Follower 2")
-    ax.plot(time4, veh4Acceleration, label=f"{title} Follower 2")
-    ax.axhline(y=0.93, color='r', linestyle='-', label="Discomfort Threshold")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Acceleration')
-    ax.legend()
-    ax.set_title(f"{title} Vehcile Acceleration vs Time")
-    accelFile = f'./{images_subdirectory}/{title}_vehicle_acceleration.png'
-    if os.path.isfile(accelFile):
-        os.unlink(accelFile)
-    fig.savefig(f'{accelFile}')
+    xFullTime = [fullTime0, fullTime1, fullTime2, fullTime3, fullTime4]
+    yCO2 = [veh0CO2, veh1CO2, veh2CO2, veh3CO2, veh4CO2]
 
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(range(len(veh1_gap_error)), veh1_gap_error, label="Vehicle 1")
-    ax.plot(range(len(veh2_gap_error)), veh2_gap_error, label="Vehicle 2")
-    ax.plot(range(len(veh3_gap_error)), veh3_gap_error, label="Vehicle 3")
-    ax.plot(range(len(veh4_gap_error)), veh4_gap_error, label="Vehicle 4")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Gap Error')
-    ax.legend()
-    ax.set_title(f"{title} Vehcile Gap Error vs Time")
-    gapErrFile = f'./{images_subdirectory}/{title}_vehicle_gap.png'
-    if os.path.isfile(gapErrFile):
-        os.unlink(gapErrFile)
-    fig.savefig(f'{gapErrFile}')
+    xCO2Sum = [0, 1, 2, 3, 4]
+    yCO2Sum = [veh0CO2Sum, veh1CO2Sum, veh2CO2Sum, veh3CO2Sum, veh4CO2Sum]
 
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.scatter(fullTime0, veh0CO2, label="Krauss Lead Vehicle")
-    ax.scatter(fullTime1, veh1CO2, label=f"{title} Follower 1")
-    ax.scatter(fullTime2, veh2CO2, label=f"{title} Follower 2")
-    ax.scatter(fullTime3, veh3CO2, label=f"{title} Follower 3")
-    ax.scatter(fullTime4, veh4CO2, label=f"{title} Follower 4")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Vehicle CO2 Emission')
-    ax.legend()
-    ax.set_title(f"{title} Vehcile CO2 Emission vs Time")
-    co2File = f'./{images_subdirectory}/{title}_vehicle_co2.png'
-    if os.path.isfile(co2File):
-        os.unlink(co2File)
-    fig.savefig(f'{co2File}')
+    plotResults(x, yPosition, title, 'Time_Step', 'Position', title)
+
+    plotResults(x, yVelocity, title, 'Time_Step', 'Velocity', title)
+
+    modAcceleration = "ax.axhline(y = 2, color = 'r', linestyle = '-')"
+    plotResults(x, yAcceleration, title, 'Time_Step', 'Acceleration', title, str(modAcceleration))
+
+    plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
+
+    plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
+
+    plotResults(xFullTime, yCO2, title, 'Time_Step', 'CO2', title)
+
+    # plotResults(xCO2Sum, yCO2Sum, title, 'Time_Step', 'Total_CO2', title)
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.scatter(0, veh0CO2Sum, label="Krauss Lead Vehicle")
