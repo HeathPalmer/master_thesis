@@ -1,0 +1,3 @@
+# ignore the following files and file types
+*.pyc
+test/FIS/results/

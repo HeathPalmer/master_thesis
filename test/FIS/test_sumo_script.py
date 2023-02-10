@@ -37,6 +37,8 @@ def get_options():
                           default=False, help="run the simulation using the human driver model")
     opt_parser.add_option("--highway_1", action="store_true",
                           default=False, help="run the simulation using the second highway configuration")
+    opt_parser.add_option("--slow_down_midway", action="store_true",
+                          default=False, help="slows the leading human model vehicle halfway during the sim")
     options, args = opt_parser.parse_args()
     return options
 
@@ -75,6 +77,16 @@ def run(fis_start_time, end_time):
                 veh3_gap_error.append(veh3Previous_Gap-1)
                 veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
                 veh4_gap_error.append(veh4Previous_Gap-1)
+                if options.slow_down_midway:
+                    if 525 < step < 615:
+                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        # traci.vehicle.setSpeed("0", 20.1168)
+                    elif 614 < step < 675:
+                        traci.vehicle.slowDown("0", 31.292, 60)
+                    else:
+                        pass
+                else:
+                    pass
             else:
                 veh1_gap_error.append(np.nan)
                 veh2_gap_error.append(np.nan)
@@ -133,6 +145,17 @@ def run(fis_start_time, end_time):
                 veh4_gap_error.append(veh4[1])
                 traci.vehicle.setSpeed("4", veh4Speed)
 
+                if options.slow_down_midway:
+                    if 525 < step < 615:
+                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        # traci.vehicle.setSpeed("0", 20.1168)
+                    elif 614 < step < 675:
+                        traci.vehicle.slowDown("0", 31.292, 60)
+                    else:
+                        pass
+                else:
+                    pass
+
         # if step >= 30 and step < 150:
             # veh1_position = traci.vehicle.getPosition("0")
             # print(veh1_position)
@@ -157,6 +180,29 @@ def run(fis_start_time, end_time):
     return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error
 
 
+def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    xLength = len(x)
+    for i in range(xLength):
+        if i == 0:
+            ax.plot(x[i], y[i], label="Krauss Vehicle")
+        else:
+            ax.plot(x[i], y[i], label=f"{modelType} Vehicle")
+    if plotModification:
+        exec(plotModification[0])
+    else:
+        pass
+    ax.set_xlabel(f'{xLabel}')
+    ax.set_ylabel(f'{yLabel}')
+    ax.legend()
+    ax.set_title(f"{title} Vehcile {yLabel} vs {xLabel}")
+    lowerYLabel = yLabel.lower()
+    posFile = f'./{images_subdirectory}/{title}_vehicle_{lowerYLabel}.png'
+    if os.path.isfile(posFile):
+        os.unlink(posFile)
+    fig.savefig(f'{posFile}')
+
+
 # main entry point
 if __name__ == "__main__":
     options = get_options()
@@ -169,14 +215,10 @@ if __name__ == "__main__":
         # run sumo with gui
         sumoBinary = checkBinary('sumo-gui')
     fileName = ntpath.basename(__file__)
-    if options.highway_1:
-        fileName_No_Suffix = "highway_1"
-        fis_start_time = 300
-        end_time = 900
-    else:
-        fileName_No_Suffix = "highway_0"
-        fis_start_time = 300
-        end_time = 700
+
+    fileName_No_Suffix = "highway_1"
+    fis_start_time = 300
+    end_time = 900
 
     timestr = time.strftime("%Y%m%d")
 
@@ -192,6 +234,7 @@ if __name__ == "__main__":
         pass
 
     spreadsheet_subdirectory = f"./results/spreadsheet/{timestr}_{fileName_No_Suffix}_tripInfo"
+    global images_subdirectory
     images_subdirectory = f"./results/images/{timestr}_{fileName_No_Suffix}_tripInfo"
 
     try:
@@ -222,37 +265,41 @@ if __name__ == "__main__":
     # generate_additionalfile(additionalFileName, inductionLoopFileName)
 
     ssmFileName = rf"{spreadsheet_subdirectory}\{recnum}_ssm.xml"
-    # tripInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_tripinfo.xml"
+    fullOutFileName = rf"{spreadsheet_subdirectory}\{recnum}_fullout.xml"
     fcdOutInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_fcdout.xml"
     amitranInforFileName = rf"{spreadsheet_subdirectory}\{recnum}_amitran.xml"
     # traci starts sumo as a subprocess and then this script connects and runs
     traci.start([sumoBinary, "-c", f"{fileName_No_Suffix}.sumocfg",
                 "--route-files", routeFileName,
                  "--additional-files", additionalFileName,
-                 # "--collision.mingap-factor", "0",
                  "--device.ssm.probability", "1",
                  "--device.ssm.file", ssmFileName,
+                 "--full-output", fullOutFileName,
                  "--fcd-output", fcdOutInfoFileName,
                  "--fcd-output.acceleration"])
     veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error = run(fis_start_time, end_time)
     # convert new xml file to csv
 
     xml2csv.main([fcdOutInfoFileName])
+    xml2csv.main([fullOutFileName])
 
     fcdOutCSV = os.path.splitext(fcdOutInfoFileName)[0]+'.csv'
+    fullOutCSV = os.path.splitext(fullOutFileName)[0]+'.csv'
 
-    print(fcdOutCSV)
+    print(f"The FCD outfile file was generate: {fcdOutCSV}")
 
     if options.krauss:
         title = "Krauss"
     else:
         title = "FIS"
     df_FCD = pd.read_csv(f'{fcdOutCSV}')
+    df_Full = pd.read_csv(f'{fullOutCSV}')
     time0 = []
     time1 = []
     time2 = []
     time3 = []
     time4 = []
+
     veh0Position = []
     veh1Position = []
     veh2Position = []
@@ -270,6 +317,31 @@ if __name__ == "__main__":
     veh2Acceleration = []
     veh3Acceleration = []
     veh4Acceleration = []
+
+    fullTime0 = []
+    fullTime1 = []
+    fullTime2 = []
+    fullTime3 = []
+    fullTime4 = []
+
+    veh0CO2 = []
+    veh1CO2 = []
+    veh2CO2 = []
+    veh3CO2 = []
+    veh4CO2 = []
+
+    veh0CO = []
+    veh1CO = []
+    veh2CO = []
+    veh3CO = []
+    veh4CO = []
+
+    veh0Fuel = []
+    veh1Fuel = []
+    veh2Fuel = []
+    veh3Fuel = []
+    veh4Fuel = []
+
     for index, row in df_FCD.iterrows():
         # print(row["vehicle_id"], row["vehicle_pos"])
         if row["vehicle_id"] == 0:
@@ -298,65 +370,83 @@ if __name__ == "__main__":
             veh4Velocity.append(row["vehicle_speed"])
             veh4Acceleration.append(row["vehicle_acceleration"])
 
+    for index, row in df_Full.iterrows():
+        # if 299 < row["data_timestep"] < 901:
+        if row["vehicle_id"] == 0:
+            fullTime0.append(row["data_timestep"])
+            veh0CO2.append(row["vehicle_CO2"])
+            veh0CO.append(row["vehicle_CO"])
+            veh0Fuel.append(row["vehicle_fuel"])
+        elif row["vehicle_id"] == 1:
+            fullTime1.append(row["data_timestep"])
+            veh1CO2.append(row["vehicle_CO2"])
+            veh1CO.append(row["vehicle_CO"])
+            veh1Fuel.append(row["vehicle_fuel"])
+        elif row["vehicle_id"] == 2:
+            fullTime2.append(row["data_timestep"])
+            veh2CO2.append(row["vehicle_CO2"])
+            veh2CO.append(row["vehicle_CO"])
+            veh2Fuel.append(row["vehicle_fuel"])
+        elif row["vehicle_id"] == 3:
+            fullTime3.append(row["data_timestep"])
+            veh3CO2.append(row["vehicle_CO2"])
+            veh3CO.append(row["vehicle_CO"])
+            veh3Fuel.append(row["vehicle_fuel"])
+        elif row["vehicle_id"] == 4:
+            fullTime4.append(row["data_timestep"])
+            veh4CO2.append(row["vehicle_CO2"])
+            veh4CO.append(row["vehicle_CO"])
+            veh4Fuel.append(row["vehicle_fuel"])
+
+    veh0CO2Sum = sum(veh0CO2)
+    veh1CO2Sum = sum(veh1CO2)
+    veh2CO2Sum = sum(veh2CO2)
+    veh3CO2Sum = sum(veh3CO2)
+    veh4CO2Sum = sum(veh4CO2)
     # try:
     #     os.mkdir(f'./{images_subdirectory}/')
     # except Exception:
     #     pass
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(time0, veh0Position, label="Vehicle 0")
-    ax.plot(time1, veh1Position, label="Vehicle 1")
-    ax.plot(time2, veh2Position, label="Vehicle 2")
-    ax.plot(time3, veh3Position, label="Vehicle 3")
-    ax.plot(time4, veh4Position, label="Vehicle 4")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Position')
-    ax.legend()
-    ax.set_title(f"{title} Vehcile Position vs Time")
-    posFile = f'./{images_subdirectory}/{title}_vehicle_position.png'
-    if os.path.isfile(posFile):
-        os.unlink(posFile)
-    fig.savefig(f'{posFile}')
+    x = [time0, time1, time2, time3, time4]
+    yPosition = [veh0Position, veh1Position, veh2Position, veh3Position, veh4Position]
+    yVelocity = [veh0Velocity, veh1Velocity, veh2Velocity, veh3Velocity, veh4Velocity]
+    yAcceleration = [veh0Acceleration, veh1Acceleration, veh2Acceleration, veh3Acceleration, veh4Acceleration]
+
+    xGapError = [range(len(veh1_gap_error)), range(len(veh2_gap_error)), range(len(veh3_gap_error)), range(len(veh4_gap_error))]
+    yGapError = [veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error]
+
+    xFullTime = [fullTime0, fullTime1, fullTime2, fullTime3, fullTime4]
+    yCO2 = [veh0CO2, veh1CO2, veh2CO2, veh3CO2, veh4CO2]
+
+    xCO2Sum = [0, 1, 2, 3, 4]
+    yCO2Sum = [veh0CO2Sum, veh1CO2Sum, veh2CO2Sum, veh3CO2Sum, veh4CO2Sum]
+
+    plotResults(x, yPosition, title, 'Time_Step', 'Position', title)
+
+    plotResults(x, yVelocity, title, 'Time_Step', 'Velocity', title)
+
+    modAcceleration = "ax.axhline(y = 2, color = 'r', linestyle = '-')"
+    plotResults(x, yAcceleration, title, 'Time_Step', 'Acceleration', title, str(modAcceleration))
+
+    plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
+
+    plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
+
+    plotResults(xFullTime, yCO2, title, 'Time_Step', 'CO2', title)
+
+    # plotResults(xCO2Sum, yCO2Sum, title, 'Time_Step', 'Total_CO2', title)
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(time0, veh0Velocity, label="Vehicle 0")
-    ax.plot(time1, veh1Velocity, label="Vehicle 1")
-    ax.plot(time2, veh2Velocity, label="Vehicle 2")
-    ax.plot(time3, veh3Velocity, label="Vehicle 3")
-    ax.plot(time4, veh4Velocity, label="Vehicle 4")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Velocity')
+    ax.scatter(0, veh0CO2Sum, label="Krauss Lead Vehicle")
+    ax.scatter(1, veh1CO2Sum, label=f"{title} Follower 1")
+    ax.scatter(2, veh2CO2Sum, label=f"{title} Follower 2")
+    ax.scatter(3, veh3CO2Sum, label=f"{title} Follower 3")
+    ax.scatter(4, veh4CO2Sum, label=f"{title} Follower 4")
+    ax.set_xlabel('Vehicle')
+    ax.set_ylabel('Total Vehicle CO2 Emission')
     ax.legend()
-    ax.set_title(f"{title} Vehcile Velocity vs Time")
-    velFile = f'./{images_subdirectory}/{title}_vehicle_velocity.png'
-    if os.path.isfile(velFile):
-        os.unlink(velFile)
-    fig.savefig(f'{velFile}')
-
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(time0, veh0Acceleration, label="Vehicle 0")
-    ax.plot(time1, veh1Acceleration, label="Vehicle 1")
-    ax.plot(time2, veh2Acceleration, label="Vehicle 2")
-    ax.plot(time3, veh3Acceleration, label="Vehicle 3")
-    ax.plot(time4, veh4Acceleration, label="Vehicle 4")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Acceleration')
-    ax.legend()
-    ax.set_title(f"{title} Vehcile Acceleration vs Time")
-    accelFile = f'./{images_subdirectory}/{title}_vehicle_acceleration.png'
-    if os.path.isfile(accelFile):
-        os.unlink(accelFile)
-    fig.savefig(f'{accelFile}')
-
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.plot(range(len(veh1_gap_error)), veh1_gap_error, label="Vehicle 1")
-    ax.plot(range(len(veh2_gap_error)), veh2_gap_error, label="Vehicle 2")
-    ax.plot(range(len(veh3_gap_error)), veh3_gap_error, label="Vehicle 3")
-    ax.plot(range(len(veh4_gap_error)), veh4_gap_error, label="Vehicle 4")
-    ax.set_xlabel('Time_Step')
-    ax.set_ylabel('Gap Error')
-    ax.legend()
-    ax.set_title(f"{title} Vehcile Gap Error vs Time")
-    gapErrFile = f'./{images_subdirectory}/{title}_vehicle_gap.png'
-    if os.path.isfile(gapErrFile):
-        os.unlink(gapErrFile)
-    fig.savefig(f'{gapErrFile}')
+    ax.set_title(f"{title} Total Vehcile CO2 Emission")
+    co2FileTotal = f'./{images_subdirectory}/{title}_vehicle_total_co2.png'
+    if os.path.isfile(co2FileTotal):
+        os.unlink(co2FileTotal)
+    fig.savefig(f'{co2FileTotal}')
