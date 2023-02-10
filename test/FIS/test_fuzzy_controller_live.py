@@ -46,7 +46,7 @@ class FuzzyHWClass:
         self.acceleration['ExtraLarge'] = fuzz.trimf(self.acceleration.universe, [1.5, 3, 4.572])
         self.acceleration['ExtraExtraLarge'] = fuzz.trimf(self.acceleration.universe, [3, 4.572, 5])
 
-        # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH  # noqa: E501
+        # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
         rule1 = ctrl.Rule(antecedent=((self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']) |
                                       (self.gap_error['ExtraExtraExtraSmall'] & self.gap_error_rate['ExtraExtraExtraSmall'])),
                           consequent=self.acceleration['ExtraExtraSmall'])
