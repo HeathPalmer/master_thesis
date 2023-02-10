@@ -7,13 +7,13 @@ import pandas as pd
 
 class FuzzyHWClass:
 
-    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate):
-        inputs = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]
-        # print(inputs)
+    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min):
+        inputs = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]  # , ego_gap_diff_from_min]
 
         # initialize fuzy variables
-        self.gap_error = ctrl.Antecedent(np.arange(-2, 3, 0.01), 'gap-error-value')  # noqa: E501
-        self.gap_error_rate = ctrl.Antecedent(np.arange(-6, 10, 0.001), 'gap-error-change-rate-value')  # noqa: E501
+        self.gap_error = ctrl.Antecedent(np.arange(-2, 3, 0.01), 'gap-error-value')
+        self.gap_error_rate = ctrl.Antecedent(np.arange(-6, 10, 0.001), 'gap-error-change-rate-value')
+        # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
 
         # output acceleration
         self.acceleration = ctrl.Consequent(np.arange(-5, 5.1, 0.001), 'acceleration-value')
@@ -36,6 +36,10 @@ class FuzzyHWClass:
         self.gap_error_rate['Large'] = fuzz.trimf(self.gap_error_rate.universe, [0, 0.447, 2.235])
         self.gap_error_rate['ExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, [0.447, 2.235, 5.36])
         self.gap_error_rate['ExtraExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, [2.235, 5.36, 10])
+
+        # self.gap_diff_from_min['Small'] = fuzz.trimf(self.gap_diff_from_min.universe, [-3, -1.5, 0])
+        # self.gap_diff_from_min['Medium'] = fuzz.trimf(self.gap_diff_from_min.universe, [-1.5, 0, 1.5])
+        # self.gap_diff_from_min['Large'] = fuzz.trimf(self.gap_diff_from_min.universe, [0, 1.5, 2])
 
         # setup the 12 output membership functions
         self.acceleration['ExtraExtraSmall'] = fuzz.trimf(self.acceleration.universe, [-5, -4.572, -3])
@@ -75,9 +79,9 @@ class FuzzyHWClass:
                                       (self.gap_error['Large'] & self.gap_error_rate['Small']) |
                                       (self.gap_error['ExtraLarge'] & self.gap_error_rate['Small']) |
                                       (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['Large']) |
-                                      (self.gap_error['ExtraSmall'] & self.gap_error_rate['Large'] |
-                                      (self.gap_error['Medium'] & self.gap_error_rate['Medium']) |
-                                      (self.gap_error['Large'] & self.gap_error_rate['Medium']))),
+                                      (self.gap_error['ExtraSmall'] & self.gap_error_rate['Large']) |
+                                      (self.gap_error['Medium'] & self.gap_error_rate['Medium']) |  # consider moving the line below to the large acceleration
+                                      (self.gap_error['Large'] & self.gap_error_rate['Medium'])),
                           consequent=self.acceleration['Medium'])
 
         rule5 = ctrl.Rule(antecedent=((self.gap_error['Small'] & self.gap_error_rate['Medium']) |
@@ -111,20 +115,20 @@ class FuzzyHWClass:
 
         SUMO.input['gap-error-value'] = inputs[1]
         SUMO.input['gap-error-change-rate-value'] = inputs[2]
+        # SUMO.input['gap-diff-from-avg'] = inputs[3]
 
         SUMO.compute()
 
         result = SUMO.output['acceleration-value']
-        # print(result)
 
         return result
 
-    def vehicle_fuzzy(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate):
+    def vehicle_fuzzy(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min):
         fuzzyOut = float
         acceleration_val = []
         # count = 0
         fuzzyFunction = FuzzyHWClass()
-        fuzzyOut = fuzzyFunction.fuzzyHW(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate)
+        fuzzyOut = fuzzyFunction.fuzzyHW(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min)
         acceleration_val.append(fuzzyOut)
         # print(f"{y_val} and {fuzzyOut}")
 
@@ -134,7 +138,10 @@ class FuzzyHWClass:
         vehicle_dataframe = df_excel_data[df_excel_data.vehicle_id == vehicle]
         return vehicle_dataframe
 
-    def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed):
+    def average(input):
+        return sum(input) / len(list)
+
+    def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed, list_vehicle_gap_errors):
         fuzzyFunction = FuzzyHWClass()
         # constants
         ideal_gap = 1  # second
@@ -160,7 +167,17 @@ class FuzzyHWClass:
         # print(count)
         # print(vehicle_id, vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate)
 
-        vehicle_acceleration = fuzzyFunction.vehicle_fuzzy(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate)
+        if len(list_vehicle_gap_errors) == 0:
+            list_vehicle_gap_errors.append(vehicle_gap_error)
+            # average_vehicle_gaps = fuzzyFunction.average(list_vehicle_gap_errors)
+            min_vehicle_gap = min(list_vehicle_gap_errors)
+            ego_gap_diff_from_min = vehicle_gap_error - min_vehicle_gap
+        else:
+            # average_vehicle_gaps = fuzzyFunction.average(list_vehicle_gap_errors)
+            min_vehicle_gap = min(list_vehicle_gap_errors)
+            ego_gap_diff_from_min = vehicle_gap_error - min_vehicle_gap
+
+        vehicle_acceleration = fuzzyFunction.vehicle_fuzzy(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min)
         vehicle = [vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate, vehicle_acceleration[0]]
         count = count+1
 
