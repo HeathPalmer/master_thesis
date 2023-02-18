@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import csv
 import matplotlib.pyplot as plt
 import ntpath
 import numpy as np
@@ -378,6 +379,22 @@ if __name__ == "__main__":
 
     xGapErrorRate = [range(len(veh1_gap_error_rate)), range(len(veh2_gap_error_rate)), range(len(veh3_gap_error_rate)), range(len(veh4_gap_error_rate))]
     yGapErrorRate = [veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate]
+
+    xGapErrorTranspose = list(zip(*xGapError))
+    yGapErrorTranspose = list(zip(*yGapError))
+    yGapErrorRateTranspose = list(zip(*yGapErrorRate))
+    titleGapError = ["Vehicle 1 Gap Error", "Vehicle 2 Gap Error", "Vehicle 3 Gap Error", "Vehicle 4 Gap Error"]
+    titleGapErrorRate = ["Vehicle 1 Gap Error Rate", "Vehicle 2 Gap Error Rate", "Vehicle 3 Gap Error Rate", "Vehicle 4 Gap Error Rate"]
+
+    with open(f'{spreadsheet_subdirectory}/{title}_Gap_error.csv', 'w') as f:
+        csv_writer = csv.writer(f)
+        csv_writer.writerow(titleGapError)
+        csv_writer.writerows(yGapErrorTranspose)
+
+    with open(f'{spreadsheet_subdirectory}/{title}_Gap_error_rate.csv', 'w') as f:
+        csv_writer = csv.writer(f)
+        csv_writer.writerow(titleGapErrorRate)
+        csv_writer.writerows(yGapErrorRateTranspose)
 
     plotResults(x, yPosition, title, 'Time_Step', 'Position', title)
 
