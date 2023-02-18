@@ -80,11 +80,11 @@ class FuzzyHWClass:
                                       (self.gap_error['ExtraLarge'] & self.gap_error_rate['Small']) |
                                       (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['Large']) |
                                       (self.gap_error['ExtraSmall'] & self.gap_error_rate['Large']) |
-                                      (self.gap_error['Medium'] & self.gap_error_rate['Medium']) |  # consider moving the line below to the large acceleration
-                                      (self.gap_error['Large'] & self.gap_error_rate['Medium'])),
+                                      (self.gap_error['Medium'] & self.gap_error_rate['Medium'])),
                           consequent=self.acceleration['Medium'])
 
         rule5 = ctrl.Rule(antecedent=((self.gap_error['Small'] & self.gap_error_rate['Medium']) |
+                                      (self.gap_error['Large'] & self.gap_error_rate['Medium']) |  # added this here
                                       (self.gap_error['ExtraLarge'] & self.gap_error_rate['Medium']) |
                                       (self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraLarge']) |
                                       (self.gap_error['ExtraSmall'] & self.gap_error_rate['ExtraLarge']) |
