@@ -336,30 +336,6 @@ if __name__ == "__main__":
     veh3Acceleration = []
     veh4Acceleration = []
 
-    fullTime0 = []
-    fullTime1 = []
-    fullTime2 = []
-    fullTime3 = []
-    fullTime4 = []
-
-    veh0CO2 = []
-    veh1CO2 = []
-    veh2CO2 = []
-    veh3CO2 = []
-    veh4CO2 = []
-
-    veh0CO = []
-    veh1CO = []
-    veh2CO = []
-    veh3CO = []
-    veh4CO = []
-
-    veh0Fuel = []
-    veh1Fuel = []
-    veh2Fuel = []
-    veh3Fuel = []
-    veh4Fuel = []
-
     for index, row in df_FCD.iterrows():
         # print(row["vehicle_id"], row["vehicle_pos"])
         if row["vehicle_id"] == 0:
@@ -388,39 +364,6 @@ if __name__ == "__main__":
             veh4Velocity.append(row["vehicle_speed"])
             veh4Acceleration.append(row["vehicle_acceleration"])
 
-    for index, row in df_Full.iterrows():
-        # if 299 < row["data_timestep"] < 901:
-        if row["vehicle_id"] == 0:
-            fullTime0.append(row["data_timestep"])
-            veh0CO2.append(row["vehicle_CO2"])
-            veh0CO.append(row["vehicle_CO"])
-            veh0Fuel.append(row["vehicle_fuel"])
-        elif row["vehicle_id"] == 1:
-            fullTime1.append(row["data_timestep"])
-            veh1CO2.append(row["vehicle_CO2"])
-            veh1CO.append(row["vehicle_CO"])
-            veh1Fuel.append(row["vehicle_fuel"])
-        elif row["vehicle_id"] == 2:
-            fullTime2.append(row["data_timestep"])
-            veh2CO2.append(row["vehicle_CO2"])
-            veh2CO.append(row["vehicle_CO"])
-            veh2Fuel.append(row["vehicle_fuel"])
-        elif row["vehicle_id"] == 3:
-            fullTime3.append(row["data_timestep"])
-            veh3CO2.append(row["vehicle_CO2"])
-            veh3CO.append(row["vehicle_CO"])
-            veh3Fuel.append(row["vehicle_fuel"])
-        elif row["vehicle_id"] == 4:
-            fullTime4.append(row["data_timestep"])
-            veh4CO2.append(row["vehicle_CO2"])
-            veh4CO.append(row["vehicle_CO"])
-            veh4Fuel.append(row["vehicle_fuel"])
-
-    veh0CO2Sum = sum(veh0CO2)
-    veh1CO2Sum = sum(veh1CO2)
-    veh2CO2Sum = sum(veh2CO2)
-    veh3CO2Sum = sum(veh3CO2)
-    veh4CO2Sum = sum(veh4CO2)
     # try:
     #     os.mkdir(f'./{images_subdirectory}/')
     # except Exception:
@@ -445,23 +388,6 @@ if __name__ == "__main__":
 
     plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
 
-    plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
+    plotResults(xGapErrorRate, yGapErrorRate, title, 'Time_Step', 'Gap_Error_Rate', title)
 
-    plotResults(xFullTime, yCO2, title, 'Time_Step', 'CO2', title)
-
-    # plotResults(xCO2Sum, yCO2Sum, title, 'Time_Step', 'Total_CO2', title)
-
-    fig, ax = plt.subplots()  # Create a figure containing a single axes.
-    ax.scatter(0, veh0CO2Sum, label="Krauss Lead Vehicle")
-    ax.scatter(1, veh1CO2Sum, label=f"{title} Follower 1")
-    ax.scatter(2, veh2CO2Sum, label=f"{title} Follower 2")
-    ax.scatter(3, veh3CO2Sum, label=f"{title} Follower 3")
-    ax.scatter(4, veh4CO2Sum, label=f"{title} Follower 4")
-    ax.set_xlabel('Vehicle')
-    ax.set_ylabel('Total Vehicle CO2 Emission')
-    ax.legend()
-    ax.set_title(f"{title} Total Vehcile CO2 Emission")
-    co2FileTotal = f'./{images_subdirectory}/{title}_vehicle_total_co2.png'
-    if os.path.isfile(co2FileTotal):
-        os.unlink(co2FileTotal)
-    fig.savefig(f'{co2FileTotal}')
+    # plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
