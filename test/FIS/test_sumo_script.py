@@ -58,12 +58,16 @@ def run(fis_start_time, end_time):
     veh3_gap_error = []
     veh4_gap_error = []
 
+    veh1_gap_error_rate = []
+    veh2_gap_error_rate = []
+    veh3_gap_error_rate = []
+    veh4_gap_error_rate = []
+
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
-        # traci.vehicle.setTau("Car01", "1")
-        # traci.vehicle.setTau("Car", "1")
         vehPosition = []
         vehSpeed = []
+        # use the Krauss vehicle controller
         if options.krauss:
             if 30 < step < end_time:
                 for ind in traci.vehicle.getIDList():
@@ -92,6 +96,7 @@ def run(fis_start_time, end_time):
                 veh2_gap_error.append(np.nan)
                 veh3_gap_error.append(np.nan)
                 veh4_gap_error.append(np.nan)
+        # Use the FIS vehicle controller
         else:
             if 30 < step < fis_start_time + 1:
                 for ind in traci.vehicle.getIDList():
@@ -109,40 +114,48 @@ def run(fis_start_time, end_time):
             elif fis_start_time < step < end_time:
                 vehPosition = []
                 vehSpeed = []
+                vehicleGapErrors = []
                 for ind in traci.vehicle.getIDList():
                     vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                     vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
 
-                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1])
+                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors)
                 veh1Previous_Gap = veh1[0]
                 veh1_gap.append(veh1[0])
+                vehicleGapErrors.append(veh1[1])
                 veh1Acceleration = veh1[3]
                 veh1Speed = vehSpeed[1] + veh1Acceleration
                 veh1_gap_error.append(veh1[1])
+                veh1_gap_error_rate.append(veh1[2])
                 traci.vehicle.setSpeed("1", veh1Speed)
 
-                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2])
+                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors)
                 veh2Previous_Gap = veh2[0]
                 veh2_gap.append(veh2[0])
+                vehicleGapErrors.append(veh2[1])
                 veh2Acceleration = veh2[3]
                 veh2Speed = vehSpeed[2] + veh2Acceleration
                 veh2_gap_error.append(veh2[1])
+                veh2_gap_error_rate.append(veh2[2])
                 traci.vehicle.setSpeed("2", veh2Speed)
 
-                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3])
+                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors)
                 veh3Previous_Gap = veh3[0]
                 veh3_gap.append(veh3[0])
+                vehicleGapErrors.append(veh3[1])
                 veh3Acceleration = veh3[3]
                 veh3Speed = vehSpeed[3] + veh3Acceleration
                 veh3_gap_error.append(veh3[1])
+                veh3_gap_error_rate.append(veh3[2])
                 traci.vehicle.setSpeed("3", veh3Speed)
 
-                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4])
+                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors)
                 veh4Previous_Gap = veh4[0]
                 veh4_gap.append(veh4[0])
                 veh4Acceleration = veh4[3]
                 veh4Speed = vehSpeed[4] + veh4Acceleration
                 veh4_gap_error.append(veh4[1])
+                veh4_gap_error_rate.append(veh4[2])
                 traci.vehicle.setSpeed("4", veh4Speed)
 
                 if options.slow_down_midway:
@@ -177,7 +190,7 @@ def run(fis_start_time, end_time):
     # print(traci.vehicle.wantsAndCouldChangeLane("1", "2", state=None))
     traci.close()
     sys.stdout.flush()
-    return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error
+    return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate
 
 
 def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
@@ -185,7 +198,10 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
     xLength = len(x)
     for i in range(xLength):
         if i == 0:
-            ax.plot(x[i], y[i], label="Krauss Vehicle")
+            if yLabel == "Gap_Error" or "Gap_Error_Rate":
+                ax.plot(x[i], y[i], label=f"{modelType} Vehicle")
+            else:
+                ax.plot(x[i], y[i], label="Krauss Vehicle")
         else:
             ax.plot(x[i], y[i], label=f"{modelType} Vehicle")
     if plotModification:
@@ -277,7 +293,9 @@ if __name__ == "__main__":
                  "--full-output", fullOutFileName,
                  "--fcd-output", fcdOutInfoFileName,
                  "--fcd-output.acceleration"])
-    veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error = run(fis_start_time, end_time)
+    # call the run script. Runs the fuzzy logic
+    veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
+        veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate = run(fis_start_time, end_time)
     # convert new xml file to csv
 
     xml2csv.main([fcdOutInfoFileName])
@@ -415,11 +433,8 @@ if __name__ == "__main__":
     xGapError = [range(len(veh1_gap_error)), range(len(veh2_gap_error)), range(len(veh3_gap_error)), range(len(veh4_gap_error))]
     yGapError = [veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error]
 
-    xFullTime = [fullTime0, fullTime1, fullTime2, fullTime3, fullTime4]
-    yCO2 = [veh0CO2, veh1CO2, veh2CO2, veh3CO2, veh4CO2]
-
-    xCO2Sum = [0, 1, 2, 3, 4]
-    yCO2Sum = [veh0CO2Sum, veh1CO2Sum, veh2CO2Sum, veh3CO2Sum, veh4CO2Sum]
+    xGapErrorRate = [range(len(veh1_gap_error_rate)), range(len(veh2_gap_error_rate)), range(len(veh3_gap_error_rate)), range(len(veh4_gap_error_rate))]
+    yGapErrorRate = [veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate]
 
     plotResults(x, yPosition, title, 'Time_Step', 'Position', title)
 
