@@ -74,7 +74,7 @@ def run(fis_start_time, end_time):
                 for ind in traci.vehicle.getIDList():
                     vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                     vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
-                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
+                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # units: seconds
                 veh1_gap_error.append(veh1Previous_Gap-1)
                 veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
                 veh2_gap_error.append(veh2Previous_Gap-1)
