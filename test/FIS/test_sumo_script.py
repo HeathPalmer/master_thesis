@@ -74,7 +74,7 @@ def run(fis_start_time, end_time):
                 for ind in traci.vehicle.getIDList():
                     vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                     vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
-                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # units: seconds
+                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
                 veh1_gap_error.append(veh1Previous_Gap-1)
                 veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
                 veh2_gap_error.append(veh2Previous_Gap-1)
@@ -199,7 +199,7 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
     xLength = len(x)
     for i in range(xLength):
         if i == 0:
-            if yLabel == "Gap_Error" or "Gap_Error_Rate":
+            if yLabel == "Gap_Error" or yLabel == "Gap_Error_Rate":
                 ax.plot(x[i], y[i], label=f"{modelType} Vehicle")
             else:
                 ax.plot(x[i], y[i], label="Krauss Vehicle")
@@ -211,7 +211,10 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
         pass
     ax.set_xlabel(f'{xLabel}')
     ax.set_ylabel(f'{yLabel}')
-    ax.legend()
+    if yLabel == "Jerk":
+        ax.legend(loc='upper right')
+    else:
+        ax.legend()
     ax.set_title(f"{title} Vehcile {yLabel} vs {xLabel}")
     lowerYLabel = yLabel.lower()
     posFile = f'./{images_subdirectory}/{title}_vehicle_{lowerYLabel}.png'
@@ -337,6 +340,12 @@ if __name__ == "__main__":
     veh3Acceleration = []
     veh4Acceleration = []
 
+    veh0Jerk = []
+    veh1Jerk = []
+    veh2Jerk = []
+    veh3Jerk = []
+    veh4Jerk = []
+
     for index, row in df_FCD.iterrows():
         # print(row["vehicle_id"], row["vehicle_pos"])
         if row["vehicle_id"] == 0:
@@ -344,26 +353,53 @@ if __name__ == "__main__":
             veh0Position.append(row["vehicle_x"])
             veh0Velocity.append(row["vehicle_speed"])
             veh0Acceleration.append(row["vehicle_acceleration"])
+            # if fis_start_time < row["timestep_time"] <= end_time:
+            if len(veh0Acceleration) > 2:
+                acceleration_array_length = len(veh0Acceleration)
+                previous_acceleration_value = veh0Acceleration[acceleration_array_length - 2]
+                veh0Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
+            else:
+                pass
         elif row["vehicle_id"] == 1:
             time1.append(row["timestep_time"])
             veh1Position.append(row["vehicle_x"])
             veh1Velocity.append(row["vehicle_speed"])
             veh1Acceleration.append(row["vehicle_acceleration"])
+            # if fis_start_time < row["timestep_time"] <= end_time:
+            if len(veh1Acceleration) > 2:
+                acceleration_array_length = len(veh1Acceleration)
+                previous_acceleration_value = veh1Acceleration[acceleration_array_length - 2]
+                veh1Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
         elif row["vehicle_id"] == 2:
             time2.append(row["timestep_time"])
             veh2Position.append(row["vehicle_x"])
             veh2Velocity.append(row["vehicle_speed"])
             veh2Acceleration.append(row["vehicle_acceleration"])
+            # if fis_start_time < row["timestep_time"] <= end_time:
+            if len(veh2Acceleration) > 2:
+                acceleration_array_length = len(veh2Acceleration)
+                previous_acceleration_value = veh2Acceleration[acceleration_array_length - 2]
+                veh2Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
         elif row["vehicle_id"] == 3:
             time3.append(row["timestep_time"])
             veh3Position.append(row["vehicle_x"])
             veh3Velocity.append(row["vehicle_speed"])
             veh3Acceleration.append(row["vehicle_acceleration"])
+            # if fis_start_time < row["timestep_time"] <= end_time:
+            if len(veh3Acceleration) > 2:
+                acceleration_array_length = len(veh3Acceleration)
+                previous_acceleration_value = veh3Acceleration[acceleration_array_length - 2]
+                veh3Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
         elif row["vehicle_id"] == 4:
             time4.append(row["timestep_time"])
             veh4Position.append(row["vehicle_x"])
             veh4Velocity.append(row["vehicle_speed"])
             veh4Acceleration.append(row["vehicle_acceleration"])
+            # if fis_start_time < row["timestep_time"] <= end_time:
+            if len(veh4Acceleration) > 2:
+                acceleration_array_length = len(veh4Acceleration)
+                previous_acceleration_value = veh4Acceleration[acceleration_array_length - 2]
+                veh4Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
 
     # try:
     #     os.mkdir(f'./{images_subdirectory}/')
@@ -373,6 +409,9 @@ if __name__ == "__main__":
     yPosition = [veh0Position, veh1Position, veh2Position, veh3Position, veh4Position]
     yVelocity = [veh0Velocity, veh1Velocity, veh2Velocity, veh3Velocity, veh4Velocity]
     yAcceleration = [veh0Acceleration, veh1Acceleration, veh2Acceleration, veh3Acceleration, veh4Acceleration]
+
+    xJerk = [range(len(veh0Jerk)), range(len(veh1Jerk)), range(len(veh2Jerk)), range(len(veh3Jerk)), range(len(veh4Jerk))]
+    yJerkCalculation = [veh0Jerk, veh1Jerk, veh2Jerk, veh3Jerk, veh4Jerk]
 
     xGapError = [range(len(veh1_gap_error)), range(len(veh2_gap_error)), range(len(veh3_gap_error)), range(len(veh4_gap_error))]
     yGapError = [veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error]
@@ -402,6 +441,8 @@ if __name__ == "__main__":
 
     modAcceleration = "ax.axhline(y = 2, color = 'r', linestyle = '-')"
     plotResults(x, yAcceleration, title, 'Time_Step', 'Acceleration', title, str(modAcceleration))
+
+    plotResults(xJerk, yJerkCalculation, title, 'Time_Step', 'Jerk', title)
 
     plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
 
