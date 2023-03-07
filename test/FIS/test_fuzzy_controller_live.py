@@ -7,7 +7,7 @@ import pandas as pd
 
 class FuzzyHWClass:
 
-    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, **membership_function_values)  # , ego_gap_diff_from_min):
+    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, *ego_gap_diff_from_min, **membership_function_values):
         inputs = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]  # , ego_gap_diff_from_min]
 
         if membership_function_values:
