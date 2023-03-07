@@ -7,8 +7,37 @@ import pandas as pd
 
 class FuzzyHWClass:
 
-    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min):
+    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, **membership_function_values)  # , ego_gap_diff_from_min):
         inputs = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]  # , ego_gap_diff_from_min]
+
+        if membership_function_values:
+            pass
+        else:
+            membership_function_values = np.array([
+                [-2, -1, -0.5],
+                [-0.6, -0.5, -0.25],
+                [-0.5, -0.25, 0],
+                [-0.25, 0, 0.25],
+                [0, 0.5, 1],
+                [0.5, 1, 1.5],
+                [1, 1.5, 3],
+                [-10, -7.5, -5.6],
+                [-6, -5.36, -2.235],
+                [-5.36, -2.235, -0.447],
+                [-10, -2.235, 0],
+                [-0.447, 0, 0.447],
+                [0, 0.447, 2.235],
+                [0.447, 2.235, 5.36],
+                [2.235, 5.36, 10],
+                # output membership functions
+                [-5, -4.572, -3],
+                [-4.572, -3, -1.5],
+                [-2.235, -1.5, 0],
+                [-1.5, 0, 1.5],
+                [0, 1.5, 3],
+                [1.5, 3, 4.572],
+                [3, 4.572, 5]
+            ])
 
         # initialize fuzy variables
         self.gap_error = ctrl.Antecedent(np.arange(-2, 3, 0.01), 'gap-error-value')
@@ -19,36 +48,36 @@ class FuzzyHWClass:
         self.acceleration = ctrl.Consequent(np.arange(-5, 5.1, 0.001), 'acceleration-value')
 
         # Function for fuzz.trimf(input,left edge, center edge, right edge)
-        self.gap_error['ExtraExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-2, -1, -0.5])
-        self.gap_error['ExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-0.6, -0.5, -0.25])
-        self.gap_error['ExtraSmall'] = fuzz.trimf(self.gap_error.universe, [-0.5, -0.25, 0])
-        self.gap_error['Small'] = fuzz.trimf(self.gap_error.universe, [-0.25, 0, 0.25])
-        self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, [0, 0.5, 1])
-        self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, [0.5, 1, 1.5])
-        self.gap_error['ExtraLarge'] = fuzz.trimf(self.gap_error.universe, [1, 1.5, 3])
+        self.gap_error['ExtraExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, membership_function_values[0])
+        self.gap_error['ExtraExtraSmall'] = fuzz.trimf(self.gap_error.universe, membership_function_values[1])
+        self.gap_error['ExtraSmall'] = fuzz.trimf(self.gap_error.universe, membership_function_values[2])
+        self.gap_error['Small'] = fuzz.trimf(self.gap_error.universe, membership_function_values[3])
+        self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, membership_function_values[4])
+        self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, membership_function_values[5])
+        self.gap_error['ExtraLarge'] = fuzz.trimf(self.gap_error.universe, membership_function_values[6])
         # print(self.gap_error.view())
 
-        self.gap_error_rate['ExtraExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-10, -7.5, -5.6])
-        self.gap_error_rate['ExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-6, -5.36, -2.235])
-        self.gap_error_rate['ExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, [-5.36, -2.235, -0.447])
-        self.gap_error_rate['Small'] = fuzz.trimf(self.gap_error_rate.universe, [-10, -2.235, 0])
-        self.gap_error_rate['Medium'] = fuzz.trimf(self.gap_error_rate.universe, [-0.447, 0, 0.447])
-        self.gap_error_rate['Large'] = fuzz.trimf(self.gap_error_rate.universe, [0, 0.447, 2.235])
-        self.gap_error_rate['ExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, [0.447, 2.235, 5.36])
-        self.gap_error_rate['ExtraExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, [2.235, 5.36, 10])
+        self.gap_error_rate['ExtraExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[7])
+        self.gap_error_rate['ExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[8])
+        self.gap_error_rate['ExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[9])
+        self.gap_error_rate['Small'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[10])
+        self.gap_error_rate['Medium'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[11])
+        self.gap_error_rate['Large'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[12])
+        self.gap_error_rate['ExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[13])
+        self.gap_error_rate['ExtraExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[14])
 
         # self.gap_diff_from_min['Small'] = fuzz.trimf(self.gap_diff_from_min.universe, [-3, -1.5, 0])
         # self.gap_diff_from_min['Medium'] = fuzz.trimf(self.gap_diff_from_min.universe, [-1.5, 0, 1.5])
         # self.gap_diff_from_min['Large'] = fuzz.trimf(self.gap_diff_from_min.universe, [0, 1.5, 2])
 
         # setup the 12 output membership functions
-        self.acceleration['ExtraExtraSmall'] = fuzz.trimf(self.acceleration.universe, [-5, -4.572, -3])
-        self.acceleration['ExtraSmall'] = fuzz.trimf(self.acceleration.universe, [-4.572, -3, -1.5])
-        self.acceleration['Small'] = fuzz.trimf(self.acceleration.universe, [-2.235, -1.5, 0])
-        self.acceleration['Medium'] = fuzz.trimf(self.acceleration.universe, [-1.5, 0, 1.5])
-        self.acceleration['Large'] = fuzz.trimf(self.acceleration.universe, [0, 1.5, 3])
-        self.acceleration['ExtraLarge'] = fuzz.trimf(self.acceleration.universe, [1.5, 3, 4.572])
-        self.acceleration['ExtraExtraLarge'] = fuzz.trimf(self.acceleration.universe, [3, 4.572, 5])
+        self.acceleration['ExtraExtraSmall'] = fuzz.trimf(self.acceleration.universe, membership_function_values[15])
+        self.acceleration['ExtraSmall'] = fuzz.trimf(self.acceleration.universe, membership_function_values[16])
+        self.acceleration['Small'] = fuzz.trimf(self.acceleration.universe, membership_function_values[17])
+        self.acceleration['Medium'] = fuzz.trimf(self.acceleration.universe, membership_function_values[18])
+        self.acceleration['Large'] = fuzz.trimf(self.acceleration.universe, membership_function_values[19])
+        self.acceleration['ExtraLarge'] = fuzz.trimf(self.acceleration.universe, membership_function_values[20])
+        self.acceleration['ExtraExtraLarge'] = fuzz.trimf(self.acceleration.universe, membership_function_values[21])
 
         # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
         rule1 = ctrl.Rule(antecedent=((self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']) |
