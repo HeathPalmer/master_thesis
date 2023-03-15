@@ -10,6 +10,7 @@ import pygad
 import sys
 import time
 import traci
+from itertools import chain
 from sumolib import checkBinary  # Checks for the binary in environ vars
 from test_fuzzy_controller_live import FuzzyHWClass
 # import xml.etree.ElementTree as ET
@@ -63,164 +64,172 @@ def calculateTimeToCollision(vehSpeed, vehPosition):  # gap_distance - units: me
 
 # contains TraCI control loop
 def run(fis_start_time, end_time):
-    fuzzyLogic = FuzzyHWClass()
-    step = 0
+    try:
+        fuzzyLogic = FuzzyHWClass()
+        step = 0
 
-    veh1_gap = []
-    veh2_gap = []
-    veh3_gap = []
-    veh4_gap = []
+        veh1_gap = []
+        veh2_gap = []
+        veh3_gap = []
+        veh4_gap = []
 
-    veh1_gap_error = []
-    veh2_gap_error = []
-    veh3_gap_error = []
-    veh4_gap_error = []
+        veh1_gap_error = []
+        veh2_gap_error = []
+        veh3_gap_error = []
+        veh4_gap_error = []
 
-    veh1_gap_error_rate = []
-    veh2_gap_error_rate = []
-    veh3_gap_error_rate = []
-    veh4_gap_error_rate = []
+        veh1_gap_error_rate = []
+        veh2_gap_error_rate = []
+        veh3_gap_error_rate = []
+        veh4_gap_error_rate = []
 
-    TTL = np.empty((0, 4), int)
+        TTL = np.empty((0, 4), int)
 
-    while traci.simulation.getMinExpectedNumber() > 0:
-        traci.simulationStep()
-        vehPosition = []
-        vehSpeed = []
-        # use the Krauss vehicle controller
-        if options.krauss:
-            if 30 < step < end_time:
-                for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
-                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
-                veh1_gap_error.append(veh1Previous_Gap-1)
-                veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
-                veh2_gap_error.append(veh2Previous_Gap-1)
-                veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
-                veh3_gap_error.append(veh3Previous_Gap-1)
-                veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
-                veh4_gap_error.append(veh4Previous_Gap-1)
+        while traci.simulation.getMinExpectedNumber() > 0:
+            traci.simulationStep()
+            vehPosition = []
+            vehSpeed = []
+            # use the Krauss vehicle controller
+            if options.krauss:
+                if 30 < step < end_time:
+                    for ind in traci.vehicle.getIDList():
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
+                    veh1_gap_error.append(veh1Previous_Gap-1)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
 
-                time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
-                TTL = np.vstack([TTL, np.array(time_to_collision)])
+                    time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                    TTL = np.vstack([TTL, np.array(time_to_collision)])
 
-                if options.slow_down_midway:
-                    if 525 < step < 615:
-                        traci.vehicle.slowDown("0", 20.1168, 90)
-                        # traci.vehicle.setSpeed("0", 20.1168)
-                    elif 614 < step < 675:
-                        traci.vehicle.slowDown("0", 31.292, 60)
+                    if options.slow_down_midway:
+                        if 525 < step < 615:
+                            traci.vehicle.slowDown("0", 20.1168, 90)
+                            # traci.vehicle.setSpeed("0", 20.1168)
+                        elif 614 < step < 675:
+                            traci.vehicle.slowDown("0", 31.292, 60)
+                        else:
+                            pass
                     else:
                         pass
                 else:
-                    pass
+                    veh1_gap_error.append(np.nan)
+                    veh2_gap_error.append(np.nan)
+                    veh3_gap_error.append(np.nan)
+                    veh4_gap_error.append(np.nan)
+            # Use the FIS vehicle controller
             else:
-                veh1_gap_error.append(np.nan)
-                veh2_gap_error.append(np.nan)
-                veh3_gap_error.append(np.nan)
-                veh4_gap_error.append(np.nan)
-        # Use the FIS vehicle controller
-        else:
-            if 30 < step < fis_start_time + 1:
-                for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
-                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
-                veh1_gap_error.append(veh1Previous_Gap-1)
-                veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
-                veh2_gap_error.append(veh2Previous_Gap-1)
-                veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
-                veh3_gap_error.append(veh3Previous_Gap-1)
-                veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
-                veh4_gap_error.append(veh4Previous_Gap-1)
+                if 30 < step < fis_start_time + 1:
+                    for ind in traci.vehicle.getIDList():
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
+                    veh1_gap_error.append(veh1Previous_Gap-1)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
 
-                time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
-                TTL = np.vstack([TTL, np.array(time_to_collision)])
+                    time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                    TTL = np.vstack([TTL, np.array(time_to_collision)])
 
-            elif fis_start_time < step < end_time:
-                vehPosition = []
-                vehSpeed = []
-                vehicleGapErrors = []
-                for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                elif fis_start_time < step < end_time:
+                    vehPosition = []
+                    vehSpeed = []
+                    vehicleGapErrors = []
+                    for ind in traci.vehicle.getIDList():
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
 
-                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors)
-                veh1Previous_Gap = veh1[0]
-                veh1_gap.append(veh1[0])
-                vehicleGapErrors.append(veh1[1])
-                veh1Acceleration = veh1[3]
-                veh1Speed = vehSpeed[1] + veh1Acceleration
-                veh1_gap_error.append(veh1[1])
-                veh1_gap_error_rate.append(veh1[2])
-                traci.vehicle.setSpeed("1", veh1Speed)
+                    veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors)
+                    veh1Previous_Gap = veh1[0]
+                    veh1_gap.append(veh1[0])
+                    vehicleGapErrors.append(veh1[1])
+                    veh1Acceleration = veh1[3]
+                    veh1Speed = vehSpeed[1] + veh1Acceleration
+                    veh1_gap_error.append(veh1[1])
+                    veh1_gap_error_rate.append(veh1[2])
+                    traci.vehicle.setSpeed("1", veh1Speed)
 
-                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors)
-                veh2Previous_Gap = veh2[0]
-                veh2_gap.append(veh2[0])
-                vehicleGapErrors.append(veh2[1])
-                veh2Acceleration = veh2[3]
-                veh2Speed = vehSpeed[2] + veh2Acceleration
-                veh2_gap_error.append(veh2[1])
-                veh2_gap_error_rate.append(veh2[2])
-                traci.vehicle.setSpeed("2", veh2Speed)
+                    veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors)
+                    veh2Previous_Gap = veh2[0]
+                    veh2_gap.append(veh2[0])
+                    vehicleGapErrors.append(veh2[1])
+                    veh2Acceleration = veh2[3]
+                    veh2Speed = vehSpeed[2] + veh2Acceleration
+                    veh2_gap_error.append(veh2[1])
+                    veh2_gap_error_rate.append(veh2[2])
+                    traci.vehicle.setSpeed("2", veh2Speed)
 
-                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors)
-                veh3Previous_Gap = veh3[0]
-                veh3_gap.append(veh3[0])
-                vehicleGapErrors.append(veh3[1])
-                veh3Acceleration = veh3[3]
-                veh3Speed = vehSpeed[3] + veh3Acceleration
-                veh3_gap_error.append(veh3[1])
-                veh3_gap_error_rate.append(veh3[2])
-                traci.vehicle.setSpeed("3", veh3Speed)
+                    veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors)
+                    veh3Previous_Gap = veh3[0]
+                    veh3_gap.append(veh3[0])
+                    vehicleGapErrors.append(veh3[1])
+                    veh3Acceleration = veh3[3]
+                    veh3Speed = vehSpeed[3] + veh3Acceleration
+                    veh3_gap_error.append(veh3[1])
+                    veh3_gap_error_rate.append(veh3[2])
+                    traci.vehicle.setSpeed("3", veh3Speed)
 
-                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors)
-                veh4Previous_Gap = veh4[0]
-                veh4_gap.append(veh4[0])
-                veh4Acceleration = veh4[3]
-                veh4Speed = vehSpeed[4] + veh4Acceleration
-                veh4_gap_error.append(veh4[1])
-                veh4_gap_error_rate.append(veh4[2])
-                traci.vehicle.setSpeed("4", veh4Speed)
+                    veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors)
+                    veh4Previous_Gap = veh4[0]
+                    veh4_gap.append(veh4[0])
+                    veh4Acceleration = veh4[3]
+                    veh4Speed = vehSpeed[4] + veh4Acceleration
+                    veh4_gap_error.append(veh4[1])
+                    veh4_gap_error_rate.append(veh4[2])
+                    traci.vehicle.setSpeed("4", veh4Speed)
 
-                time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
-                TTL = np.vstack([TTL, np.array(time_to_collision)])
+                    time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                    TTL = np.vstack([TTL, np.array(time_to_collision)])
 
-                if options.slow_down_midway:
-                    if 525 < step < 615:
-                        traci.vehicle.slowDown("0", 20.1168, 90)
-                        # traci.vehicle.setSpeed("0", 20.1168)
-                    elif 614 < step < 675:
-                        traci.vehicle.slowDown("0", 31.292, 60)
+                    if options.slow_down_midway:
+                        if 525 < step < 615:
+                            traci.vehicle.slowDown("0", 20.1168, 90)
+                            # traci.vehicle.setSpeed("0", 20.1168)
+                        elif 614 < step < 675:
+                            traci.vehicle.slowDown("0", 31.292, 60)
+                        else:
+                            pass
                     else:
                         pass
-                else:
-                    pass
 
-        # if step >= 30 and step < 150:
-            # veh1_position = traci.vehicle.getPosition("0")
-            # print(veh1_position)
-        # close lanes so vehicles do not attmept to pass the slow leader:
-        # if step == 120:
-            # with the current map, this stop happens between \1/2 or \
-            # 2/3 was down the road.
-            # traci.vehicle.slowDown("0", "0", "9")
-            # a time of 8 seconds with a decel of 9m/s causes the leading \
-            # vehicle to travel for ~68meters before stoping
-            # DEFAULT_THRESHOLD_TTC is 3 seconds according to: \
-            # https://github.com/eclipse/sumo/blob/main/src/microsim/devices/MSDevice_SSM.cpp
-        # if step == 120:
-        # traci.vehicle.setAccel("0", "1")
-        step += 1
-    # coome back to poi add
-    # traci.poi.add("test string", 0, 0, ("1", "0", "0", "0"))
-    # print(traci.poi.getIDCount())
-    # print(traci.vehicle.wantsAndCouldChangeLane("1", "2", state=None))
-    traci.close()
-    sys.stdout.flush()
-    return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
+            # if step >= 30 and step < 150:
+                # veh1_position = traci.vehicle.getPosition("0")
+                # print(veh1_position)
+            # close lanes so vehicles do not attmept to pass the slow leader:
+            # if step == 120:
+                # with the current map, this stop happens between \1/2 or \
+                # 2/3 was down the road.
+                # traci.vehicle.slowDown("0", "0", "9")
+                # a time of 8 seconds with a decel of 9m/s causes the leading \
+                # vehicle to travel for ~68meters before stoping
+                # DEFAULT_THRESHOLD_TTC is 3 seconds according to: \
+                # https://github.com/eclipse/sumo/blob/main/src/microsim/devices/MSDevice_SSM.cpp
+            # if step == 120:
+            # traci.vehicle.setAccel("0", "1")
+            step += 1
+        # coome back to poi add
+        # traci.poi.add("test string", 0, 0, ("1", "0", "0", "0"))
+        # print(traci.poi.getIDCount())
+        # print(traci.vehicle.wantsAndCouldChangeLane("1", "2", state=None))
+    except Exception as e:
+        print(f"Error in the FIS run function. Error was {e}")
+        veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
+            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL = \
+            10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000
+    finally:
+        traci.close()
+        sys.stdout.flush()
+        return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
+            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
 
 
 def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
@@ -253,24 +262,55 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
 
 
 def fitness_func(solution, solution_idx):
-    print(f"The solution is {solution}")
+    try:
+        print(f"The solution was: {type(solution)}")
+        # flat_solution = list(chain.from_iterable(solution))
+        # print(flat_solution)
+        solution.tolist()
+        i = 0
+        new_data = []
+        while i < len(solution):
+            new_data.append(solution[i:i+3])
+            i += 3
 
-    global veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
-        veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
-    # run the test_sumo_script
-    veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
-        veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL = run(fis_start_time, end_time)
+        print(f"The proposed solution is {new_data}")
 
-    print(veh1_gap_error[fis_start_time:end_time])
-    veh1_fitness_sum = sum(veh1_gap_error[fis_start_time:end_time])
-    veh2_fitness_sum = sum(veh2_gap_error[fis_start_time:end_time])
-    veh3_fitness_sum = sum(veh3_gap_error[fis_start_time:end_time])
-    veh4_fitness_sum = sum(veh4_gap_error[fis_start_time:end_time])
+        global veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
+            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
 
-    # total error for the simulation
-    fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+        # check if the proposed solution is valid...
+        for membership_function_row in new_data:
+            if membership_function_row[0] > membership_function_row[1] > membership_function_row[2]:
+                memberships_acceptable = True
+            else:
+                print("The membership function bounds are not acceptable")
+                memberships_acceptable = False
 
-    return fitness
+        if memberships_acceptable:
+            # run the test_sumo_script
+            veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
+                veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL = run(fis_start_time, end_time)
+
+            print(veh1_gap_error[fis_start_time:end_time])
+            veh1_fitness_sum = sum(veh1_gap_error[fis_start_time:end_time])
+            veh2_fitness_sum = sum(veh2_gap_error[fis_start_time:end_time])
+            veh3_fitness_sum = sum(veh3_gap_error[fis_start_time:end_time])
+            veh4_fitness_sum = sum(veh4_gap_error[fis_start_time:end_time])
+
+            fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+
+            # total error for the simulation
+            # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+        else:
+            fitness = 10000000  # one million
+
+    except Exception as e:
+        # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+        fitness = 10000000
+        print(f"There was an error calculating the fitness. The error was {e}")
+    finally:
+        print("Attempted to run fitness")
+        return fitness
 
 
 def on_generation(ga_instance):
@@ -369,7 +409,7 @@ if __name__ == "__main__":
 
     desired_output = 0  # Function output.
 
-    num_generations = 1  # Number of generations.
+    num_generations = 2  # Number of generations.
     num_parents_mating = 1  # Number of solutions to be selected as parents in the mating pool.
 
     sol_per_pop = 1  # Number of solutions in the population.
@@ -377,10 +417,27 @@ if __name__ == "__main__":
 
     last_fitness = 1000000
 
+    initial_population = [[-2, -1, -0.5,
+                           -0.6, -0.5, -0.25, -0.5, -0.25, 0, -0.25, 0, 0.25, 0, 0.5, 1, 0.5, 1, 1.5, 1, 1.5, 3, -10, -7.5, -5.6, -6, -5.36, -2.235, -5.36, -2.235, -0.447, -10, -2.235, 0,
+                           -0.447, 0, 0.447,
+                           0, 0.447, 2.235,
+                           0.447, 2.235, 5.36,
+                           2.235, 5.36, 10,
+                           # output membership functions
+                           -5, -4.572, -3,
+                           -4.572, -3, -1.5,
+                           -2.235, -1.5, 0,
+                           -1.5, 0, 1.5,
+                           0, 1.5, 3,
+                           1.5, 3, 4.572,
+                           3, 4.572, 5]]
+
     ga_instance = pygad.GA(num_generations=num_generations,
                            num_parents_mating=num_parents_mating,
                            sol_per_pop=sol_per_pop,
                            num_genes=num_genes,
+                           initial_population=initial_population,
+                           mutation_type=None,
                            fitness_func=fitness_func,
                            on_generation=on_generation)
 
