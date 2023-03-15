@@ -7,37 +7,38 @@ import pandas as pd
 
 class FuzzyHWClass:
 
-    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, *ego_gap_diff_from_min, **membership_function_values):
+    def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, membership_function_values, *ego_gap_diff_from_min):
         inputs = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]  # , ego_gap_diff_from_min]
 
-        if membership_function_values:
-            pass
-        else:
-            membership_function_values = np.array([
-                [-2, -1, -0.5],
-                [-0.6, -0.5, -0.25],
-                [-0.5, -0.25, 0],
-                [-0.25, 0, 0.25],
-                [0, 0.5, 1],
-                [0.5, 1, 1.5],
-                [1, 1.5, 3],
-                [-10, -7.5, -5.6],
-                [-6, -5.36, -2.235],
-                [-5.36, -2.235, -0.447],
-                [-10, -2.235, 0],
-                [-0.447, 0, 0.447],
-                [0, 0.447, 2.235],
-                [0.447, 2.235, 5.36],
-                [2.235, 5.36, 10],
-                # output membership functions
-                [-5, -4.572, -3],
-                [-4.572, -3, -1.5],
-                [-2.235, -1.5, 0],
-                [-1.5, 0, 1.5],
-                [0, 1.5, 3],
-                [1.5, 3, 4.572],
-                [3, 4.572, 5]
-            ])
+        # if membership_function_values.any():
+        #     pass
+        # else:
+        #     membership_function_values = np.array([
+        #         [-2, -1, -0.5],
+        #         [-0.6, -0.5, -0.25],
+        #         [-0.5, -0.25, 0],
+        #         [-0.25, 0, 0.25],
+        #         [0, 0.5, 1],
+        #         [0.5, 1, 1.5],
+        #         [1, 1.5, 3],
+        #         # second input mem functions
+        #         [-10, -7.5, -5.6],
+        #         [-6, -5.36, -2.235],
+        #         [-5.36, -2.235, -0.447],
+        #         [-10, -2.235, 0],
+        #         [-0.447, 0, 0.447],
+        #         [0, 0.447, 2.235],
+        #         [0.447, 2.235, 5.36],
+        #         [2.235, 5.36, 10],
+        #         # output membership functions
+        #         [-5, -4.572, -3],
+        #         [-4.572, -3, -1.5],
+        #         [-2.235, -1.5, 0],
+        #         [-1.5, 0, 1.5],
+        #         [0, 1.5, 3],
+        #         [1.5, 3, 4.572],
+        #         [3, 4.572, 5]
+        #     ])
 
         # initialize fuzy variables
         self.gap_error = ctrl.Antecedent(np.arange(-2, 3, 0.01), 'gap-error-value')
@@ -152,12 +153,12 @@ class FuzzyHWClass:
 
         return result
 
-    def vehicle_fuzzy(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min):
+    def vehicle_fuzzy(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min, membership_function_values):
         fuzzyOut = float
         acceleration_val = []
         # count = 0
         fuzzyFunction = FuzzyHWClass()
-        fuzzyOut = fuzzyFunction.fuzzyHW(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min)
+        fuzzyOut = fuzzyFunction.fuzzyHW(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, membership_function_values, ego_gap_diff_from_min)
         acceleration_val.append(fuzzyOut)
         # print(f"{y_val} and {fuzzyOut}")
 
@@ -170,7 +171,7 @@ class FuzzyHWClass:
     def average(input):
         return sum(input) / len(list)
 
-    def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed, list_vehicle_gap_errors):
+    def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed, list_vehicle_gap_errors, membership_function_values):
         fuzzyFunction = FuzzyHWClass()
         # constants
         ideal_gap = 1  # second
@@ -206,7 +207,7 @@ class FuzzyHWClass:
             min_vehicle_gap = min(list_vehicle_gap_errors)
             ego_gap_diff_from_min = vehicle_gap_error - min_vehicle_gap
 
-        vehicle_acceleration = fuzzyFunction.vehicle_fuzzy(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min)
+        vehicle_acceleration = fuzzyFunction.vehicle_fuzzy(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, ego_gap_diff_from_min, membership_function_values)
         vehicle = [vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate, vehicle_acceleration[0]]
         count = count+1
 
