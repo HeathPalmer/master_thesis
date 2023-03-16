@@ -97,7 +97,13 @@ def user_def_fitness(chromosome):
         # print(f"The proposed chromosome is {chromosome_array_of_arrays}")
 
         # starting SUMO and traci
-        global fullOutFileName, fcdOutInfoFileName
+
+        global fullOutFileName, fcdOutInfoFileName, recnum
+        # set the file name based on increamenting value
+        i = 0
+        while os.path.exists(os.path.join(spreadsheet_subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
+            i += 1
+        recnum = format(int(i), '03d')
         ssmFileName = rf"{spreadsheet_subdirectory}\{recnum}_ssm.xml"
         fullOutFileName = rf"{spreadsheet_subdirectory}\{recnum}_fullout.xml"
         fcdOutInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_fcdout.xml"
@@ -343,9 +349,22 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
         # print(traci.vehicle.wantsAndCouldChangeLane("1", "2", state=None))
     except Exception as e:
         print(f"Error in the FIS run function. Error was {e}")
-        veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
-            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL = \
-            10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000
+        step_difference = 1064 - step
+        i = 0
+        for i in len(step_difference):
+            veh1_gap_error.append(10)
+            veh2_gap_error.append(10)
+            veh3_gap_error.append(10)
+            veh4_gap_error.append(10)
+
+            veh1_gap_error_rate.append(10)
+            veh2_gap_error_rate.append(10)
+            veh3_gap_error_rate.append(10)
+            veh4_gap_error_rate.append(10)
+
+            TTL.append(10)
+
+            i = i+1
     finally:
         traci.close()
         sys.stdout.flush()
@@ -426,11 +445,6 @@ if __name__ == "__main__":
     except Exception:
         pass
 
-    # set the file name based on increamenting value
-    i = 0
-    while os.path.exists(os.path.join(spreadsheet_subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
-        i += 1
-    recnum = format(int(i), '03d')
     # another way to seperate new log files:
     # https://sumo.dlr.de/docs/Simulation/Output/index.html#separating_outputs_of_repeated_runs
 
@@ -452,17 +466,21 @@ if __name__ == "__main__":
     # Create the Genetic algorithm
     ga = My_GA()
 
-    ga.generation_goal = 2
+    ga.generation_goal = 10
     ga.chromosome_length = 66
-    ga.population_size = 10
+    ga.population_size = 20
+    ga.fitness_goal = 0
     # Run everything.
     ga.crossover_individual_impl = crossover.Crossover.Individual.single_point
     ga.fitness_function_impl = user_def_fitness
+    # ga.target_fitness_type = 'min'
     ga.evolve()
     # print(ga.population)
 
     ga.graph.generation_total_fitness()
     ga.graph.show()
+
+    # take the best individual and run the FIS with it again. Then generate the fcOut and so on...
 
     xml2csv.main([fcdOutInfoFileName])
     xml2csv.main([fullOutFileName])
