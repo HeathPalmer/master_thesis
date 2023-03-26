@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import csv
-from EasyGA import GA, crossover
+from EasyGA import GA, crossover, mutation
 import matplotlib.pyplot as plt
 import ntpath
 import numpy as np
@@ -171,6 +171,112 @@ def user_def_fitness(chromosome):
             print(f"No error occured. The fitness is: {fitness}")
         print(f"Attempted to run fitness with a fitness of: {fitness}")
         return fitness
+
+
+# Custom implementation of the survivor selection method.
+def survivor_selection_impl(ga):
+    needed_amount = len(ga.population) - len(ga.population.next_population)
+    print(f"population: {ga.population}")
+    print(f"population length is: {len(ga.population)}")
+    print(f"The next population length is: {len(ga.population.next_population)}")
+    print(f"needed amount: {needed_amount}")
+    print(f"next generation is: {ga.population.next_population}")
+
+    best_chromosome = ga.population[0]
+    # Save the best chromosome
+    if needed_amount > 0:
+        ga.population.add_child(best_chromosome)
+        needed_amount -= 1
+        print(f"population: {ga.population}")
+        print(f"needed amount: {needed_amount}")
+        print(f"next generation is: {ga.population.next_population}")
+        if needed_amount <= 0:
+            return
+
+    # Loop through the population
+    for chromosome in ga.population:
+        print(f"the chomosome fitness is: {chromosome.fitness}")
+        if chromosome.fitness == 100000:
+            new_chrom = create_pop()
+            print(f"new chrom is: {new_chrom}")
+            ga.population.add_child(new_chrom)
+            needed_amount -= 1
+            if needed_amount <= 0:
+                break
+        # Add chromosome if any of the genes are different
+        if any(best_gene != gene for best_gene, gene in zip(best_chromosome, chromosome)):
+            ga.population.add_child(chromosome)
+            needed_amount -= 1
+            print(f"population: {ga.population}")
+            print(f"needed amount: {needed_amount}")
+            print(f"next generation is: {ga.population.next_population}")
+
+            # Stop if enough chromosomes survive
+            if needed_amount <= 0:
+                break
+    print(f"population length is: {len(ga.population)}")
+    print(f"The next population length is: {len(ga.population.next_population)}")
+
+
+# Custom implementation of the mutation population method.
+# @GA._check_chromosome_mutation_rate
+# @GA._loop_selections
+# def mutation_population_impl(ga):
+#     print("Mutating...")
+#     for i in range(len(ga.population)):
+#         print(ga.population[i].fitness)
+#         if ga.population[i].fitness == 100000:
+#             new_chromosome = create_pop()
+#             for j in range(66):
+#                 ga.population[i][j] = new_chromosome[j]
+#             # recalculate the fitness value. Is this required?
+#             # ga.population[i].fitness = user_def_fitness(ga.population[i])
+#             print("Mutated the whole chromosome.")
+#         else:
+#             pass
+#         i += 1
+#     actual_mutation_rate = ga.gene_mutation_rate * 0.05
+#     random_chance = random.randint(0, 100)
+#     mutation_chance = 100 * actual_mutation_rate
+#     if random_chance < mutation_chance:
+#         # indexes surrounding the middle of the population
+#         low_index = int(len(ga.population)*(1-actual_mutation_rate)/2)
+#         # upper index is the last individual
+#         upp_index = int(len(ga.population))
+
+#         index = random.randrange(low_index, upp_index)
+#         ga.mutation_individual_impl(ga.population[index])
+#         print("Mutated genes in the chromosome")
+#     else:
+#         print("skipped gene mutation")
+#         pass
+
+
+# Custom implementation of the mutation individual method.
+# @mutation.Mutation._check_gene_mutation_rate
+# @mutation.Mutation._loop_mutations
+# def mutation_individual_impl(ga, chromosome):
+
+#     index = random.randrange(0, len(chromosome))
+
+#     # Use swapping
+#     if index > len(chromosome)/2:
+#         index_1 = index
+#         index_2 = random.randrange(index, len(chromosome))  # Stay in range.
+
+#         chromosome[index_1], chromosome[index_2] = chromosome[index_2], chromosome[index_1]  # Swap genes.
+
+#     # Make a new gene using chromosome_impl
+#     elif ga.chromosome_impl is not None:
+#         chromosome[index] = ga.chromosome_impl()[index]
+
+#     # Make a new gene using gene impl
+#     elif ga.gene_impl is not None:
+#         chromosome[index] = ga.gene_impl()
+
+#     # Can't make new gene
+#     else:
+#         raise Exception("Did not specify any initialization constraints.")
 
 
 # UPDATE how this args/options parser is structured. set up similar to graphvi args were parsed
