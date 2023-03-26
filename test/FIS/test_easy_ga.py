@@ -115,10 +115,11 @@ def user_def_fitness(chromosome):
 
         global fullOutFileName, fcdOutInfoFileName, recnum
         # set the file name based on increamenting value
-        i = 0
-        while os.path.exists(os.path.join(spreadsheet_subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
-            i += 1
-        recnum = format(int(i), '03d')
+        # i = 0
+        # while os.path.exists(os.path.join(spreadsheet_subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
+        #     i += 1
+        # recnum = format(int(i), '03d')
+        recnum = 100
         ssmFileName = rf"{spreadsheet_subdirectory}\{recnum}_ssm.xml"
         fullOutFileName = rf"{spreadsheet_subdirectory}\{recnum}_fullout.xml"
         fcdOutInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_fcdout.xml"
@@ -596,7 +597,7 @@ if __name__ == "__main__":
     # Create the Genetic algorithm
     ga = My_GA()
 
-    ga.generation_goal = 5
+    ga.generation_goal = 100
     ga.chromosome_length = 66
     ga.population_size = 10
     # Probability that the best selected chromosome will be selected as a parent
@@ -653,7 +654,7 @@ if __name__ == "__main__":
 
         generation_info = [current_gen, current_best_fitness, currenet_best_chromosome, current_population_fitness, current_population]
 
-        with open('ga_information.csv', 'a') as outfile:
+        with open(generation_information_file, 'a') as outfile:
             writer = csv.writer(outfile)
             writer.writerow(generation_info)
         # for i in range(len(ga.population)):
@@ -670,9 +671,9 @@ if __name__ == "__main__":
 
     time.sleep(1)
 
-    print(ga.database.generation_total_fitness("average"))
-    ga.graph.generation_total_fitness("average")
-    ga.graph.show()
+    # print(ga.database.generation_total_fitness("average"))
+    # ga.graph.generation_total_fitness("average")
+    # ga.graph.show()
 
     # take the best individual and run the FIS with it again. Then generate the fcOut and so on...
 
