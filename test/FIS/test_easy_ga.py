@@ -596,22 +596,39 @@ if __name__ == "__main__":
     # Create the Genetic algorithm
     ga = My_GA()
 
-    ga.generation_goal = 100
+    ga.generation_goal = 5
     ga.chromosome_length = 66
-    ga.population_size = 20
-    ga.selection_probability = 1
+    ga.population_size = 10
+    # Probability that the best selected chromosome will be selected as a parent
+    ga.selection_probability = 0.5
     # ga.fitness_goal = 0
     # Run everything.
     ga.crossover_individual_impl = crossover.Crossover.Individual.single_point
-    # create cutstom crossover method
-    #
-    # Create custom survivor method
-    #
+    ga.survivor_selection_impl = survivor_selection_impl
     # create custom mutation method
     #
     ga.fitness_function_impl = user_def_fitness
     ga.target_fitness_type = 'min'
+    # This makes it so the mutation functions are called every time
+    # This does not mean that the chromosome will be mutated every time.
+    # This is to ensure that chromosomes out of bounds are replaced.
+    ga.chromosome_mutation_rate = 0.05  # Rate at which chromosomes get mutated
+    # Ratio of chromosomes selected (1.0 = 1 parent for every chromosome in the population)
+    ga.parent_ratio = 0.1  # this should make it so that only two parents are chosen to mate if the population is 10
+    # ga.gene_mutation_rate = 1
+    # If you don't want to store all data coming from the GA set to
+    # false. This will also relieve some memory density issues.
+    ga.save_data = False
     ga.database_name = f'{spreadsheet_subdirectory}/database.db'
+    if os.path.isfile(ga.database_name):
+        os.unlink(ga.database_name)
+
+    generation_information_file = f'{spreadsheet_subdirectory}/ga_information.csv'
+    if os.path.isfile(generation_information_file):
+        os.unlink(generation_information_file)
+    # Setting the mutation methods.
+    # ga.mutation_population_impl = mutation_population_impl
+    # ga.mutation_individual_impl = mutation_individual_impl
 
     while ga.active():
         # Evolve only a certain number of generations
@@ -625,16 +642,30 @@ if __name__ == "__main__":
         # To divide the print to make it easier to look at
         print('-'*75)
 
+        generation_info = []
+        current_gen = ga.current_generation
+        current_best_fitness = ga.population[0].fitness
+        currenet_best_chromosome = ga.population[0]
+        current_population_fitness = []
         for i in range(len(ga.population)):
-            print(ga.population[i].fitness)
-            if ga.population[i].fitness == 100000:
-                new_chromosome = create_pop()
-                for j in range(66):
-                    ga.population[i][j] = new_chromosome[j]
-                ga.population[i].fitness = None
-            else:
-                pass
-            i += 1
+            current_population_fitness.append(ga.population[i].fitness)
+        current_population = ga.population
+
+        generation_info = [current_gen, current_best_fitness, currenet_best_chromosome, current_population_fitness, current_population]
+
+        with open('ga_information.csv', 'a') as outfile:
+            writer = csv.writer(outfile)
+            writer.writerow(generation_info)
+        # for i in range(len(ga.population)):
+        #     print(ga.population[i].fitness)
+        #     if ga.population[i].fitness == 100000:
+        #         new_chromosome = create_pop()
+        #         for j in range(66):
+        #             ga.population[i][j] = new_chromosome[j]
+        #         # ga.population[i].fitness = user_def_fitness(ga.population[i])
+        #     else:
+        #         pass
+        #     i += 1
     # print(ga.population)
 
     time.sleep(1)
