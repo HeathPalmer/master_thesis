@@ -135,6 +135,7 @@ def user_def_fitness(chromosome):
                      "--fcd-output", fcdOutInfoFileName,
                      "--fcd-output.acceleration"
                      ])
+        time.sleep(1)
 
         global veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
             veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
@@ -177,20 +178,20 @@ def user_def_fitness(chromosome):
 # Custom implementation of the survivor selection method.
 def survivor_selection_impl(ga):
     needed_amount = len(ga.population) - len(ga.population.next_population)
-    print(f"population: {ga.population}")
-    print(f"population length is: {len(ga.population)}")
-    print(f"The next population length is: {len(ga.population.next_population)}")
+    # print(f"population: {ga.population}")
+    # print(f"population length is: {len(ga.population)}")
+    # print(f"The next population length is: {len(ga.population.next_population)}")
     print(f"needed amount: {needed_amount}")
-    print(f"next generation is: {ga.population.next_population}")
+    # print(f"next generation is: {ga.population.next_population}")
 
     best_chromosome = ga.population[0]
     # Save the best chromosome
     if needed_amount > 0:
         ga.population.add_child(best_chromosome)
         needed_amount -= 1
-        print(f"population: {ga.population}")
+        # print(f"population: {ga.population}")
         print(f"needed amount: {needed_amount}")
-        print(f"next generation is: {ga.population.next_population}")
+        # print(f"next generation is: {ga.population.next_population}")
         if needed_amount <= 0:
             return
 
@@ -208,9 +209,9 @@ def survivor_selection_impl(ga):
         if any(best_gene != gene for best_gene, gene in zip(best_chromosome, chromosome)):
             ga.population.add_child(chromosome)
             needed_amount -= 1
-            print(f"population: {ga.population}")
+            # print(f"population: {ga.population}")
             print(f"needed amount: {needed_amount}")
-            print(f"next generation is: {ga.population.next_population}")
+            # print(f"next generation is: {ga.population.next_population}")
 
             # Stop if enough chromosomes survive
             if needed_amount <= 0:
@@ -480,6 +481,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
     finally:
         traci.close()
         sys.stdout.flush()
+        time.sleep(1)
         if ERROR_OCCURED is True:
             step_difference = 1064 - step
             i = 0
@@ -597,7 +599,7 @@ if __name__ == "__main__":
     # Create the Genetic algorithm
     ga = My_GA()
 
-    ga.generation_goal = 100
+    ga.generation_goal = 1000
     ga.chromosome_length = 66
     ga.population_size = 10
     # Probability that the best selected chromosome will be selected as a parent
