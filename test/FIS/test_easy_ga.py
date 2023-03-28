@@ -164,6 +164,9 @@ def user_def_fitness(chromosome):
         # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
         ERROR_OCCURED = True
         print(f"There was an error calculating the fitness. The error was: {e}")
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
     finally:
         # traci.close()
         # sys.stdout.flush()
@@ -478,6 +481,10 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
         ERROR_OCCURED = True
         print(f"Error in the FIS run function at step {step}. Error was {e} \n")
         print(f"The state of error is {ERROR_OCCURED}")
+
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
     finally:
         traci.close()
         sys.stdout.flush()
@@ -645,6 +652,7 @@ if __name__ == "__main__":
         # To divide the print to make it easier to look at
         print('-'*75)
 
+        # write results to CSV instead of the SQL database.
         generation_info = []
         current_gen = ga.current_generation
         current_best_fitness = ga.population[0].fitness
