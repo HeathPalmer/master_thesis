@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import csv
+import gc
 import matplotlib.pyplot as plt
+from memory_profiler import profile
 import ntpath
 import numpy as np
 import os
@@ -62,6 +64,7 @@ def calculateTimeToCollision(vehSpeed, vehPosition):  # gap_distance - units: me
 
 
 # contains TraCI control loop
+# @profile
 def run(fis_start_time, end_time):
     fuzzyLogic = FuzzyHWClass()
     step = 0
@@ -82,6 +85,35 @@ def run(fis_start_time, end_time):
     veh4_gap_error_rate = []
 
     TTL = np.empty((0, 4), int)
+
+    membership_function_values = np.array([
+                                            [-2, -1, -0.5],
+                                            [-0.6, -0.5, -0.25],
+                                            [-0.5, -0.25, 0],
+                                            [-0.25, 0, 0.25],
+                                            [0, 0.5, 1],
+                                            [0.5, 1, 1.5],
+                                            [1, 1.5, 3],
+                                            # second input mem functions
+                                            [-10, -7.5, -5.6],
+                                            [-6, -5.36, -2.235],
+                                            [-5.36, -2.235, -0.447],
+                                            [-10, -2.235, 0],
+                                            [-0.447, 0, 0.447],
+                                            [0, 0.447, 2.235],
+                                            [0.447, 2.235, 5.36],
+                                            [2.235, 5.36, 10],
+                                            # output membership functions
+                                            [-5, -4.572, -3],
+                                            [-4.572, -3, -1.5],
+                                            [-2.235, -1.5, 0],
+                                            [-1.5, 0, 1.5],
+                                            [0, 1.5, 3],
+                                            [1.5, 3, 4.572],
+                                            [3, 4.572, 5]
+                                            ])
+
+    SUMO = fuzzyLogic.createFuzzyControl(membership_function_values)
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
@@ -146,7 +178,7 @@ def run(fis_start_time, end_time):
                     vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                     vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
 
-                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors)
+                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, SUMO)
                 veh1Previous_Gap = veh1[0]
                 veh1_gap.append(veh1[0])
                 vehicleGapErrors.append(veh1[1])
@@ -156,7 +188,7 @@ def run(fis_start_time, end_time):
                 veh1_gap_error_rate.append(veh1[2])
                 traci.vehicle.setSpeed("1", veh1Speed)
 
-                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors)
+                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, SUMO)
                 veh2Previous_Gap = veh2[0]
                 veh2_gap.append(veh2[0])
                 vehicleGapErrors.append(veh2[1])
@@ -166,7 +198,7 @@ def run(fis_start_time, end_time):
                 veh2_gap_error_rate.append(veh2[2])
                 traci.vehicle.setSpeed("2", veh2Speed)
 
-                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors)
+                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, SUMO)
                 veh3Previous_Gap = veh3[0]
                 veh3_gap.append(veh3[0])
                 vehicleGapErrors.append(veh3[1])
@@ -176,7 +208,7 @@ def run(fis_start_time, end_time):
                 veh3_gap_error_rate.append(veh3[2])
                 traci.vehicle.setSpeed("3", veh3Speed)
 
-                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors)
+                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, SUMO)
                 veh4Previous_Gap = veh4[0]
                 veh4_gap.append(veh4[0])
                 veh4Acceleration = veh4[3]
@@ -187,6 +219,9 @@ def run(fis_start_time, end_time):
 
                 time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
+
+                # del veh1, veh2, veh3, veh4, vehSpeed, vehPosition
+                # gc.collect()
 
                 if options.slow_down_midway:
                     if 525 < step < 615:
@@ -220,6 +255,8 @@ def run(fis_start_time, end_time):
     # print(traci.vehicle.wantsAndCouldChangeLane("1", "2", state=None))
     traci.close()
     sys.stdout.flush()
+    # del fuzzyLogic
+    # gc.collect()
     return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
 
 
@@ -325,162 +362,170 @@ if __name__ == "__main__":
                  "--device.ssm.file", ssmFileName,
                  "--full-output", fullOutFileName,
                  "--fcd-output", fcdOutInfoFileName,
-                 "--fcd-output.acceleration"])
+                 "--fcd-output.acceleration",
+                 "--start",
+                 "--quit-on-end"])
     # call the run script. Runs the fuzzy logic
     veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
         veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL = run(fis_start_time, end_time)
+
+    del veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
+        veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
+    gc.collect()
+
+    time.sleep(10)
     # convert new xml file to csv
 
-    xml2csv.main([fcdOutInfoFileName])
-    xml2csv.main([fullOutFileName])
+    # xml2csv.main([fcdOutInfoFileName])
+    # xml2csv.main([fullOutFileName])
 
-    fcdOutCSV = os.path.splitext(fcdOutInfoFileName)[0]+'.csv'
-    fullOutCSV = os.path.splitext(fullOutFileName)[0]+'.csv'
+    # fcdOutCSV = os.path.splitext(fcdOutInfoFileName)[0]+'.csv'
+    # fullOutCSV = os.path.splitext(fullOutFileName)[0]+'.csv'
 
-    print(f"The FCD outfile file was generate: {fcdOutCSV}")
+    # print(f"The FCD outfile file was generate: {fcdOutCSV}")
 
-    if options.krauss:
-        title = "Krauss"
-    else:
-        title = "FIS"
-    df_FCD = pd.read_csv(f'{fcdOutCSV}')
-    df_Full = pd.read_csv(f'{fullOutCSV}')
-    time0 = []
-    time1 = []
-    time2 = []
-    time3 = []
-    time4 = []
+    # if options.krauss:
+    #     title = "Krauss"
+    # else:
+    #     title = "FIS"
+    # df_FCD = pd.read_csv(f'{fcdOutCSV}')
+    # df_Full = pd.read_csv(f'{fullOutCSV}')
+    # time0 = []
+    # time1 = []
+    # time2 = []
+    # time3 = []
+    # time4 = []
 
-    veh0Position = []
-    veh1Position = []
-    veh2Position = []
-    veh3Position = []
-    veh4Position = []
+    # veh0Position = []
+    # veh1Position = []
+    # veh2Position = []
+    # veh3Position = []
+    # veh4Position = []
 
-    veh0Velocity = []
-    veh1Velocity = []
-    veh2Velocity = []
-    veh3Velocity = []
-    veh4Velocity = []
+    # veh0Velocity = []
+    # veh1Velocity = []
+    # veh2Velocity = []
+    # veh3Velocity = []
+    # veh4Velocity = []
 
-    veh0Acceleration = []
-    veh1Acceleration = []
-    veh2Acceleration = []
-    veh3Acceleration = []
-    veh4Acceleration = []
+    # veh0Acceleration = []
+    # veh1Acceleration = []
+    # veh2Acceleration = []
+    # veh3Acceleration = []
+    # veh4Acceleration = []
 
-    veh0Jerk = []
-    veh1Jerk = []
-    veh2Jerk = []
-    veh3Jerk = []
-    veh4Jerk = []
+    # veh0Jerk = []
+    # veh1Jerk = []
+    # veh2Jerk = []
+    # veh3Jerk = []
+    # veh4Jerk = []
 
-    for index, row in df_FCD.iterrows():
-        # print(row["vehicle_id"], row["vehicle_pos"])
-        if row["vehicle_id"] == 0:
-            time0.append(row["timestep_time"])
-            veh0Position.append(row["vehicle_x"])
-            veh0Velocity.append(row["vehicle_speed"])
-            veh0Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
-            if len(veh0Acceleration) > 2:
-                acceleration_array_length = len(veh0Acceleration)
-                previous_acceleration_value = veh0Acceleration[acceleration_array_length - 2]
-                veh0Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
-            else:
-                pass
-        elif row["vehicle_id"] == 1:
-            time1.append(row["timestep_time"])
-            veh1Position.append(row["vehicle_x"])
-            veh1Velocity.append(row["vehicle_speed"])
-            veh1Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
-            if len(veh1Acceleration) > 2:
-                acceleration_array_length = len(veh1Acceleration)
-                previous_acceleration_value = veh1Acceleration[acceleration_array_length - 2]
-                veh1Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
-        elif row["vehicle_id"] == 2:
-            time2.append(row["timestep_time"])
-            veh2Position.append(row["vehicle_x"])
-            veh2Velocity.append(row["vehicle_speed"])
-            veh2Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
-            if len(veh2Acceleration) > 2:
-                acceleration_array_length = len(veh2Acceleration)
-                previous_acceleration_value = veh2Acceleration[acceleration_array_length - 2]
-                veh2Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
-        elif row["vehicle_id"] == 3:
-            time3.append(row["timestep_time"])
-            veh3Position.append(row["vehicle_x"])
-            veh3Velocity.append(row["vehicle_speed"])
-            veh3Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
-            if len(veh3Acceleration) > 2:
-                acceleration_array_length = len(veh3Acceleration)
-                previous_acceleration_value = veh3Acceleration[acceleration_array_length - 2]
-                veh3Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
-        elif row["vehicle_id"] == 4:
-            time4.append(row["timestep_time"])
-            veh4Position.append(row["vehicle_x"])
-            veh4Velocity.append(row["vehicle_speed"])
-            veh4Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
-            if len(veh4Acceleration) > 2:
-                acceleration_array_length = len(veh4Acceleration)
-                previous_acceleration_value = veh4Acceleration[acceleration_array_length - 2]
-                veh4Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
+    # for index, row in df_FCD.iterrows():
+    #     # print(row["vehicle_id"], row["vehicle_pos"])
+    #     if row["vehicle_id"] == 0:
+    #         time0.append(row["timestep_time"])
+    #         veh0Position.append(row["vehicle_x"])
+    #         veh0Velocity.append(row["vehicle_speed"])
+    #         veh0Acceleration.append(row["vehicle_acceleration"])
+    #         # if fis_start_time < row["timestep_time"] <= end_time:
+    #         if len(veh0Acceleration) > 2:
+    #             acceleration_array_length = len(veh0Acceleration)
+    #             previous_acceleration_value = veh0Acceleration[acceleration_array_length - 2]
+    #             veh0Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
+    #         else:
+    #             pass
+    #     elif row["vehicle_id"] == 1:
+    #         time1.append(row["timestep_time"])
+    #         veh1Position.append(row["vehicle_x"])
+    #         veh1Velocity.append(row["vehicle_speed"])
+    #         veh1Acceleration.append(row["vehicle_acceleration"])
+    #         # if fis_start_time < row["timestep_time"] <= end_time:
+    #         if len(veh1Acceleration) > 2:
+    #             acceleration_array_length = len(veh1Acceleration)
+    #             previous_acceleration_value = veh1Acceleration[acceleration_array_length - 2]
+    #             veh1Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
+    #     elif row["vehicle_id"] == 2:
+    #         time2.append(row["timestep_time"])
+    #         veh2Position.append(row["vehicle_x"])
+    #         veh2Velocity.append(row["vehicle_speed"])
+    #         veh2Acceleration.append(row["vehicle_acceleration"])
+    #         # if fis_start_time < row["timestep_time"] <= end_time:
+    #         if len(veh2Acceleration) > 2:
+    #             acceleration_array_length = len(veh2Acceleration)
+    #             previous_acceleration_value = veh2Acceleration[acceleration_array_length - 2]
+    #             veh2Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
+    #     elif row["vehicle_id"] == 3:
+    #         time3.append(row["timestep_time"])
+    #         veh3Position.append(row["vehicle_x"])
+    #         veh3Velocity.append(row["vehicle_speed"])
+    #         veh3Acceleration.append(row["vehicle_acceleration"])
+    #         # if fis_start_time < row["timestep_time"] <= end_time:
+    #         if len(veh3Acceleration) > 2:
+    #             acceleration_array_length = len(veh3Acceleration)
+    #             previous_acceleration_value = veh3Acceleration[acceleration_array_length - 2]
+    #             veh3Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
+    #     elif row["vehicle_id"] == 4:
+    #         time4.append(row["timestep_time"])
+    #         veh4Position.append(row["vehicle_x"])
+    #         veh4Velocity.append(row["vehicle_speed"])
+    #         veh4Acceleration.append(row["vehicle_acceleration"])
+    #         # if fis_start_time < row["timestep_time"] <= end_time:
+    #         if len(veh4Acceleration) > 2:
+    #             acceleration_array_length = len(veh4Acceleration)
+    #             previous_acceleration_value = veh4Acceleration[acceleration_array_length - 2]
+    #             veh4Jerk.append(row["vehicle_acceleration"] - previous_acceleration_value)
 
-    # try:
-    #     os.mkdir(f'./{images_subdirectory}/')
-    # except Exception:
-    #     pass
-    x = [time0, time1, time2, time3, time4]
-    yPosition = [veh0Position, veh1Position, veh2Position, veh3Position, veh4Position]
-    yVelocity = [veh0Velocity, veh1Velocity, veh2Velocity, veh3Velocity, veh4Velocity]
-    yAcceleration = [veh0Acceleration, veh1Acceleration, veh2Acceleration, veh3Acceleration, veh4Acceleration]
+    # # try:
+    # #     os.mkdir(f'./{images_subdirectory}/')
+    # # except Exception:
+    # #     pass
+    # x = [time0, time1, time2, time3, time4]
+    # yPosition = [veh0Position, veh1Position, veh2Position, veh3Position, veh4Position]
+    # yVelocity = [veh0Velocity, veh1Velocity, veh2Velocity, veh3Velocity, veh4Velocity]
+    # yAcceleration = [veh0Acceleration, veh1Acceleration, veh2Acceleration, veh3Acceleration, veh4Acceleration]
 
-    xJerk = [range(len(veh0Jerk)), range(len(veh1Jerk)), range(len(veh2Jerk)), range(len(veh3Jerk)), range(len(veh4Jerk))]
-    yJerkCalculation = [veh0Jerk, veh1Jerk, veh2Jerk, veh3Jerk, veh4Jerk]
+    # xJerk = [range(len(veh0Jerk)), range(len(veh1Jerk)), range(len(veh2Jerk)), range(len(veh3Jerk)), range(len(veh4Jerk))]
+    # yJerkCalculation = [veh0Jerk, veh1Jerk, veh2Jerk, veh3Jerk, veh4Jerk]
 
-    xGapError = [range(len(veh1_gap_error)), range(len(veh2_gap_error)), range(len(veh3_gap_error)), range(len(veh4_gap_error))]
-    yGapError = [veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error]
+    # xGapError = [range(len(veh1_gap_error)), range(len(veh2_gap_error)), range(len(veh3_gap_error)), range(len(veh4_gap_error))]
+    # yGapError = [veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error]
 
-    xGapErrorRate = [range(len(veh1_gap_error_rate)), range(len(veh2_gap_error_rate)), range(len(veh3_gap_error_rate)), range(len(veh4_gap_error_rate))]
-    yGapErrorRate = [veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate]
+    # xGapErrorRate = [range(len(veh1_gap_error_rate)), range(len(veh2_gap_error_rate)), range(len(veh3_gap_error_rate)), range(len(veh4_gap_error_rate))]
+    # yGapErrorRate = [veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate]
 
-    xTTL = [range(len(TTL[:, 0])), range(len(TTL[:, 1])), range(len(TTL[:, 2])), range(len(TTL[:, 3]))]
-    yTTL = [TTL[:, 0], TTL[:, 1], TTL[:, 2], TTL[:, 3]]
+    # xTTL = [range(len(TTL[:, 0])), range(len(TTL[:, 1])), range(len(TTL[:, 2])), range(len(TTL[:, 3]))]
+    # yTTL = [TTL[:, 0], TTL[:, 1], TTL[:, 2], TTL[:, 3]]
 
-    xGapErrorTranspose = list(zip(*xGapError))
-    yGapErrorTranspose = list(zip(*yGapError))
-    yGapErrorRateTranspose = list(zip(*yGapErrorRate))
-    titleGapError = ["Vehicle 1 Gap Error", "Vehicle 2 Gap Error", "Vehicle 3 Gap Error", "Vehicle 4 Gap Error"]
-    titleGapErrorRate = ["Vehicle 1 Gap Error Rate", "Vehicle 2 Gap Error Rate", "Vehicle 3 Gap Error Rate", "Vehicle 4 Gap Error Rate"]
+    # xGapErrorTranspose = list(zip(*xGapError))
+    # yGapErrorTranspose = list(zip(*yGapError))
+    # yGapErrorRateTranspose = list(zip(*yGapErrorRate))
+    # titleGapError = ["Vehicle 1 Gap Error", "Vehicle 2 Gap Error", "Vehicle 3 Gap Error", "Vehicle 4 Gap Error"]
+    # titleGapErrorRate = ["Vehicle 1 Gap Error Rate", "Vehicle 2 Gap Error Rate", "Vehicle 3 Gap Error Rate", "Vehicle 4 Gap Error Rate"]
 
-    with open(f'{spreadsheet_subdirectory}/{title}_Gap_error.csv', 'w') as f:
-        csv_writer = csv.writer(f)
-        csv_writer.writerow(titleGapError)
-        csv_writer.writerows(yGapErrorTranspose)
+    # with open(f'{spreadsheet_subdirectory}/{title}_Gap_error.csv', 'w') as f:
+    #     csv_writer = csv.writer(f)
+    #     csv_writer.writerow(titleGapError)
+    #     csv_writer.writerows(yGapErrorTranspose)
 
-    with open(f'{spreadsheet_subdirectory}/{title}_Gap_error_rate.csv', 'w') as f:
-        csv_writer = csv.writer(f)
-        csv_writer.writerow(titleGapErrorRate)
-        csv_writer.writerows(yGapErrorRateTranspose)
+    # with open(f'{spreadsheet_subdirectory}/{title}_Gap_error_rate.csv', 'w') as f:
+    #     csv_writer = csv.writer(f)
+    #     csv_writer.writerow(titleGapErrorRate)
+    #     csv_writer.writerows(yGapErrorRateTranspose)
 
-    plotResults(x, yPosition, title, 'Time_Step', 'Position', title)
+    # plotResults(x, yPosition, title, 'Time_Step', 'Position', title)
 
-    plotResults(x, yVelocity, title, 'Time_Step', 'Velocity', title)
+    # plotResults(x, yVelocity, title, 'Time_Step', 'Velocity', title)
 
-    modAcceleration = "ax.axhline(y = 2, color = 'r', linestyle = '-')"
-    plotResults(x, yAcceleration, title, 'Time_Step', 'Acceleration', title, str(modAcceleration))
+    # modAcceleration = "ax.axhline(y = 2, color = 'r', linestyle = '-')"
+    # plotResults(x, yAcceleration, title, 'Time_Step', 'Acceleration', title, str(modAcceleration))
 
-    plotResults(xJerk, yJerkCalculation, title, 'Time_Step', 'Jerk', title)
+    # plotResults(xJerk, yJerkCalculation, title, 'Time_Step', 'Jerk', title)
 
-    # modTTL = "ax.ticklabel_format(axis = \"y\", style = \"sci\", scilimits=(0,2))"
-    plotResults(xTTL, yTTL, title, 'Time_Step', 'TTL_seconds', title)
-
-    plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
-
-    plotResults(xGapErrorRate, yGapErrorRate, title, 'Time_Step', 'Gap_Error_Rate', title)
+    # # modTTL = "ax.ticklabel_format(axis = \"y\", style = \"sci\", scilimits=(0,2))"
+    # plotResults(xTTL, yTTL, title, 'Time_Step', 'TTL_seconds', title)
 
     # plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
+
+    # plotResults(xGapErrorRate, yGapErrorRate, title, 'Time_Step', 'Gap_Error_Rate', title)
+
+    # # plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
