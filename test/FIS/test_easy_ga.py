@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import csv
 from EasyGA import GA, crossover, mutation
+import gc
 import matplotlib.pyplot as plt
 import ntpath
 import numpy as np
@@ -91,6 +92,12 @@ def user_def_fitness(chromosome):
     try:
         global ERROR_OCCURED
         ERROR_OCCURED = False
+
+        # check if another fitness is being ran
+        # if traci.simulation.getDeltaT() > 0:
+        #     time.sleep(600)
+        # else:
+        #     pass
         # ERROR_OCCURED = False
         # print(f"The solution was: {chromosome}")
         # flat_solution = list(chain.from_iterable(solution))
@@ -131,10 +138,12 @@ def user_def_fitness(chromosome):
                      "--additional-files", additionalFileName,
                      "--device.ssm.probability", "1",
                      "--device.ssm.file", ssmFileName,
-                     "--full-output", fullOutFileName,
-                     "--fcd-output", fcdOutInfoFileName,
-                     "--fcd-output.acceleration"
+                     "--start",
+                     "--quit-on-end"
                      ])
+        # removed: "--full-output", fullOutFileName,
+        #  "--fcd-output", fcdOutInfoFileName,
+        #  "--fcd-output.acceleration"
         time.sleep(1)
 
         global veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
@@ -175,6 +184,10 @@ def user_def_fitness(chromosome):
         else:
             print(f"No error occured. The fitness is: {fitness}")
         print(f"Attempted to run fitness with a fitness of: {fitness}")
+        # del veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum, \
+        #     veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate
+        # # print("The garbace count is: ", gc.get_count())
+        # gc.collect()
         return fitness
 
 
@@ -342,6 +355,8 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
 
         TTL = np.empty((0, 4), int)
 
+        SUMO = fuzzyLogic.createFuzzyControl(chromosome_array_of_arrays)
+
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             vehPosition = []
@@ -405,7 +420,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
 
-                    veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, chromosome_array_of_arrays)
+                    veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, SUMO)
                     veh1Previous_Gap = veh1[0]
                     veh1_gap.append(veh1[0])
                     vehicleGapErrors.append(veh1[1])
@@ -415,7 +430,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                     veh1_gap_error_rate.append(veh1[2])
                     traci.vehicle.setSpeed("1", veh1Speed)
 
-                    veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, chromosome_array_of_arrays)
+                    veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, SUMO)
                     veh2Previous_Gap = veh2[0]
                     veh2_gap.append(veh2[0])
                     vehicleGapErrors.append(veh2[1])
@@ -425,7 +440,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                     veh2_gap_error_rate.append(veh2[2])
                     traci.vehicle.setSpeed("2", veh2Speed)
 
-                    veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, chromosome_array_of_arrays)
+                    veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, SUMO)
                     veh3Previous_Gap = veh3[0]
                     veh3_gap.append(veh3[0])
                     vehicleGapErrors.append(veh3[1])
@@ -435,7 +450,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                     veh3_gap_error_rate.append(veh3[2])
                     traci.vehicle.setSpeed("3", veh3Speed)
 
-                    veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, chromosome_array_of_arrays)
+                    veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, SUMO)
                     veh4Previous_Gap = veh4[0]
                     veh4_gap.append(veh4[0])
                     veh4Acceleration = veh4[3]
@@ -551,7 +566,7 @@ if __name__ == "__main__":
         sumoBinary = checkBinary('sumo')
     else:
         # run sumo with gui
-        sumoBinary = checkBinary('sumo')
+        sumoBinary = checkBinary('sumo-gui')
     fileName = ntpath.basename(__file__)
 
     fileName_No_Suffix = "highway_1"
@@ -628,7 +643,7 @@ if __name__ == "__main__":
     # ga.gene_mutation_rate = 1
     # If you don't want to store all data coming from the GA set to
     # false. This will also relieve some memory density issues.
-    ga.save_data = False
+    ga.save_data = True
     ga.database_name = f'{spreadsheet_subdirectory}/database.db'
     if os.path.isfile(ga.database_name):
         os.unlink(ga.database_name)
@@ -682,8 +697,8 @@ if __name__ == "__main__":
     time.sleep(1)
 
     # print(ga.database.generation_total_fitness("average"))
-    # ga.graph.generation_total_fitness("average")
-    # ga.graph.show()
+    ga.graph.generation_total_fitness("average")
+    ga.graph.show()
 
     # take the best individual and run the FIS with it again. Then generate the fcOut and so on...
 
