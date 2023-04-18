@@ -697,7 +697,7 @@ if __name__ == "__main__":
     time.sleep(1)
 
     # print(ga.database.generation_total_fitness("average"))
-    ga.graph.generation_total_fitness("average")
+    ga.graph.lowest_value_chromosome()
     ga.graph.show()
 
     # take the best individual and run the FIS with it again. Then generate the fcOut and so on...
