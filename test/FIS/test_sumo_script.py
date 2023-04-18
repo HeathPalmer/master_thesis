@@ -406,7 +406,7 @@ if __name__ == "__main__":
     print(f"The FCD outfile file was generate: {fcdOutCSV}")
 
     if options.krauss:
-        title = "CACC"
+        title = "Krauss"
     else:
         title = "FIS"
     df_FCD = pd.read_csv(fcdOutCSV)  # './results/spreadsheet/20230306_highway_1_tripInfo/000_fcdout.csv')
