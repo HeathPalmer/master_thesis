@@ -17,7 +17,7 @@ from test_fuzzy_controller_live import FuzzyHWClass
 # import xml.etree.ElementTree as ET
 # necessary to import xml2csv file from a different directory
 # source:https://www.codegrepper.com/code-examples/python/import+script+from+another+folder+python
-sys.path.append('C:/Program Files (x86)/Eclipse/Sumo/tools/xml')
+sys.path.append(r'C:/Program Files (x86)/Eclipse/Sumo/tools/xml')
 import xml2csv  # noqa: E402
 # used for writing xml files (better than examples)
 # import xml.etree.ElementTree as ET
@@ -86,6 +86,24 @@ def run(fis_start_time, end_time):
 
     TTL = np.empty((0, 4), int)
 
+    chromosome = [[-1.4457460055267017],[0.9596282534579326],[7],[-1.9687233494625112],[-1.4949227177070799],[0.4612586650427106],[-0.5184262059508764],[0.33112194921412064],[1],[0.032862387192658105],[1.1411546493663296],[1.6209736373574386],[-1.325107367543487],[-1.0780860231020188],[-0.5188892088706325],[0.35693070676711347],[2.050684365001913],[2.774034566185253],[1],[2.68280418027796],[2.748702738024731],[2],[3.489405091498025],[5.0337841895636455],[-5.724586988002178],[-0.35251959938796507],[1],[-4.750454037624641],[-4.254990848572678],[7],[1],[3.2731361566159016],[7],[-5.90119953417147],[-3.844035790352814],[3.8775225627050975],[-5.2362274660785495],[-1.168961150316191],[9],[0.23788695355013978],[3.1587191623626643],[4.687913542495231],[1],[7.525508667366361],[7.804668032310376],[1.342919268417213],[1.39218145634533],[1.6151422656498324],[0.31956898205956374],[1.0963867260814184],[2.2544998100268643],[1],[2.490873025143525],[4.1265360934946305],[-0.6069999197682163],[0.6492415564704332],[1],[-0.1372509781448512],[1.347515967623831],[1.3896826810635972],[-3.6379127234475956],[-1.6691021049343568],[0.2178198719024973],[-4.54308179374002],[0.0989252235612108],[1.3340108981072287]]
+
+    i = 0
+    new_data = []
+    while i < len(chromosome):
+        new_data.append(chromosome[i])
+        i = i+1
+
+    j = 0
+    chromosome_array_of_arrays = []
+    while j < len(new_data):
+        chromosome_array_of_arrays.append(new_data[j:j+3])
+        j = j + 3
+
+    # convert array of arrays to a Numpy array of arrays
+    chromosome_array_of_arrays = np.array(chromosome_array_of_arrays)
+
+    # hand picked FIS parameters
     membership_function_values = np.array([
                                             [-2, -1, -0.5],
                                             [-0.6, -0.5, -0.25],
