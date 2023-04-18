@@ -292,7 +292,7 @@ class FuzzyHWClass:
 
     # @profile
     def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed, list_vehicle_gap_errors, SUMO):
-        fuzzyFunction = FuzzyHWClass()
+        # fuzzyFunction = FuzzyHWClass()
         # constants
         ideal_gap = 1  # second
         vehicle_length = 5  # meters
