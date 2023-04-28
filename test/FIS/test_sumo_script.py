@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import csv
+import gc
 import matplotlib.pyplot as plt
+from memory_profiler import profile
 import ntpath
 import numpy as np
 import os
@@ -15,7 +17,7 @@ from test_fuzzy_controller_live import FuzzyHWClass
 # import xml.etree.ElementTree as ET
 # necessary to import xml2csv file from a different directory
 # source:https://www.codegrepper.com/code-examples/python/import+script+from+another+folder+python
-sys.path.append('C:/Program Files (x86)/Eclipse/Sumo/tools/xml')
+sys.path.append(r'C:/Program Files (x86)/Eclipse/Sumo/tools/xml')
 import xml2csv  # noqa: E402
 # used for writing xml files (better than examples)
 # import xml.etree.ElementTree as ET
@@ -62,6 +64,7 @@ def calculateTimeToCollision(vehSpeed, vehPosition):  # gap_distance - units: me
 
 
 # contains TraCI control loop
+# @profile
 def run(fis_start_time, end_time):
     fuzzyLogic = FuzzyHWClass()
     step = 0
@@ -82,6 +85,53 @@ def run(fis_start_time, end_time):
     veh4_gap_error_rate = []
 
     TTL = np.empty((0, 4), int)
+
+    chromosome = [[-1.4457460055267017],[0.9596282534579326],[7],[-1.9687233494625112],[-1.4949227177070799],[0.4612586650427106],[-0.5184262059508764],[0.33112194921412064],[1],[0.032862387192658105],[1.1411546493663296],[1.6209736373574386],[-1.325107367543487],[-1.0780860231020188],[-0.5188892088706325],[0.35693070676711347],[2.050684365001913],[2.774034566185253],[1],[2.68280418027796],[2.748702738024731],[2],[3.489405091498025],[5.0337841895636455],[-5.724586988002178],[-0.35251959938796507],[1],[-4.750454037624641],[-4.254990848572678],[7],[1],[3.2731361566159016],[7],[-5.90119953417147],[-3.844035790352814],[3.8775225627050975],[-5.2362274660785495],[-1.168961150316191],[9],[0.23788695355013978],[3.1587191623626643],[4.687913542495231],[1],[7.525508667366361],[7.804668032310376],[1.342919268417213],[1.39218145634533],[1.6151422656498324],[0.31956898205956374],[1.0963867260814184],[2.2544998100268643],[1],[2.490873025143525],[4.1265360934946305],[-0.6069999197682163],[0.6492415564704332],[1],[-0.1372509781448512],[1.347515967623831],[1.3896826810635972],[-3.6379127234475956],[-1.6691021049343568],[0.2178198719024973],[-4.54308179374002],[0.0989252235612108],[1.3340108981072287]]
+
+    i = 0
+    new_data = []
+    while i < len(chromosome):
+        new_data.append(chromosome[i])
+        i = i+1
+
+    j = 0
+    chromosome_array_of_arrays = []
+    while j < len(new_data):
+        chromosome_array_of_arrays.append(new_data[j:j+3])
+        j = j + 3
+
+    # convert array of arrays to a Numpy array of arrays
+    chromosome_array_of_arrays = np.array(chromosome_array_of_arrays)
+
+    # hand picked FIS parameters
+    membership_function_values = np.array([
+                                            [-2, -1, -0.5],
+                                            [-0.6, -0.5, -0.25],
+                                            [-0.5, -0.25, 0],
+                                            [-0.25, 0, 0.25],
+                                            [0, 0.5, 1],
+                                            [0.5, 1, 1.5],
+                                            [1, 1.5, 3],
+                                            # second input mem functions
+                                            [-10, -7.5, -5.6],
+                                            [-6, -5.36, -2.235],
+                                            [-5.36, -2.235, -0.447],
+                                            [-10, -2.235, 0],
+                                            [-0.447, 0, 0.447],
+                                            [0, 0.447, 2.235],
+                                            [0.447, 2.235, 5.36],
+                                            [2.235, 5.36, 10],
+                                            # output membership functions
+                                            [-5, -4.572, -3],
+                                            [-4.572, -3, -1.5],
+                                            [-2.235, -1.5, 0],
+                                            [-1.5, 0, 1.5],
+                                            [0, 1.5, 3],
+                                            [1.5, 3, 4.572],
+                                            [3, 4.572, 5]
+                                            ])
+
+    SUMO = fuzzyLogic.createFuzzyControl(membership_function_values)
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
@@ -146,7 +196,7 @@ def run(fis_start_time, end_time):
                     vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                     vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
 
-                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors)
+                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, SUMO)
                 veh1Previous_Gap = veh1[0]
                 veh1_gap.append(veh1[0])
                 vehicleGapErrors.append(veh1[1])
@@ -156,7 +206,7 @@ def run(fis_start_time, end_time):
                 veh1_gap_error_rate.append(veh1[2])
                 traci.vehicle.setSpeed("1", veh1Speed)
 
-                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors)
+                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, SUMO)
                 veh2Previous_Gap = veh2[0]
                 veh2_gap.append(veh2[0])
                 vehicleGapErrors.append(veh2[1])
@@ -166,7 +216,7 @@ def run(fis_start_time, end_time):
                 veh2_gap_error_rate.append(veh2[2])
                 traci.vehicle.setSpeed("2", veh2Speed)
 
-                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors)
+                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, SUMO)
                 veh3Previous_Gap = veh3[0]
                 veh3_gap.append(veh3[0])
                 vehicleGapErrors.append(veh3[1])
@@ -176,7 +226,7 @@ def run(fis_start_time, end_time):
                 veh3_gap_error_rate.append(veh3[2])
                 traci.vehicle.setSpeed("3", veh3Speed)
 
-                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors)
+                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, SUMO)
                 veh4Previous_Gap = veh4[0]
                 veh4_gap.append(veh4[0])
                 veh4Acceleration = veh4[3]
@@ -187,6 +237,9 @@ def run(fis_start_time, end_time):
 
                 time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
+
+                # del veh1, veh2, veh3, veh4, vehSpeed, vehPosition
+                # gc.collect()
 
                 if options.slow_down_midway:
                     if 525 < step < 615:
@@ -220,6 +273,8 @@ def run(fis_start_time, end_time):
     # print(traci.vehicle.wantsAndCouldChangeLane("1", "2", state=None))
     traci.close()
     sys.stdout.flush()
+    # del fuzzyLogic
+    # gc.collect()
     return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
 
 
@@ -325,12 +380,23 @@ if __name__ == "__main__":
                  "--device.ssm.file", ssmFileName,
                  "--full-output", fullOutFileName,
                  "--fcd-output", fcdOutInfoFileName,
-                 "--fcd-output.acceleration"])
+                 "--fcd-output.acceleration",
+                 "--start",
+                 "--quit-on-end"])
     # call the run script. Runs the fuzzy logic
     veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
         veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL = run(fis_start_time, end_time)
-    # convert new xml file to csv
 
+    veh1_fitness_sum = sum(veh1_gap_error[fis_start_time:end_time])
+    veh2_fitness_sum = sum(veh2_gap_error[fis_start_time:end_time])
+    veh3_fitness_sum = sum(veh3_gap_error[fis_start_time:end_time])
+    veh4_fitness_sum = sum(veh4_gap_error[fis_start_time:end_time])
+
+    fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+
+    print(f"The fitness is: {fitness}")
+
+    # convert new xml file to csv
     xml2csv.main([fcdOutInfoFileName])
     xml2csv.main([fullOutFileName])
 
@@ -343,8 +409,8 @@ if __name__ == "__main__":
         title = "Krauss"
     else:
         title = "FIS"
-    df_FCD = pd.read_csv(f'{fcdOutCSV}')
-    df_Full = pd.read_csv(f'{fullOutCSV}')
+    df_FCD = pd.read_csv(fcdOutCSV)  # './results/spreadsheet/20230306_highway_1_tripInfo/000_fcdout.csv')
+    df_Full = pd.read_csv(fullOutCSV)  # './results/spreadsheet/20230306_highway_1_tripInfo/000_fullout.csv')
     time0 = []
     time1 = []
     time2 = []
