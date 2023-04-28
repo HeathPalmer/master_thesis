@@ -6,41 +6,13 @@ import random
 class My_GA(GA):
     """Example GA with custom initialize_population method."""
 
-    def create_pop(self):
-        membershipFunction = []
-        for x in range(7):
-            outterBounds = [random.uniform(-2, 3), random.uniform(-2, 3)]
-            outterBounds.sort()
-            peak = random.uniform(outterBounds[0], outterBounds[1])
-            membershipFunction.append(outterBounds[0])
-            membershipFunction.append(peak)
-            membershipFunction.append(outterBounds[1])
-
-        for x in range(8):
-            outterBounds = [random.uniform(-6, 10), random.uniform(-6, 10)]
-            outterBounds.sort()
-            peak = random.uniform(outterBounds[0], outterBounds[1])
-            membershipFunction.append(outterBounds[0])
-            membershipFunction.append(peak)
-            membershipFunction.append(outterBounds[1])
-
-        for x in range(7):
-            outterBounds = [random.uniform(-5, 5.1), random.uniform(-5, 5.1)]
-            outterBounds.sort()
-            peak = random.uniform(outterBounds[0], outterBounds[1])
-            membershipFunction.append(outterBounds[0])
-            membershipFunction.append(peak)
-            membershipFunction.append(outterBounds[1])
-
-        return membershipFunction
-
     def initialize_population(self):
         """Custom population initialization with chromosomes
         """
         ga_test = My_GA()
 
         self.population = self.make_population(
-            ga_test.create_pop()
+            create_pop()
             for _
             in range(self.population_size)
         )
@@ -75,13 +47,67 @@ class My_GA(GA):
     #     return value_list
 
 
+def create_pop():
+    membershipFunction = []
+    for x in range(7):
+        outterBounds = [random.uniform(-2, 3), random.uniform(-2, 3)]
+        outterBounds.sort()
+        peak = random.uniform(outterBounds[0], outterBounds[1])
+        membershipFunction.append(outterBounds[0])
+        membershipFunction.append(peak)
+        membershipFunction.append(outterBounds[1])
+
+    for x in range(8):
+        outterBounds = [random.uniform(-6, 10), random.uniform(-6, 10)]
+        outterBounds.sort()
+        peak = random.uniform(outterBounds[0], outterBounds[1])
+        membershipFunction.append(outterBounds[0])
+        membershipFunction.append(peak)
+        membershipFunction.append(outterBounds[1])
+
+    for x in range(7):
+        outterBounds = [random.uniform(-5, 5.1), random.uniform(-5, 5.1)]
+        outterBounds.sort()
+        peak = random.uniform(outterBounds[0], outterBounds[1])
+        membershipFunction.append(outterBounds[0])
+        membershipFunction.append(peak)
+        membershipFunction.append(outterBounds[1])
+
+    return membershipFunction
+
+
 # Make a custom ga object
 ga = My_GA()
-ga.generation_goal = 2
+ga.generation_goal = 100
 ga.chromosome_length = 66
 # Run everything.
 ga.crossover_individual_impl = crossover.Crossover.Individual.single_point
-ga.evolve()
+while ga.active():
+    # Evolve only a certain number of generations
+    ga.evolve(1)
+    # Print the current generation
+    ga.print_generation()
+    # Print the best chromosome from that generations population
+    ga.print_best_chromosome()
+    # If you want to show each population
+    # ga.print_population()
+    # To divide the print to make it easier to look at
+    print('-'*75)
+    test = []
+    for i in range(len(ga.population)):
+        # print(f"The chromosome is: {individual}")
+        print(f"The chromosome was: {ga.population[i]}")
+        test = create_pop()
+        # print([[test_item] for test_item in test])
+        for j in range(66):
+            ga.population[i][j].value = test[j]
+        print(f"New chromosome is {ga.population[i]}")
+        ga.population[i].fitness = None
+        print(f"New chromosome fitness is {ga.population[i].fitness}")
+        # ga.population[i] = res
+        # print(f"The chromosome is now: {ga.population[i]}")
+
+
 print(len(ga.population[5]))
 # with the gene.value below, I can pull the values from the chromosome and use them in the membership functions
 print(ga.population[5][0].value)
