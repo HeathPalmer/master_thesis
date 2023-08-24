@@ -356,6 +356,8 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
         TTL = np.empty((0, 4), int)
 
         SUMO = fuzzyLogic.createFuzzyControl(chromosome_array_of_arrays)
+        # Add another fuzzy inference system here for the lane change
+        SUMO_LANE_CHANGE = fuzzyLogic.createFuzzyLaneControl()  # create a new chromosome array
 
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
@@ -416,6 +418,8 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                     vehPosition = []
                     vehSpeed = []
                     vehicleGapErrors = []
+                    # collect data related to lane change at every time step
+
                     for ind in traci.vehicle.getIDList():
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -472,6 +476,8 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                             pass
                     else:
                         pass
+
+                    # add in the lane change section of the vehicle control
 
             # if step >= 30 and step < 150:
                 # veh1_position = traci.vehicle.getPosition("0")
