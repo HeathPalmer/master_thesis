@@ -137,12 +137,22 @@ def run(fis_start_time, end_time):
         traci.simulationStep()
         vehPosition = []
         vehSpeed = []
+        newVehPosition = []
+        newVehSpeed = []
+        timeLoss = []
+        newVehTimeLoss = []
         # use the Krauss vehicle controller
         if options.krauss:
             if 30 < step < end_time:
                 for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                 veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
                 veh1_gap_error.append(veh1Previous_Gap-1)
                 veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
@@ -174,8 +184,14 @@ def run(fis_start_time, end_time):
         else:
             if 30 < step < fis_start_time + 1:
                 for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                 veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
                 veh1_gap_error.append(veh1Previous_Gap-1)
                 veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
@@ -189,12 +205,23 @@ def run(fis_start_time, end_time):
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
 
             elif fis_start_time < step < end_time:
+                # is re-creating these variables necessary???????
                 vehPosition = []
                 vehSpeed = []
                 vehicleGapErrors = []
+                newVehPosition = []
+                newVehSpeed = []
+                timeLoss = []
+                newVehTimeLoss = []
                 for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
 
                 veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, SUMO)
                 veh1Previous_Gap = veh1[0]
