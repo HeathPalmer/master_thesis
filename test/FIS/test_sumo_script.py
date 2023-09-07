@@ -38,7 +38,7 @@ def get_options():
                           version of sumo")
     opt_parser.add_option("--krauss", action="store_true",
                           default=False, help="run the simulation using the human driver model")
-    opt_parser.add_option("--highway_1", action="store_true",
+    opt_parser.add_option("--highway_2", action="store_true",
                           default=False, help="run the simulation using the second highway configuration")
     opt_parser.add_option("--slow_down_midway", action="store_true",
                           default=False, help="slows the leading human model vehicle halfway during the sim")
@@ -320,7 +320,7 @@ if __name__ == "__main__":
         sumoBinary = checkBinary('sumo-gui')
     fileName = ntpath.basename(__file__)
 
-    fileName_No_Suffix = "highway_1"
+    fileName_No_Suffix = "highway_2"
     fis_start_time = 300
     end_time = 900
 
@@ -353,7 +353,7 @@ if __name__ == "__main__":
 
     # set the file name based on increamenting value
     i = 0
-    while os.path.exists(os.path.join(spreadsheet_subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
+    while os.path.exists(os.path.join(spreadsheet_subdirectory, f"{i}_fcdout.xml")):
         i += 1
     recnum = format(int(i), '03d')
     # another way to seperate new log files:
