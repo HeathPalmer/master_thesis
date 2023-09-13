@@ -131,7 +131,21 @@ def run(fis_start_time, end_time):
                                             [3, 4.572, 5]
                                             ])
 
+    lane_change_membership_function_values = np.array([
+                                            [-1, 0, 15],
+                                            [14, 22, 29],
+                                            [25, 50, 100],
+                                            # second input mem functions
+                                            [-0.1, 0, 0.01],
+                                            [0.005, 0.025, 0.05],
+                                            [0.04, 0.07, 1],
+                                            # output membership functions
+                                            [-1, 0, 0.4],
+                                            [0.39, 1, 2],
+                                            ])
+
     SUMO = fuzzyLogic.createFuzzyControl(membership_function_values)
+    SUMOLANECHANGE = fuzzyLogic.createFuzzyLaneControl(lane_change_membership_function_values)
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
@@ -148,7 +162,8 @@ def run(fis_start_time, end_time):
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
-                        timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                     else:
                         newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -187,7 +202,8 @@ def run(fis_start_time, end_time):
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
-                        timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                     else:
                         newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -200,6 +216,7 @@ def run(fis_start_time, end_time):
                 veh3_gap_error.append(veh3Previous_Gap-1)
                 veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
                 veh4_gap_error.append(veh4Previous_Gap-1)
+                previousTimeLoss = timeLoss
 
                 time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
@@ -217,13 +234,19 @@ def run(fis_start_time, end_time):
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
-                        timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                     else:
                         newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
                         newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
 
-                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, SUMO)
+                # print(step)
+                # print(timeLoss)
+                avgTimeLoss = sum(timeLoss)/4
+                timeLossChangeRate = [a - b for a, b in zip(timeLoss, previousTimeLoss)]
+                timeLoss = previousTimeLoss
+                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
                 veh1Previous_Gap = veh1[0]
                 veh1_gap.append(veh1[0])
                 vehicleGapErrors.append(veh1[1])
@@ -233,7 +256,7 @@ def run(fis_start_time, end_time):
                 veh1_gap_error_rate.append(veh1[2])
                 traci.vehicle.setSpeed("1", veh1Speed)
 
-                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, SUMO)
+                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
                 veh2Previous_Gap = veh2[0]
                 veh2_gap.append(veh2[0])
                 vehicleGapErrors.append(veh2[1])
@@ -243,7 +266,7 @@ def run(fis_start_time, end_time):
                 veh2_gap_error_rate.append(veh2[2])
                 traci.vehicle.setSpeed("2", veh2Speed)
 
-                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, SUMO)
+                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
                 veh3Previous_Gap = veh3[0]
                 veh3_gap.append(veh3[0])
                 vehicleGapErrors.append(veh3[1])
@@ -253,7 +276,7 @@ def run(fis_start_time, end_time):
                 veh3_gap_error_rate.append(veh3[2])
                 traci.vehicle.setSpeed("3", veh3Speed)
 
-                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, SUMO)
+                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
                 veh4Previous_Gap = veh4[0]
                 veh4_gap.append(veh4[0])
                 veh4Acceleration = veh4[3]
