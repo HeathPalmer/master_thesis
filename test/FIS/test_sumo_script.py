@@ -84,6 +84,11 @@ def run(fis_start_time, end_time):
     veh3_gap_error_rate = []
     veh4_gap_error_rate = []
 
+    veh1_lane_change_decision = []
+    veh2_lane_change_decision = []
+    veh3_lane_change_decision = []
+    veh4_lane_change_decision = []
+
     TTL = np.empty((0, 4), int)
 
     chromosome = [[-1.4457460055267017],[0.9596282534579326],[7],[-1.9687233494625112],[-1.4949227177070799],[0.4612586650427106],[-0.5184262059508764],[0.33112194921412064],[1],[0.032862387192658105],[1.1411546493663296],[1.6209736373574386],[-1.325107367543487],[-1.0780860231020188],[-0.5188892088706325],[0.35693070676711347],[2.050684365001913],[2.774034566185253],[1],[2.68280418027796],[2.748702738024731],[2],[3.489405091498025],[5.0337841895636455],[-5.724586988002178],[-0.35251959938796507],[1],[-4.750454037624641],[-4.254990848572678],[7],[1],[3.2731361566159016],[7],[-5.90119953417147],[-3.844035790352814],[3.8775225627050975],[-5.2362274660785495],[-1.168961150316191],[9],[0.23788695355013978],[3.1587191623626643],[4.687913542495231],[1],[7.525508667366361],[7.804668032310376],[1.342919268417213],[1.39218145634533],[1.6151422656498324],[0.31956898205956374],[1.0963867260814184],[2.2544998100268643],[1],[2.490873025143525],[4.1265360934946305],[-0.6069999197682163],[0.6492415564704332],[1],[-0.1372509781448512],[1.347515967623831],[1.3896826810635972],[-3.6379127234475956],[-1.6691021049343568],[0.2178198719024973],[-4.54308179374002],[0.0989252235612108],[1.3340108981072287]]
@@ -136,12 +141,12 @@ def run(fis_start_time, end_time):
                                             [14, 22, 29],
                                             [25, 50, 100],
                                             # second input mem functions
-                                            [-0.1, 0, 0.01],
-                                            [0.005, 0.025, 0.05],
-                                            [0.04, 0.07, 1],
+                                            [-0.1, 0, 0.03],
+                                            [0.025, 0.05, 0.07],
+                                            [0.065, 0.1, 1],
                                             # output membership functions
-                                            [-1, 0, 0.4],
-                                            [0.39, 1, 2],
+                                            [-0.1, 0, 0.49],
+                                            [0.48, 1, 1.1],
                                             ])
 
     SUMO = fuzzyLogic.createFuzzyControl(membership_function_values)
@@ -244,8 +249,8 @@ def run(fis_start_time, end_time):
                 # print(step)
                 # print(timeLoss)
                 avgTimeLoss = sum(timeLoss)/4
-                timeLossChangeRate = [a - b for a, b in zip(timeLoss, previousTimeLoss)]
-                timeLoss = previousTimeLoss
+                timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
+                previousTimeLoss = timeLoss
                 veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
                 veh1Previous_Gap = veh1[0]
                 veh1_gap.append(veh1[0])
@@ -254,6 +259,8 @@ def run(fis_start_time, end_time):
                 veh1Speed = vehSpeed[1] + veh1Acceleration
                 veh1_gap_error.append(veh1[1])
                 veh1_gap_error_rate.append(veh1[2])
+                veh1_lane_change_decision.append(veh1[4])
+                print(f"{veh1_lane_change_decision[-1]}, {avgTimeLoss}, {timeLossChangeRate}")
                 traci.vehicle.setSpeed("1", veh1Speed)
 
                 veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
@@ -264,6 +271,7 @@ def run(fis_start_time, end_time):
                 veh2Speed = vehSpeed[2] + veh2Acceleration
                 veh2_gap_error.append(veh2[1])
                 veh2_gap_error_rate.append(veh2[2])
+                veh2_lane_change_decision.append(veh2[4])
                 traci.vehicle.setSpeed("2", veh2Speed)
 
                 veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
@@ -274,6 +282,7 @@ def run(fis_start_time, end_time):
                 veh3Speed = vehSpeed[3] + veh3Acceleration
                 veh3_gap_error.append(veh3[1])
                 veh3_gap_error_rate.append(veh3[2])
+                veh3_lane_change_decision.append(veh3[4])
                 traci.vehicle.setSpeed("3", veh3Speed)
 
                 veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
