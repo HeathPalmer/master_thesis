@@ -114,6 +114,50 @@ class FuzzyHWClass:
         SUMO = ctrl.ControlSystemSimulation(SUMO_control, flush_after_run=1000)  # using cache=False did not help
         return SUMO
 
+    def createFuzzyLaneControl(self, membership_function_values):
+
+        # initialize fuzy variables
+        self.avg_time_loss = ctrl.Antecedent(np.arange(0, 100, 1), 'avg-time-loss')
+        self.avg_time_loss_rate = ctrl.Antecedent(np.arange(-2, 1, 0.005), 'avg-time-loss-rate')
+        # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
+
+        # output acceleration
+        self.change_lane_decision = ctrl.Consequent(np.arange(-5, 5.1, 0.001), 'change-lane-decision')
+
+        # Function for fuzz.trimf(input,left edge, center edge, right edge)
+        self.avg_time_loss['Small'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[0])
+        self.avg_time_loss['Medium'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[1])
+        self.avg_time_loss['Large'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[2])
+        # print(self.platoon_time_loss.view())
+
+        self.avg_time_loss_rate['Small'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[3])
+        self.avg_time_loss_rate['Medium'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[4])
+        self.avg_time_loss_rate['Large'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[5])
+
+        # setup the 12 output membership functions
+        self.change_lane_decision['NoChange'] = fuzz.trimf(self.change_lane_decision.universe, membership_function_values[6])
+        self.change_lane_decision['ChangeLane'] = fuzz.trimf(self.change_lane_decision.universe, membership_function_values[7])
+
+        # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
+        rule1 = ctrl.Rule(antecedent=((self.avg_time_loss['Small'] & self.avg_time_loss_rate['Small']) |
+                                      (self.avg_time_loss['Small'] & self.avg_time_loss_rate['Medium']) |
+                                      (self.avg_time_loss['Medium'] & self.avg_time_loss_rate['Small'])),
+                          consequent=self.change_lane_decision['NoChange'])
+
+        rule2 = ctrl.Rule(antecedent=((self.avg_time_loss['Small'] & self.avg_time_loss_rate['Large']) |
+                                      (self.avg_time_loss['Medium'] & self.avg_time_loss_rate['Medium']) |
+                                      (self.avg_time_loss['Medium'] & self.avg_time_loss_rate['Large']) |
+                                      (self.avg_time_loss['Large'] & self.avg_time_loss_rate['Medium']) |
+                                      (self.avg_time_loss['Large'] & self.avg_time_loss_rate['Large'])),
+                          consequent=self.change_lane_decision['ChangeLane'])
+
+        # rule1.view()
+
+        SUMO_control = ctrl.ControlSystem([rule1, rule2])
+
+        SUMO = ctrl.ControlSystemSimulation(SUMO_control, flush_after_run=1000)  # using cache=False did not help
+        return SUMO
+
     # @profile
     def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, SUMO):  # , *ego_gap_diff_from_min):
         # inputs = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]  # , ego_gap_diff_from_min]
@@ -291,7 +335,7 @@ class FuzzyHWClass:
         return sum(input) / len(list)
 
     # @profile
-    def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed, list_vehicle_gap_errors, SUMO):
+    def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed, list_vehicle_gap_errors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE):
         # fuzzyFunction = FuzzyHWClass()
         # constants
         ideal_gap = 1  # second
@@ -337,8 +381,17 @@ class FuzzyHWClass:
         # print(f"skfuzzy number of runs is: {SUMO._run}")
 
         result = SUMO.output['acceleration-value']
+
+        # lane change behavior - FIS
+        # SUMOLANECHANGE.input['avg-time-loss'] = None
+        # SUMOLANECHANGE.input['avg-time-loss-rate'] = None
+
+        # SUMOLANECHANGE.compute()
+
+        lane_change_decision = False  # SUMOLANECHANGE.output['change-lane-decision']
         # fuzzyOut = fuzzyFunction.fuzzyHW(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, SUMO)
-        vehicle = [vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate, result]
+        vehicle = [vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate, result, lane_change_decision]
+
         count = count+1
         # del vehicle_acceleration, min_vehicle_gap, list_vehicle_gap_errors, vehicle_gap_error_rate, vehicle_gap_error, \
         #     previous_gap_error, vehicle_gap
