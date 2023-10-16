@@ -164,6 +164,10 @@ def run(fis_start_time, end_time):
         if options.krauss:
             if 30 < step < end_time:
                 for ind in traci.vehicle.getIDList():
+                    veh5_lane = traci.vehicle.getLaneID("5")
+                    # print(veh5_lane)
+                    if veh5_lane != 1:
+                        traci.vehicle.changeLane("5", 1, 3)
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -204,6 +208,10 @@ def run(fis_start_time, end_time):
         else:
             if 30 < step < fis_start_time + 1:
                 for ind in traci.vehicle.getIDList():
+                    veh5_lane = traci.vehicle.getLaneID("5")
+                    # print(veh5_lane)
+                    if veh5_lane != 1:
+                        traci.vehicle.changeLane("5", 1, 3)
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -235,7 +243,12 @@ def run(fis_start_time, end_time):
                 newVehSpeed = []
                 timeLoss = []
                 newVehTimeLoss = []
+                newLaneVehicles = []
                 for ind in traci.vehicle.getIDList():
+                    veh5_lane = traci.vehicle.getLaneID("5")
+                    # print(veh5_lane)
+                    if veh5_lane != 1:
+                        traci.vehicle.changeLane("5", 1, 3)
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -260,7 +273,15 @@ def run(fis_start_time, end_time):
                 veh1_gap_error.append(veh1[1])
                 veh1_gap_error_rate.append(veh1[2])
                 veh1_lane_change_decision.append(veh1[4])
-                print(f"{veh1_lane_change_decision[-1]}, {avgTimeLoss}, {timeLossChangeRate}")
+                # print(traci.lane.getIDList())
+                # if veh1_lane_change_decision[-1] == 1:
+
+                # Checking the second lane traffic
+                # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE0_1"))
+                # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE1_1"))
+                # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE3_1"))
+                # for a in newLaneVehicles:
+                #     print(f"{veh1_lane_change_decision[-1]}, {avgTimeLoss}, {timeLossChangeRate} {a}")
                 traci.vehicle.setSpeed("1", veh1Speed)
 
                 veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
