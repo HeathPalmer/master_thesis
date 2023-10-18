@@ -122,7 +122,7 @@ class FuzzyHWClass:
         # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
 
         # output acceleration
-        self.change_lane_decision = ctrl.Consequent(np.arange(-5, 5.1, 0.001), 'change-lane-decision')
+        self.change_lane_decision = ctrl.Consequent(np.arange(-1, 2, 0.01), 'change-lane-decision')
 
         # Function for fuzz.trimf(input,left edge, center edge, right edge)
         self.avg_time_loss['Small'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[0])
@@ -147,6 +147,7 @@ class FuzzyHWClass:
         rule2 = ctrl.Rule(antecedent=((self.avg_time_loss['Small'] & self.avg_time_loss_rate['Large']) |
                                       (self.avg_time_loss['Medium'] & self.avg_time_loss_rate['Medium']) |
                                       (self.avg_time_loss['Medium'] & self.avg_time_loss_rate['Large']) |
+                                      (self.avg_time_loss['Large'] & self.avg_time_loss_rate['Small']) |
                                       (self.avg_time_loss['Large'] & self.avg_time_loss_rate['Medium']) |
                                       (self.avg_time_loss['Large'] & self.avg_time_loss_rate['Large'])),
                           consequent=self.change_lane_decision['ChangeLane'])
@@ -383,12 +384,12 @@ class FuzzyHWClass:
         result = SUMO.output['acceleration-value']
 
         # lane change behavior - FIS
-        # SUMOLANECHANGE.input['avg-time-loss'] = None
-        # SUMOLANECHANGE.input['avg-time-loss-rate'] = None
+        SUMOLANECHANGE.input['avg-time-loss'] = avgTimeLoss
+        SUMOLANECHANGE.input['avg-time-loss-rate'] = timeLossChangeRate
 
-        # SUMOLANECHANGE.compute()
+        SUMOLANECHANGE.compute()
 
-        lane_change_decision = False  # SUMOLANECHANGE.output['change-lane-decision']
+        lane_change_decision = round(SUMOLANECHANGE.output['change-lane-decision'])
         # fuzzyOut = fuzzyFunction.fuzzyHW(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, SUMO)
         vehicle = [vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate, result, lane_change_decision]
 
