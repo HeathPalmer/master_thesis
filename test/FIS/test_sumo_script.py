@@ -177,6 +177,7 @@ def run(fis_start_time, end_time):
                         newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
                         newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                traci.vehicle.setSpeed("5", 31)
                 veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
                 veh1_gap_error.append(veh1Previous_Gap-1)
                 veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
@@ -276,10 +277,21 @@ def run(fis_start_time, end_time):
                 # print(traci.lane.getIDList())
                 # if veh1_lane_change_decision[-1] == 1:
 
+                # make this a function:
+                # print(vehPosition[0][0], traci.vehicle.getPosition("5")[0])
+                if veh1_lane_change_decision[-1] == 1:
+                    # now engage the last FIS
+                    # determine if there is enough room to change lanes
+                    newLaneDistanceDiff = vehPosition[0][0] - traci.vehicle.getPosition("5")[0]
+                    if -250 < newLaneDistanceDiff > 250:
+                        traci.vehicle.changeLane("1", 1, 3)
+                        print(traci.vehicle.getLaneID("1"))
+
                 # Checking the second lane traffic
                 # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE0_1"))
                 # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE1_1"))
                 # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE3_1"))
+                # newLaneVehicles.append()
                 # for a in newLaneVehicles:
                 #     print(f"{veh1_lane_change_decision[-1]}, {avgTimeLoss}, {timeLossChangeRate} {a}")
                 traci.vehicle.setSpeed("1", veh1Speed)
