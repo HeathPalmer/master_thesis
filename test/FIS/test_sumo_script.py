@@ -275,6 +275,46 @@ def run(fis_start_time, end_time):
                     traci.vehicle.changeLane("2", 1, 300)
                     traci.vehicle.changeLane("3", 1, 300)
                     traci.vehicle.changeLane("4", 1, 300)
+
+                    veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh2Previous_Gap = veh2[0]
+                    veh2_gap.append(veh2[0])
+                    vehicleGapErrors.append(veh2[1])
+                    veh2Acceleration = veh2[3]
+                    veh2Speed = vehSpeed[2] + veh2Acceleration
+                    veh2_gap_error.append(veh2[1])
+                    veh2_gap_error_rate.append(veh2[2])
+                    veh2_lane_change_decision.append(veh2[4])
+
+                    # if veh1_lane_value == 1:
+                    #     traci.vehicle.changeLane("2", 1, 300)
+
+                    traci.vehicle.setSpeed("2", veh2Speed)
+
+                    veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh3Previous_Gap = veh3[0]
+                    veh3_gap.append(veh3[0])
+                    vehicleGapErrors.append(veh3[1])
+                    veh3Acceleration = veh3[3]
+                    veh3Speed = vehSpeed[3] + veh3Acceleration
+                    veh3_gap_error.append(veh3[1])
+                    veh3_gap_error_rate.append(veh3[2])
+                    veh3_lane_change_decision.append(veh3[4])
+                    traci.vehicle.setSpeed("3", veh3Speed)
+
+                    # if veh1_lane_value == 1:
+                    #     traci.vehicle.changeLane("3", 1, 300)
+
+                    veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh4Previous_Gap = veh4[0]
+                    veh4_gap.append(veh4[0])
+                    veh4Acceleration = veh4[3]
+                    veh4Speed = vehSpeed[4] + veh4Acceleration
+                    veh4_gap_error.append(veh4[1])
+                    veh4_gap_error_rate.append(veh4[2])
+                    veh4_lane_change_decision.append(veh4[4])
+                    traci.vehicle.setSpeed("4", veh4Speed)
+
                 else:
                     avgTimeLoss = sum(timeLoss)/4
                     timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
@@ -293,11 +333,56 @@ def run(fis_start_time, end_time):
 
                     # make this a function:
                     # print(vehPosition[0][0], traci.vehicle.getPosition("5")[0])
+
+                    veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh2Previous_Gap = veh2[0]
+                    veh2_gap.append(veh2[0])
+                    vehicleGapErrors.append(veh2[1])
+                    veh2Acceleration = veh2[3]
+                    veh2Speed = vehSpeed[2] + veh2Acceleration
+                    veh2_gap_error.append(veh2[1])
+                    veh2_gap_error_rate.append(veh2[2])
+                    veh2_lane_change_decision.append(veh2[4])
+
+                    # if veh1_lane_value == 1:
+                    #     traci.vehicle.changeLane("2", 1, 300)
+
+                    traci.vehicle.setSpeed("2", veh2Speed)
+
+                    veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh3Previous_Gap = veh3[0]
+                    veh3_gap.append(veh3[0])
+                    vehicleGapErrors.append(veh3[1])
+                    veh3Acceleration = veh3[3]
+                    veh3Speed = vehSpeed[3] + veh3Acceleration
+                    veh3_gap_error.append(veh3[1])
+                    veh3_gap_error_rate.append(veh3[2])
+                    veh3_lane_change_decision.append(veh3[4])
+                    traci.vehicle.setSpeed("3", veh3Speed)
+
+                    # if veh1_lane_value == 1:
+                    #     traci.vehicle.changeLane("3", 1, 300)
+
+                    veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh4Previous_Gap = veh4[0]
+                    veh4_gap.append(veh4[0])
+                    veh4Acceleration = veh4[3]
+                    veh4Speed = vehSpeed[4] + veh4Acceleration
+                    veh4_gap_error.append(veh4[1])
+                    veh4_gap_error_rate.append(veh4[2])
+                    veh4_lane_change_decision.append(veh4[4])
+                    traci.vehicle.setSpeed("4", veh4Speed)
+
                     traci.vehicle.changeLane("1", 0, 300)
                     traci.vehicle.changeLane("2", 0, 300)
                     traci.vehicle.changeLane("3", 0, 300)
                     traci.vehicle.changeLane("4", 0, 300)
-                    if step > 900:
+
+                    print(veh1_lane_change_decision[-1], veh2_lane_change_decision[-1], veh3_lane_change_decision[-1], veh4_lane_change_decision[-1])
+
+                    # if veh1_lane_value == 1:
+                    #     traci.vehicle.changeLane("4", 1, 300)
+                    if veh1_lane_change_decision[-1] and veh2_lane_change_decision[-1] and veh3_lane_change_decision[-1] and veh4_lane_change_decision[-1] == 1:  # step > 900:
                         print(step)
                         if veh1_lane_change_decision[-1] == 1:
                             # now engage the last FIS
@@ -311,57 +396,6 @@ def run(fis_start_time, end_time):
                                 traci.vehicle.changeLane("4", 1, 300)
                                 # print(traci.vehicle.getLaneID("1"))
                     traci.vehicle.setSpeed("1", veh1Speed)
-
-                # Checking the second lane traffic
-                # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE0_1"))
-                # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE1_1"))
-                # newLaneVehicles.append(traci.lane.getLastStepVehicleIDs("gneE3_1"))
-                # newLaneVehicles.append()
-                # for a in newLaneVehicles:
-                #     print(f"{veh1_lane_change_decision[-1]}, {avgTimeLoss}, {timeLossChangeRate} {a}")
-                # traci.vehicle.setSpeed("1", veh1Speed)
-
-                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
-                veh2Previous_Gap = veh2[0]
-                veh2_gap.append(veh2[0])
-                vehicleGapErrors.append(veh2[1])
-                veh2Acceleration = veh2[3]
-                veh2Speed = vehSpeed[2] + veh2Acceleration
-                veh2_gap_error.append(veh2[1])
-                veh2_gap_error_rate.append(veh2[2])
-                veh2_lane_change_decision.append(veh2[4])
-
-                # if veh1_lane_value == 1:
-                #     traci.vehicle.changeLane("2", 1, 300)
-
-                traci.vehicle.setSpeed("2", veh2Speed)
-
-                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
-                veh3Previous_Gap = veh3[0]
-                veh3_gap.append(veh3[0])
-                vehicleGapErrors.append(veh3[1])
-                veh3Acceleration = veh3[3]
-                veh3Speed = vehSpeed[3] + veh3Acceleration
-                veh3_gap_error.append(veh3[1])
-                veh3_gap_error_rate.append(veh3[2])
-                veh3_lane_change_decision.append(veh3[4])
-                traci.vehicle.setSpeed("3", veh3Speed)
-
-                # if veh1_lane_value == 1:
-                #     traci.vehicle.changeLane("3", 1, 300)
-
-                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
-                veh4Previous_Gap = veh4[0]
-                veh4_gap.append(veh4[0])
-                veh4Acceleration = veh4[3]
-                veh4Speed = vehSpeed[4] + veh4Acceleration
-                veh4_gap_error.append(veh4[1])
-                veh4_gap_error_rate.append(veh4[2])
-                veh4_lane_change_decision.append(veh4[4])
-                traci.vehicle.setSpeed("4", veh4Speed)
-
-                # if veh1_lane_value == 1:
-                #     traci.vehicle.changeLane("4", 1, 300)
 
                 time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
