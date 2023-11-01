@@ -419,8 +419,8 @@ def run(fis_start_time, end_time):
                         if veh_gap_error_max < 0.5:
                             # now engage the last FIS
                             # determine if there is enough room to change lanes
-                            newLaneDistanceDiff = vehPosition[0][0] - traci.vehicle.getPosition("5")[0]
-                            if -250 < newLaneDistanceDiff > 250:
+                            newLaneDistanceDiff = [vehPosition[1][0] - traci.vehicle.getPosition("5")[0], vehPosition[2][0] - traci.vehicle.getPosition("5")[0], vehPosition[3][0] - traci.vehicle.getPosition("5")[0], vehPosition[4][0] - traci.vehicle.getPosition("5")[0]]
+                            if all([abs(x) > 250 for x in newLaneDistanceDiff]):
                                 # print(veh1_lane_change_decision)
                                 traci.vehicle.changeLane("1", 1, 300)
                                 traci.vehicle.changeLane("2", 1, 300)
