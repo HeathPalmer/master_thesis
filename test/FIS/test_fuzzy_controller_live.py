@@ -159,6 +159,57 @@ class FuzzyHWClass:
         SUMO = ctrl.ControlSystemSimulation(SUMO_control, flush_after_run=1000)  # using cache=False did not help
         return SUMO
 
+    def createSecondFuzzyLongitudinalControl(self, membership_function_values):
+
+        # initialize fuzy variables
+        self.platoon_gap_error = ctrl.Antecedent(np.arange(-10, 10, 0.01), 'platoon-gap-error-value')
+        self.velocity_error = ctrl.Antecedent(np.arange(-10, 3, 0.01), 'vehicle-error-value')
+        # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
+
+        # output acceleration
+        self.acceleration = ctrl.Consequent(np.arange(-3, 3, 0.01), 'acceleration-value')
+
+        # Function for fuzz.trimf(input,left edge, center edge, right edge)
+        self.platoon_gap_error['Small'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[0])
+        self.platoon_gap_error['Medium'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[1])
+        self.platoon_gap_error['Large'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[2])
+        # print(self.gap_error.view())
+
+        self.velocity_error['Small'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[3])
+        self.velocity_error['Medium'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[4])
+        self.velocity_error['Large'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[5])
+        # self.gap_diff_from_min['Small'] = fuzz.trimf(self.gap_diff_from_min.universe, [-3, -1.5, 0])
+        # self.gap_diff_from_min['Medium'] = fuzz.trimf(self.gap_diff_from_min.universe, [-1.5, 0, 1.5])
+        # self.gap_diff_from_min['Large'] = fuzz.trimf(self.gap_diff_from_min.universe, [0, 1.5, 2])
+
+        # setup the 12 output membership functions
+        self.acceleration['Small'] = fuzz.trimf(self.acceleration.universe, membership_function_values[6])
+        self.acceleration['Medium'] = fuzz.trimf(self.acceleration.universe, membership_function_values[7])
+        self.acceleration['Large'] = fuzz.trimf(self.acceleration.universe, membership_function_values[8])
+
+        # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
+        rule1 = ctrl.Rule(antecedent=((self.platoon_gap_error['Small'] & self.velocity_error['Small']) |
+                                      (self.platoon_gap_error['Small'] & self.velocity_error['Medium']) |
+                                      (self.platoon_gap_error['Medium'] & self.velocity_error['Small']) |
+                                      (self.platoon_gap_error['Large'] & self.velocity_error['Small']) |
+                                      (self.platoon_gap_error['Large'] & self.velocity_error['Medium'])),
+                          consequent=self.acceleration['Small'])
+
+        rule2 = ctrl.Rule(antecedent=((self.platoon_gap_error['Small'] & self.velocity_error['Large']) |
+                                      (self.platoon_gap_error['Medium'] & self.velocity_error['Medium'])),
+                          consequent=self.acceleration['Medium'])
+
+        rule3 = ctrl.Rule(antecedent=((self.platoon_gap_error['Medium'] & self.velocity_error['Large']) |
+                                      (self.platoon_gap_error['Large'] & self.velocity_error['Large'])),
+                          consequent=self.acceleration['Large'])
+
+        # rule1.view()
+
+        SUMO_control = ctrl.ControlSystem([rule1, rule2, rule3])
+
+        SUMO = ctrl.ControlSystemSimulation(SUMO_control, flush_after_run=1000)  # using cache=False did not help
+        return SUMO
+
     # @profile
     def fuzzyHW(self, vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, SUMO):  # , *ego_gap_diff_from_min):
         # inputs = [vehicle_id, vehicle_gap_error, vehicle_gap_error_rate]  # , ego_gap_diff_from_min]

@@ -149,8 +149,23 @@ def run(fis_start_time, end_time):
                                             [0.48, 1, 1.1],
                                             ])
 
+    # hand picked FIS parameters
+    second_longitudinal_membership_function_values = np.array([
+                                            [-10, -1.5, 0],
+                                            [-1.5, 0, 1.5],
+                                            [0, 1.5, 10],
+                                            # second input mem functions
+                                            [-10, -2.235, 0],
+                                            [-0.447, 0, 0.447],
+                                            [0, 0.447, 2.235],
+                                            # output membership functions
+                                            [-2.235, -1.5, 0],
+                                            [-1.5, 0, 1.5],
+                                            [0, 1.5, 3]
+                                            ])
     SUMO = fuzzyLogic.createFuzzyControl(membership_function_values)
     SUMOLANECHANGE = fuzzyLogic.createFuzzyLaneControl(lane_change_membership_function_values)
+    SUMOSECONDLONGITUDE = fuzzyLogic.createSecondFuzzyLongitudinalControl(second_longitudinal_membership_function_values)
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
@@ -265,12 +280,6 @@ def run(fis_start_time, end_time):
                 veh1_lane_value = int(veh1_lane[6])
                 if veh1_lane_value == 1:
                     # print(veh1_lane_value)
-                    traci.vehicle.setSpeed("1", 31)
-                    vehicleGapErrors.append(0)
-                    avgTimeLoss = sum(timeLoss)/4
-                    timeLoss.append(traci.vehicle.getTimeLoss("0"))
-                    timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
-                    previousTimeLoss = timeLoss
                     traci.vehicle.changeLane("1", 1, 300)
                     traci.vehicle.changeLane("2", 1, 300)
                     traci.vehicle.changeLane("3", 1, 300)
@@ -314,6 +323,28 @@ def run(fis_start_time, end_time):
                     veh4_gap_error_rate.append(veh4[2])
                     veh4_lane_change_decision.append(veh4[4])
                     traci.vehicle.setSpeed("4", veh4Speed)
+                    time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+
+                    veh1Speed = traci.vehicle.getSpeed("1")
+                    veh2Speed = traci.vehicle.getSpeed("2")
+                    veh3Speed = traci.vehicle.getSpeed("3")
+                    veh4Speed = traci.vehicle.getSpeed("4")
+                    platoonSpeedDiff = [31.292 - x for x in [veh1Speed, veh2Speed, veh3Speed, veh4Speed]]
+                    platoonGapError = [veh2_gap_error[-1], veh3_gap_error[-1], veh4_gap_error[-1]]
+                    SUMOSECONDLONGITUDE.input['platoon-gap-error-value'] = (sum(platoonGapError) / len(platoonGapError))
+                    SUMOSECONDLONGITUDE.input['vehicle-error-value'] = platoonSpeedDiff[0]
+                    SUMOSECONDLONGITUDE.compute()
+                    result = SUMOSECONDLONGITUDE.output['acceleration-value']
+                    veh1Speed = veh1Speed + result
+                    vehicleGapErrors.append(0)
+                    avgTimeLoss = sum(timeLoss)/4
+                    timeLoss.append(traci.vehicle.getTimeLoss("0"))
+                    timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
+                    previousTimeLoss = timeLoss
+                    traci.vehicle.setSpeed("1", veh1Speed)
+
+                    time_to_collision[0] = 0
+                    TTL = np.vstack([TTL, np.array(time_to_collision)])
 
                 else:
                     avgTimeLoss = sum(timeLoss)/4
@@ -328,6 +359,7 @@ def run(fis_start_time, end_time):
                     veh1_gap_error.append(veh1[1])
                     veh1_gap_error_rate.append(veh1[2])
                     veh1_lane_change_decision.append(veh1[4])
+                    traci.vehicle.setSpeed("1", veh1Speed)
                     # print(traci.lane.getIDList())
                     # if veh1_lane_change_decision[-1] == 1:
 
@@ -378,13 +410,13 @@ def run(fis_start_time, end_time):
                     traci.vehicle.changeLane("3", 0, 300)
                     traci.vehicle.changeLane("4", 0, 300)
 
-                    print(veh1_lane_change_decision[-1], veh2_lane_change_decision[-1], veh3_lane_change_decision[-1], veh4_lane_change_decision[-1])
+                    # print(veh1_lane_change_decision[-1], veh2_lane_change_decision[-1], veh3_lane_change_decision[-1], veh4_lane_change_decision[-1])
 
                     # if veh1_lane_value == 1:
                     #     traci.vehicle.changeLane("4", 1, 300)
                     if veh1_lane_change_decision[-1] and veh2_lane_change_decision[-1] and veh3_lane_change_decision[-1] and veh4_lane_change_decision[-1] == 1:  # step > 900:
-                        print(step)
-                        if veh1_lane_change_decision[-1] == 1:
+                        veh_gap_error_max = max([veh1_gap_error[-1], veh2_gap_error[-1], veh3_gap_error[-1], veh4_gap_error[-1]])
+                        if veh_gap_error_max < 0.5:
                             # now engage the last FIS
                             # determine if there is enough room to change lanes
                             newLaneDistanceDiff = vehPosition[0][0] - traci.vehicle.getPosition("5")[0]
@@ -395,10 +427,9 @@ def run(fis_start_time, end_time):
                                 traci.vehicle.changeLane("3", 1, 300)
                                 traci.vehicle.changeLane("4", 1, 300)
                                 # print(traci.vehicle.getLaneID("1"))
-                    traci.vehicle.setSpeed("1", veh1Speed)
 
-                time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
-                TTL = np.vstack([TTL, np.array(time_to_collision)])
+                    time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                    TTL = np.vstack([TTL, np.array(time_to_collision)])
 
                 # traci.vehicle.changeLane("1", 1, 2)
 
@@ -486,7 +517,7 @@ if __name__ == "__main__":
 
     fileName_No_Suffix = "highway_2"
     fis_start_time = 300
-    end_time = 1700
+    end_time = 2000
 
     timestr = time.strftime("%Y%m%d")
 
