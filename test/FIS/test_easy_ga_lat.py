@@ -148,7 +148,7 @@ def user_def_fitness(chromosome):
         time.sleep(1)
 
         global veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
-            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
+            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL, totalTimeLoss
 
         # # check if the proposed solution is valid...
         # for membership_function_row in new_data:
@@ -161,14 +161,15 @@ def user_def_fitness(chromosome):
         # if memberships_acceptable:
         # run the test_sumo_script
         veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
-            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL = run(fis_start_time, end_time, chromosome_array_of_arrays)
+            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL, totalTimeLoss = run(fis_start_time, end_time, chromosome_array_of_arrays)
 
         veh1_fitness_sum = sum(veh1_gap_error[fis_start_time:end_time])
         veh2_fitness_sum = sum(veh2_gap_error[fis_start_time:end_time])
         veh3_fitness_sum = sum(veh3_gap_error[fis_start_time:end_time])
         veh4_fitness_sum = sum(veh4_gap_error[fis_start_time:end_time])
 
-        fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+        # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+        fitness = sum(totalTimeLoss)
 
     except Exception as e:
         # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
@@ -359,6 +360,8 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
         veh3_lane_change_decision = []
         veh4_lane_change_decision = []
 
+        totalTimeLoss = []
+
         TTL = np.empty((0, 4), int)
         # apparently this set of membership functions does not work...
         GA_chromosome = [[-1.4457460055267017],[0.9596282534579326],[7],[-1.9687233494625112],[-1.4949227177070799],[0.4612586650427106],[-0.5184262059508764],[0.33112194921412064],[1],[0.032862387192658105],[1.1411546493663296],[1.6209736373574386],[-1.325107367543487],[-1.0780860231020188],[-0.5188892088706325],[0.35693070676711347],[2.050684365001913],[2.774034566185253],[1],[2.68280418027796],[2.748702738024731],[2],[3.489405091498025],[5.0337841895636455],[-5.724586988002178],[-0.35251959938796507],[1],[-4.750454037624641],[-4.254990848572678],[7],[1],[3.2731361566159016],[7],[-5.90119953417147],[-3.844035790352814],[3.8775225627050975],[-5.2362274660785495],[-1.168961150316191],[9],[0.23788695355013978],[3.1587191623626643],[4.687913542495231],[1],[7.525508667366361],[7.804668032310376],[1.342919268417213],[1.39218145634533],[1.6151422656498324],[0.31956898205956374],[1.0963867260814184],[2.2544998100268643],[1],[2.490873025143525],[4.1265360934946305],[-0.6069999197682163],[0.6492415564704332],[1],[-0.1372509781448512],[1.347515967623831],[1.3896826810635972],[-3.6379127234475956],[-1.6691021049343568],[0.2178198719024973],[-4.54308179374002],[0.0989252235612108],[1.3340108981072287]]
@@ -472,6 +475,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                     veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
                     veh4_gap_error.append(veh4Previous_Gap-1)
 
+                    totalTimeLoss.append(sum(timeLoss))
                     time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                     TTL = np.vstack([TTL, np.array(time_to_collision)])
 
@@ -486,10 +490,25 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                     else:
                         pass
                 else:
+                    for ind in traci.vehicle.getIDList():
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
+                        if int(ind) < 5:
+                            vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                            vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                            if int(ind) > 0:
+                                timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                        else:
+                            newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                            newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                            newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                     veh1_gap_error.append(np.nan)
                     veh2_gap_error.append(np.nan)
                     veh3_gap_error.append(np.nan)
                     veh4_gap_error.append(np.nan)
+                    totalTimeLoss.append(sum(timeLoss))
             # Use the FIS vehicle controller
             else:
                 if 30 < step < fis_start_time + 1:
@@ -516,6 +535,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                     veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
                     veh4_gap_error.append(veh4Previous_Gap-1)
                     previousTimeLoss = timeLoss
+                    totalTimeLoss.append(sum(timeLoss))
 
                     time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                     TTL = np.vstack([TTL, np.array(time_to_collision)])
@@ -769,7 +789,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
         else:
             print("No error in the FIS run function")
         return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
-            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
+            veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL, totalTimeLoss
 
 
 def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
