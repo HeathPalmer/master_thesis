@@ -544,7 +544,7 @@ if __name__ == "__main__":
     fis_start_time = 300
     end_time = 2000
 
-    timestr = time.strftime("%Y%m%d")
+    timestr = time.strftime("%Y%m%d_%S")
 
     # create *_subdirectory or join it
     try:
