@@ -42,7 +42,7 @@ class My_GA(GA):
             in range(self.population_size)
         )
 
-        self.population[0] = [-1, 0, 15, 14, 22, 29, 25, 50, 100, -0.1, 0, 0.03, 0.025, 0.05, 0.07, 0.065, 0.1, 1, -0.1, 0, 0.49, 0.48, 1, 1.1]
+        #self.population[0] = [-1, 0, 15, 14, 22, 29, 25, 50, 100, -0.1, 0, 0.03, 0.025, 0.05, 0.07, 0.065, 0.1, 1, -0.1, 0, 0.49, 0.48, 1, 1.1]
         # print(self.population[0])
         # print(f"The population is: {self.population}")
 
@@ -116,7 +116,7 @@ def user_def_fitness(chromosome):
 
         # convert array of arrays to a Numpy array of arrays
         chromosome_array_of_arrays = np.array(chromosome_array_of_arrays)
-        print(chromosome_array_of_arrays)
+        # print(chromosome_array_of_arrays)
         # print(f"The proposed chromosome is {chromosome_array_of_arrays}")
 
         # starting SUMO and traci
@@ -168,8 +168,8 @@ def user_def_fitness(chromosome):
         veh3_fitness_sum = sum(veh3_gap_error[fis_start_time:end_time])
         veh4_fitness_sum = sum(veh4_gap_error[fis_start_time:end_time])
 
-        # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
-        fitness = sum(totalTimeLoss)
+        fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+        # fitness = sum(totalTimeLoss)
 
     except Exception as e:
         # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
@@ -437,7 +437,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                                                 [0, 1.5, 3]
                                                 ])
         SUMO = fuzzyLogic.createFuzzyControl(membership_function_values)
-        SUMOLANECHANGE = fuzzyLogic.createFuzzyLaneControl(lane_change_membership_function_values)
+        SUMOLANECHANGE = fuzzyLogic.createFuzzyLaneControl(chromosome_array_of_arrays)
         SUMOSECONDLONGITUDE = fuzzyLogic.createSecondFuzzyLongitudinalControl(second_longitudinal_membership_function_values)
 
         while traci.simulation.getMinExpectedNumber() > 0:
@@ -840,7 +840,7 @@ if __name__ == "__main__":
     fis_start_time = 300
     end_time = 2000
 
-    timestr = time.strftime("%Y%m%d")
+    timestr = time.strftime("%Y%m%d_%S")
 
     # create *_subdirectory or join it
     try:
@@ -904,10 +904,11 @@ if __name__ == "__main__":
     # This makes it so the mutation functions are called every time
     # This does not mean that the chromosome will be mutated every time.
     # This is to ensure that chromosomes out of bounds are replaced.
-    ga.chromosome_mutation_rate = 0.05  # Rate at which chromosomes get mutated
+    ga.chromosome_mutation_rate = 0.3  # Rate at which chromosomes get mutated
     # Ratio of chromosomes selected (1.0 = 1 parent for every chromosome in the population)
     ga.parent_ratio = 0.1  # this should make it so that only two parents are chosen to mate if the population is 10
     # ga.gene_mutation_rate = 1
+    ga.adapt_probability_rate = 0.1
     # If you don't want to store all data coming from the GA set to
     # false. This will also relieve some memory density issues.
     ga.save_data = True
