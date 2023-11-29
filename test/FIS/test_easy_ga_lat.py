@@ -134,7 +134,7 @@ def user_def_fitness(chromosome):
 
         # amitranInforFileName = rf"{spreadsheet_subdirectory}\{recnum}_amitran.xml"
         # traci starts sumo as a subprocess and then this script connects and runs
-        traci.start([sumoBinary, "-c", f"{fileName_No_Suffix}.sumocfg",
+        traci.start([sumoBinary, "-c", f"{highway_filename}.sumocfg",
                      "--route-files", routeFileName,
                      "--additional-files", additionalFileName,
                      "--device.ssm.probability", "1",
@@ -834,9 +834,10 @@ if __name__ == "__main__":
     else:
         # run sumo with gui
         sumoBinary = checkBinary('sumo-gui')
-    fileName = ntpath.basename(__file__)
+    fileName = ntpath.basename(__file__).split('.')[0]
 
-    fileName_No_Suffix = "highway_2"
+    highway_filename = "highway_2"
+    fileName_no_sffix = f"{fileName}_{highway_filename}"
     fis_start_time = 300
     end_time = 2000
 
@@ -853,9 +854,9 @@ if __name__ == "__main__":
     except Exception:
         pass
 
-    spreadsheet_subdirectory = f"./results/spreadsheet/{timestr}_{fileName_No_Suffix}_tripInfo"
+    spreadsheet_subdirectory = f"./results/spreadsheet/{timestr}_{fileName_no_sffix}_tripInfo"
     global images_subdirectory
-    images_subdirectory = f"./results/images/{timestr}_{fileName_No_Suffix}_tripInfo"
+    images_subdirectory = f"./results/images/{timestr}_{fileName_no_sffix}_tripInfo"
 
     try:
         os.mkdir(spreadsheet_subdirectory)
@@ -871,11 +872,11 @@ if __name__ == "__main__":
     # https://sumo.dlr.de/docs/Simulation/Output/index.html#separating_outputs_of_repeated_runs
 
     # generate route file
-    routeFileName = f"{fileName_No_Suffix}.rou.xml"
+    routeFileName = f"{highway_filename}.rou.xml"
     # inductionLoopFileName = "{}_induction.xml".format(recnum)
 
     # generate additional file
-    additionalFileName = f"{fileName_No_Suffix}.add.xml"
+    additionalFileName = f"{highway_filename}.add.xml"
     # inductionLoopFileName = f"./results/{recnum}_induction.xml"
     # generate_additionalfile(additionalFileName, inductionLoopFileName)
 
