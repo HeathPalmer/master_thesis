@@ -62,6 +62,7 @@ def calculateTimeToCollision(vehSpeed, vehPosition):  # gap_distance - units: me
 
     return time_to_collision
 
+
 def parseGAChrmosome(GA_chromosome):
     i = 0
     new_data = []

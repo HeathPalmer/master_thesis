@@ -38,7 +38,7 @@ def get_options():
                           version of sumo")
     opt_parser.add_option("--krauss", action="store_true",
                           default=False, help="run the simulation using the human driver model")
-    opt_parser.add_option("--highway_1", action="store_true",
+    opt_parser.add_option("--highway_2", action="store_true",
                           default=False, help="run the simulation using the second highway configuration")
     opt_parser.add_option("--slow_down_midway", action="store_true",
                           default=False, help="slows the leading human model vehicle halfway during the sim")
@@ -63,6 +63,28 @@ def calculateTimeToCollision(vehSpeed, vehPosition):  # gap_distance - units: me
     return time_to_collision
 
 
+def parseGAChrmosome(GA_chromosome):
+    i = 0
+    new_data = []
+    while i < len(GA_chromosome):
+        new_data.append(GA_chromosome[i][0])
+        i = i+1
+
+    j = 0
+    chromosome_array_of_arrays = []
+    while j < len(new_data):
+        chromosome_array_of_arrays.append(new_data[j:j+3])
+        j = j + 3
+
+    # convert array of arrays to a Numpy array of arrays
+    chromosome_array_of_arrays = np.array(chromosome_array_of_arrays)
+    return chromosome_array_of_arrays
+
+
+def check_Lane_Change(list):
+    return all(i[6] == '1' for i in list)
+
+
 # contains TraCI control loop
 # @profile
 def run(fis_start_time, end_time):
@@ -84,24 +106,27 @@ def run(fis_start_time, end_time):
     veh3_gap_error_rate = []
     veh4_gap_error_rate = []
 
+    veh1_lane_change_decision = []
+    veh2_lane_change_decision = []
+    veh3_lane_change_decision = []
+    veh4_lane_change_decision = []
+
+    totalTimeLoss = []
+
+    laneChangeDecision = []
+
     TTL = np.empty((0, 4), int)
 
-    chromosome = [[-1.4457460055267017],[0.9596282534579326],[7],[-1.9687233494625112],[-1.4949227177070799],[0.4612586650427106],[-0.5184262059508764],[0.33112194921412064],[1],[0.032862387192658105],[1.1411546493663296],[1.6209736373574386],[-1.325107367543487],[-1.0780860231020188],[-0.5188892088706325],[0.35693070676711347],[2.050684365001913],[2.774034566185253],[1],[2.68280418027796],[2.748702738024731],[2],[3.489405091498025],[5.0337841895636455],[-5.724586988002178],[-0.35251959938796507],[1],[-4.750454037624641],[-4.254990848572678],[7],[1],[3.2731361566159016],[7],[-5.90119953417147],[-3.844035790352814],[3.8775225627050975],[-5.2362274660785495],[-1.168961150316191],[9],[0.23788695355013978],[3.1587191623626643],[4.687913542495231],[1],[7.525508667366361],[7.804668032310376],[1.342919268417213],[1.39218145634533],[1.6151422656498324],[0.31956898205956374],[1.0963867260814184],[2.2544998100268643],[1],[2.490873025143525],[4.1265360934946305],[-0.6069999197682163],[0.6492415564704332],[1],[-0.1372509781448512],[1.347515967623831],[1.3896826810635972],[-3.6379127234475956],[-1.6691021049343568],[0.2178198719024973],[-4.54308179374002],[0.0989252235612108],[1.3340108981072287]]
+    GA_chromosome = [[-1.6240344751828966],[0.8735664638544858],[2.786421006981838],[-1.5360056631852324],[-1.4109936691129998],[2.7760919030749687],[-1.5146609995028424],[0.286111356789177],[0.533014367315769],[2.5437503030955755],[2.681878309479083],[2.7097058149347957],[-1.1954826254870359],[0.34595014308802696],[7],[0.30548234324726],[1.3912850561655268],[5],[1.9672298354813358],[2.271725813193616],[2.8039497198684],[6.516775246756547],[7.86365500161472],[9],[-3.3358267954019674],[1],[8],[-3.069388543029344],[-0.776325465066936],[9.923128903319997],[0.40372338238102223],[1.2133295148870922],[9.338581482690811],[-3.5131368262457343],[-1.0635482340216882],[-0.8120053202249782],[-2.79827706849043],[4.286758833890948],[8.579088170091405],[-5.114797183793154],[0.3113213534794914],[1.5156892599137048],[-5.106525856456598],[1.3213374066030035],[3.58042381890575],[1.8886598151326774],[2.086456315410275],[4.106743549010657],[-4.581403448687182],[-2.1445655539246036],[-1.6059296614388434],[3.4163387350245618],[4.055041509477416],[4.252104769272686],[2.5453547664446967],[3.3785651221906745],[4.104506478012013],[0.1904316537942723],[1.1529647268301189],[1.6532473842039472],[-1.586099831835674],[-1.4449729751873748],[-0.8071520067124034],[4.209897506678502],[4.537169733825274],[4.714573428575184]]
+    # lat_GA_Chromosome = [[7],[71.8232712481126],[73.44574771934484],[9],[42.97549278960961],[88.51370938381592],[26.480593113993702],[34.333598530390944],[97.87627131835028],[-0.08994987703760998],[0.003994405618960042],[0.6124129233504257],[0.12034402394596203],[0.23316119394964663],[0.29640097938129517],[0.2391229754559647],[0.6980126528742496],[0.6994915574987353],[0.2909558499914311],[0.33025519650852836],[0.3716297699772756],[-0.026500933890887646],[0.8560407770469973],[10]]
+    # alt_lat_GA_Chromosome = [[67.6761221512281],[69.83251654757844],[77.76368252882389],[33.97062143232918],[36.332680373664786],[58.947637103181755],[-0.665875480807002],[5.020935566853341],[84.5102309275504],[0.1295196815633867],[0.4524747405064238],[0.5304257536123267],[-0.044061054847725746],[0.4261034949192127],[0.9703554076610142],[0.510278503691667],[0.6033899496234578],[0.6261256068999578],[0.048885670430450806],[0.25171726717588283],[0.35163550672256294],[0.5917424400418568],[0.6148280065175284],[0.6516127105888627]]
+    alt_lat_GA_Chromosome = [[64.5156456435981],[65.10512228655486],[86.17156792350178],[1.5577564837304148],[22.647222415305365],[61.19444125696693],[55.64033218802219],[68.99877267290137],[97.42463342627312],[0.11867881846598133],[0.1267105725894678],[0.13111946765751606],[-0.07648265710199151],[0.18819996154948335],[0.8763376540835236],[-0.0492715826292624],[0.33508165688740355],[0.6119936061062785],[0.3242773308948389],[0.39313456372966255],[1.0730835480996557],[0.8863730287887847],[0.8995946312096776],[0.9170835065528654]]
+    lon2_GA_Chromosome = [[1.5098238860638276],[7],[7.92916396487642],[-4.341434003061262],[8.323253529177837],[8.437866725066886],[-0.45026512051033585],[2.719697720047667],[3.528034862358293],[-1.9281714608667464],[4.649377056952073],[8.444484017261313],[-4.810208847723389],[0.5342624851631741],[8],[-5.344379261896522],[-0.189868052993317],[2],[-3.7325788876367287],[3],[5],[-2.634533342311523],[2.4345164558740184],[8],[-3.3872697156344653],[-1.8550680999661042],[1]]
 
-    i = 0
-    new_data = []
-    while i < len(chromosome):
-        new_data.append(chromosome[i])
-        i = i+1
-
-    j = 0
-    chromosome_array_of_arrays = []
-    while j < len(new_data):
-        chromosome_array_of_arrays.append(new_data[j:j+3])
-        j = j + 3
-
-    # convert array of arrays to a Numpy array of arrays
-    chromosome_array_of_arrays = np.array(chromosome_array_of_arrays)
+    lon1_GA_Chromosome = parseGAChrmosome(GA_chromosome)
+    # lat_GA_Chromosome = parseGAChrmosome(lat_GA_Chromosome)
+    alt_lat_GA_Chromsome = parseGAChrmosome(alt_lat_GA_Chromosome)
+    lon2_GA_Chromosome = parseGAChrmosome(lon2_GA_Chromosome)
 
     # hand picked FIS parameters
     membership_function_values = np.array([
@@ -131,18 +156,63 @@ def run(fis_start_time, end_time):
                                             [3, 4.572, 5]
                                             ])
 
-    SUMO = fuzzyLogic.createFuzzyControl(membership_function_values)
+    lane_change_membership_function_values = np.array([
+                                            [-1, 0, 15],
+                                            [14, 22, 29],
+                                            [25, 50, 100],
+                                            # second input mem functions
+                                            [-0.1, 0, 0.03],
+                                            [0.025, 0.05, 0.07],
+                                            [0.065, 0.1, 1],
+                                            # output membership functions
+                                            [-0.1, 0, 0.49],
+                                            [0.48, 1, 1.1],
+                                            ])
+
+    # hand picked FIS parameters
+    second_longitudinal_membership_function_values = np.array([
+                                            [-10, -1.5, 0],
+                                            [-1.5, 0, 1.5],
+                                            [0, 1.5, 10],
+                                            # second input mem functions
+                                            [-10, -2.235, 0],
+                                            [-0.447, 0, 0.447],
+                                            [0, 0.447, 2.235],
+                                            # output membership functions
+                                            [-2.235, -1.5, 0],
+                                            [-1.5, 0, 1.5],
+                                            [0, 1.5, 3]
+                                            ])
+    SUMO = fuzzyLogic.createFuzzyControl(lon1_GA_Chromosome)
+    SUMOLANECHANGE = fuzzyLogic.createFuzzyLaneControl(alt_lat_GA_Chromsome)
+    SUMOSECONDLONGITUDE = fuzzyLogic.createSecondFuzzyLongitudinalControl(lon2_GA_Chromosome)
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
         vehPosition = []
         vehSpeed = []
+        newVehPosition = []
+        newVehSpeed = []
+        timeLoss = []
+        newVehTimeLoss = []
         # use the Krauss vehicle controller
         if options.krauss:
             if 30 < step < end_time:
                 for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                    veh5_lane = traci.vehicle.getLaneID("5")
+                    # print(veh5_lane)
+                    if veh5_lane != 1:
+                        traci.vehicle.changeLane("5", 1, 3)
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                traci.vehicle.setSpeed("5", 31)
                 veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
                 veh1_gap_error.append(veh1Previous_Gap-1)
                 veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
@@ -151,6 +221,8 @@ def run(fis_start_time, end_time):
                 veh3_gap_error.append(veh3Previous_Gap-1)
                 veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
                 veh4_gap_error.append(veh4Previous_Gap-1)
+
+                totalTimeLoss.append(sum(timeLoss))
 
                 time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
@@ -166,16 +238,42 @@ def run(fis_start_time, end_time):
                 else:
                     pass
             else:
+                for ind in traci.vehicle.getIDList():
+                    veh5_lane = traci.vehicle.getLaneID("5")
+                    # print(veh5_lane)
+                    if veh5_lane != 1:
+                        traci.vehicle.changeLane("5", 1, 3)
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                 veh1_gap_error.append(np.nan)
                 veh2_gap_error.append(np.nan)
                 veh3_gap_error.append(np.nan)
                 veh4_gap_error.append(np.nan)
+                totalTimeLoss.append(sum(timeLoss))
         # Use the FIS vehicle controller
         else:
             if 30 < step < fis_start_time + 1:
                 for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                    veh5_lane = traci.vehicle.getLaneID("5")
+                    # print(veh5_lane)
+                    if veh5_lane != 1:
+                        traci.vehicle.changeLane("5", 1, 3)
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                 veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
                 veh1_gap_error.append(veh1Previous_Gap-1)
                 veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
@@ -184,66 +282,304 @@ def run(fis_start_time, end_time):
                 veh3_gap_error.append(veh3Previous_Gap-1)
                 veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
                 veh4_gap_error.append(veh4Previous_Gap-1)
+                previousTimeLoss = timeLoss
+                totalTimeLoss.append(sum(timeLoss))
 
                 time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
+                laneChangeDecision.append(0)
 
             elif fis_start_time < step < end_time:
+                # is re-creating these variables necessary???????
                 vehPosition = []
                 vehSpeed = []
                 vehicleGapErrors = []
+                newVehPosition = []
+                newVehSpeed = []
+                timeLoss = []
+                newVehTimeLoss = []
+                newLaneVehicles = []
                 for ind in traci.vehicle.getIDList():
-                    vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
-                    vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                    veh5_lane = traci.vehicle.getLaneID("5")
+                    # print(veh5_lane)
+                    if veh5_lane != 1:
+                        traci.vehicle.changeLane("5", 1, 3)
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getLanePosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                totalTimeLoss.append(sum(timeLoss))
+                traci.vehicle.setSpeed("5", 31)
+                veh1_lane = traci.vehicle.getLaneID("1")
+                veh1_lane_value = int(veh1_lane[6])
+                if veh1_lane_value == 1:
+                    laneChangeDecision.append(0)
+                    platoon_lane_ids = []
+                    for x in [1, 2, 3, 4]:
+                        platoon_lane_ids.append(traci.vehicle.getLaneID(f"{x}"))
+                    veh1Speed = traci.vehicle.getSpeed("1")
+                    veh2Speed = traci.vehicle.getSpeed("2")
+                    veh3Speed = traci.vehicle.getSpeed("3")
+                    veh4Speed = traci.vehicle.getSpeed("4")
+                    if check_Lane_Change(platoon_lane_ids):
+                        traci.vehicle.changeLane("1", 1, 300)
+                        traci.vehicle.changeLane("2", 1, 300)
+                        traci.vehicle.changeLane("3", 1, 300)
+                        traci.vehicle.changeLane("4", 1, 300)
 
-                veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, SUMO)
-                veh1Previous_Gap = veh1[0]
-                veh1_gap.append(veh1[0])
-                vehicleGapErrors.append(veh1[1])
-                veh1Acceleration = veh1[3]
-                veh1Speed = vehSpeed[1] + veh1Acceleration
-                veh1_gap_error.append(veh1[1])
-                veh1_gap_error_rate.append(veh1[2])
-                traci.vehicle.setSpeed("1", veh1Speed)
+                        avgTimeLoss = sum(timeLoss)/4
+                        timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
 
-                veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, SUMO)
-                veh2Previous_Gap = veh2[0]
-                veh2_gap.append(veh2[0])
-                vehicleGapErrors.append(veh2[1])
-                veh2Acceleration = veh2[3]
-                veh2Speed = vehSpeed[2] + veh2Acceleration
-                veh2_gap_error.append(veh2[1])
-                veh2_gap_error_rate.append(veh2[2])
-                traci.vehicle.setSpeed("2", veh2Speed)
+                        veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                        veh2Previous_Gap = veh2[0]
+                        veh2_gap.append(veh2[0])
+                        vehicleGapErrors.append(veh2[1])
+                        veh2Acceleration = veh2[3]
+                        veh2Speed = vehSpeed[2] + veh2Acceleration
+                        veh2_gap_error.append(veh2[1])
+                        veh2_gap_error_rate.append(veh2[2])
+                        veh2_lane_change_decision.append(veh2[4])
 
-                veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, SUMO)
-                veh3Previous_Gap = veh3[0]
-                veh3_gap.append(veh3[0])
-                vehicleGapErrors.append(veh3[1])
-                veh3Acceleration = veh3[3]
-                veh3Speed = vehSpeed[3] + veh3Acceleration
-                veh3_gap_error.append(veh3[1])
-                veh3_gap_error_rate.append(veh3[2])
-                traci.vehicle.setSpeed("3", veh3Speed)
+                        # if veh1_lane_value == 1:
+                        #     traci.vehicle.changeLane("2", 1, 300)
 
-                veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, SUMO)
-                veh4Previous_Gap = veh4[0]
-                veh4_gap.append(veh4[0])
-                veh4Acceleration = veh4[3]
-                veh4Speed = vehSpeed[4] + veh4Acceleration
-                veh4_gap_error.append(veh4[1])
-                veh4_gap_error_rate.append(veh4[2])
-                traci.vehicle.setSpeed("4", veh4Speed)
+                        traci.vehicle.setSpeed("2", veh2Speed)
 
-                time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
-                TTL = np.vstack([TTL, np.array(time_to_collision)])
+                        veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                        veh3Previous_Gap = veh3[0]
+                        veh3_gap.append(veh3[0])
+                        vehicleGapErrors.append(veh3[1])
+                        veh3Acceleration = veh3[3]
+                        veh3Speed = vehSpeed[3] + veh3Acceleration
+                        veh3_gap_error.append(veh3[1])
+                        veh3_gap_error_rate.append(veh3[2])
+                        veh3_lane_change_decision.append(veh3[4])
+                        traci.vehicle.setSpeed("3", veh3Speed)
+
+                        # if veh1_lane_value == 1:
+                        #     traci.vehicle.changeLane("3", 1, 300)
+
+                        veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                        veh4Previous_Gap = veh4[0]
+                        veh4_gap.append(veh4[0])
+                        veh4Acceleration = veh4[3]
+                        veh4Speed = vehSpeed[4] + veh4Acceleration
+                        veh4_gap_error.append(veh4[1])
+                        veh4_gap_error_rate.append(veh4[2])
+                        veh4_lane_change_decision.append(veh4[4])
+                        traci.vehicle.setSpeed("4", veh4Speed)
+
+                        time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+
+                        veh1Speed = traci.vehicle.getSpeed("1")
+                        veh2Speed = traci.vehicle.getSpeed("2")
+                        veh3Speed = traci.vehicle.getSpeed("3")
+                        veh4Speed = traci.vehicle.getSpeed("4")
+
+                        platoonSpeedDiff = [31.292 - x for x in [veh1Speed, veh2Speed, veh3Speed, veh4Speed]]
+                        platoonGapError = [veh2_gap_error[-1], veh3_gap_error[-1], veh4_gap_error[-1]]
+                        SUMOSECONDLONGITUDE.input['platoon-gap-error-value'] = (sum(platoonGapError) / len(platoonGapError))
+                        SUMOSECONDLONGITUDE.input['vehicle-error-value'] = platoonSpeedDiff[0]
+                        SUMOSECONDLONGITUDE.compute()
+                        result = SUMOSECONDLONGITUDE.output['acceleration-value']
+                        veh1Speed = veh1Speed + result
+                        vehicleGapErrors.append(0)
+
+                        # timeLoss.append(traci.vehicle.getTimeLoss("1"))
+                        timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
+                        previousTimeLoss = timeLoss
+                        traci.vehicle.setSpeed("1", veh1Speed)
+
+                        time_to_collision[0] = 0
+                        TTL = np.vstack([TTL, np.array(time_to_collision)])
+                    else:
+                        veh_id_to_slow_down = []
+                        veh_id_to_speed_up = []
+                        for ind, x in enumerate(platoon_lane_ids):
+                            veh_id = ind + 1
+                            if x != 1:
+                                if veh_id > 3:
+                                    veh_id_to_slow_down.append(veh_id)
+                                    veh_id_to_speed_up.append(veh_id - 1)
+                                else:
+                                    veh_id_to_slow_down.append(veh_id + 1)
+                                traci.vehicle.changeLane(f"{veh_id}", 1, 300)
+                            else:
+                                pass
+
+                        for x in veh_id_to_slow_down:
+                            veh_speed_to_slow_down = traci.vehicle.getSpeed(f"{x}")
+                            traci.vehicle.setSpeed(f"{x}", veh_speed_to_slow_down - 0.5)
+
+                        for x in veh_id_to_speed_up:
+                            veh_speed_to_speed_up = traci.vehicle.getSpeed(f"{x}")
+                            traci.vehicle.setSpeed(f"{x}", veh_speed_to_speed_up + 0.5)
+
+                        avgTimeLoss = sum(timeLoss)/4
+                        timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
+
+                        veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                        veh2Previous_Gap = veh2[0]
+                        veh2_gap.append(veh2[0])
+                        vehicleGapErrors.append(veh2[1])
+                        veh2Acceleration = veh2[3]
+                        veh2Speed = vehSpeed[2] + veh2Acceleration
+                        veh2_gap_error.append(veh2[1])
+                        veh2_gap_error_rate.append(veh2[2])
+                        veh2_lane_change_decision.append(veh2[4])
+
+                        veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                        veh3Previous_Gap = veh3[0]
+                        veh3_gap.append(veh3[0])
+                        vehicleGapErrors.append(veh3[1])
+                        veh3Acceleration = veh3[3]
+                        veh3Speed = vehSpeed[3] + veh3Acceleration
+                        veh3_gap_error.append(veh3[1])
+                        veh3_gap_error_rate.append(veh3[2])
+                        veh3_lane_change_decision.append(veh3[4])
+
+                        # if veh1_lane_value == 1:
+                        #     traci.vehicle.changeLane("3", 1, 300)
+
+                        veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                        veh4Previous_Gap = veh4[0]
+                        veh4_gap.append(veh4[0])
+                        veh4Acceleration = veh4[3]
+                        veh4Speed = vehSpeed[4] + veh4Acceleration
+                        veh4_gap_error.append(veh4[1])
+                        veh4_gap_error_rate.append(veh4[2])
+                        veh4_lane_change_decision.append(veh4[4])
+
+                        time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+
+                        veh1Speed = traci.vehicle.getSpeed("1")
+                        veh2Speed = traci.vehicle.getSpeed("2")
+                        veh3Speed = traci.vehicle.getSpeed("3")
+                        veh4Speed = traci.vehicle.getSpeed("4")
+
+                        platoonSpeedDiff = [31.292 - x for x in [veh1Speed, veh2Speed, veh3Speed, veh4Speed]]
+                        platoonGapError = [veh2_gap_error[-1], veh3_gap_error[-1], veh4_gap_error[-1]]
+                        SUMOSECONDLONGITUDE.input['platoon-gap-error-value'] = (sum(platoonGapError) / len(platoonGapError))
+                        SUMOSECONDLONGITUDE.input['vehicle-error-value'] = platoonSpeedDiff[0]
+                        SUMOSECONDLONGITUDE.compute()
+                        result = SUMOSECONDLONGITUDE.output['acceleration-value']
+                        veh1Speed = veh1Speed + result
+                        vehicleGapErrors.append(0)
+
+                        # timeLoss.append(traci.vehicle.getTimeLoss("1"))
+                        timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
+                        previousTimeLoss = timeLoss
+
+                        time_to_collision[0] = 0
+                        TTL = np.vstack([TTL, np.array(time_to_collision)])
+
+                else:
+                    avgTimeLoss = sum(timeLoss)/4
+                    timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
+                    previousTimeLoss = timeLoss
+                    veh1 = fuzzyLogic.calc_Inputs(1, vehPosition[0][0], veh1Previous_Gap, vehPosition[1][0], vehSpeed[1], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh1Previous_Gap = veh1[0]
+                    veh1_gap.append(veh1[0])
+                    vehicleGapErrors.append(veh1[1])
+                    veh1Acceleration = veh1[3]
+                    veh1Speed = vehSpeed[1] + veh1Acceleration
+                    veh1_gap_error.append(veh1[1])
+                    veh1_gap_error_rate.append(veh1[2])
+                    veh1_lane_change_decision.append(veh1[4])
+                    traci.vehicle.setSpeed("1", veh1Speed)
+                    # print(traci.lane.getIDList())
+                    # if veh1_lane_change_decision[-1] == 1:
+
+                    # make this a function:
+                    # print(vehPosition[0][0], traci.vehicle.getPosition("5")[0])
+
+                    veh2 = fuzzyLogic.calc_Inputs(2, vehPosition[1][0], veh2Previous_Gap, vehPosition[2][0], vehSpeed[2], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh2Previous_Gap = veh2[0]
+                    veh2_gap.append(veh2[0])
+                    vehicleGapErrors.append(veh2[1])
+                    veh2Acceleration = veh2[3]
+                    veh2Speed = vehSpeed[2] + veh2Acceleration
+                    veh2_gap_error.append(veh2[1])
+                    veh2_gap_error_rate.append(veh2[2])
+                    veh2_lane_change_decision.append(veh2[4])
+
+                    # if veh1_lane_value == 1:
+                    #     traci.vehicle.changeLane("2", 1, 300)
+
+                    traci.vehicle.setSpeed("2", veh2Speed)
+
+                    veh3 = fuzzyLogic.calc_Inputs(3, vehPosition[2][0], veh3Previous_Gap, vehPosition[3][0], vehSpeed[3], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh3Previous_Gap = veh3[0]
+                    veh3_gap.append(veh3[0])
+                    vehicleGapErrors.append(veh3[1])
+                    veh3Acceleration = veh3[3]
+                    veh3Speed = vehSpeed[3] + veh3Acceleration
+                    veh3_gap_error.append(veh3[1])
+                    veh3_gap_error_rate.append(veh3[2])
+                    veh3_lane_change_decision.append(veh3[4])
+                    traci.vehicle.setSpeed("3", veh3Speed)
+
+                    # if veh1_lane_value == 1:
+                    #     traci.vehicle.changeLane("3", 1, 300)
+
+                    veh4 = fuzzyLogic.calc_Inputs(4, vehPosition[3][0], veh4Previous_Gap, vehPosition[4][0], vehSpeed[4], vehicleGapErrors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE)
+                    veh4Previous_Gap = veh4[0]
+                    veh4_gap.append(veh4[0])
+                    veh4Acceleration = veh4[3]
+                    veh4Speed = vehSpeed[4] + veh4Acceleration
+                    veh4_gap_error.append(veh4[1])
+                    veh4_gap_error_rate.append(veh4[2])
+                    veh4_lane_change_decision.append(veh4[4])
+                    traci.vehicle.setSpeed("4", veh4Speed)
+
+                    traci.vehicle.changeLane("1", 0, 300)
+                    traci.vehicle.changeLane("2", 0, 300)
+                    traci.vehicle.changeLane("3", 0, 300)
+                    traci.vehicle.changeLane("4", 0, 300)
+
+                    # print(veh1_lane_change_decision[-1], veh2_lane_change_decision[-1], veh3_lane_change_decision[-1], veh4_lane_change_decision[-1])
+
+                    # if veh1_lane_value == 1:
+                    #     traci.vehicle.changeLane("4", 1, 300)
+                    if veh1_lane_change_decision[-1] and veh2_lane_change_decision[-1] and veh3_lane_change_decision[-1] and veh4_lane_change_decision[-1] == 1:  # step > 900:
+                        veh_gap_error_max = max([veh1_gap_error[-1], veh2_gap_error[-1], veh3_gap_error[-1], veh4_gap_error[-1]])
+                        if veh_gap_error_max < 0.5:
+                            # now engage the last FIS
+                            # determine if there is enough room to change lanes
+                            newLaneDistanceDiff = [vehPosition[1][0] - traci.vehicle.getPosition("5")[0], vehPosition[2][0] - traci.vehicle.getPosition("5")[0], vehPosition[3][0] - traci.vehicle.getPosition("5")[0], vehPosition[4][0] - traci.vehicle.getPosition("5")[0]]
+                            if all([abs(x) > 250 for x in newLaneDistanceDiff]):
+                                # print(veh1_lane_change_decision)
+                                traci.vehicle.changeLane("1", 1, 300)
+                                traci.vehicle.changeLane("2", 1, 300)
+                                traci.vehicle.changeLane("3", 1, 300)
+                                traci.vehicle.changeLane("4", 1, 300)
+                                laneChangeDecision.append(1)
+                                # print(traci.vehicle.getLaneID("1"))
+                            else:
+                                laneChangeDecision.append(0)
+                        else:
+                            laneChangeDecision.append(0)
+                    else:
+                        laneChangeDecision.append(0)
+
+                    timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
+                    previousTimeLoss = timeLoss
+                    time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                    TTL = np.vstack([TTL, np.array(time_to_collision)])
+
+                # traci.vehicle.changeLane("1", 1, 2)
 
                 # del veh1, veh2, veh3, veh4, vehSpeed, vehPosition
                 # gc.collect()
 
                 if options.slow_down_midway:
                     if 525 < step < 615:
-                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        traci.vehicle.slowDown("0", 10, 90)
                         # traci.vehicle.setSpeed("0", 20.1168)
                     elif 614 < step < 675:
                         traci.vehicle.slowDown("0", 31.292, 60)
@@ -251,7 +587,6 @@ def run(fis_start_time, end_time):
                         pass
                 else:
                     pass
-
         # if step >= 30 and step < 150:
             # veh1_position = traci.vehicle.getPosition("0")
             # print(veh1_position)
@@ -275,7 +610,7 @@ def run(fis_start_time, end_time):
     sys.stdout.flush()
     # del fuzzyLogic
     # gc.collect()
-    return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL
+    return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL, totalTimeLoss, laneChangeDecision
 
 
 def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
@@ -318,13 +653,14 @@ if __name__ == "__main__":
     else:
         # run sumo with gui
         sumoBinary = checkBinary('sumo-gui')
-    fileName = ntpath.basename(__file__)
+    fileName = ntpath.basename(__file__).split('.')[0]
 
-    fileName_No_Suffix = "highway_1"
+    highway_filename = "highway_2"
+    fileName_no_sffix = f"{fileName}_{highway_filename}"
     fis_start_time = 300
-    end_time = 900
+    end_time = 2000
 
-    timestr = time.strftime("%Y%m%d")
+    timestr = time.strftime("%Y%m%d_%H%M%S")
 
     # create *_subdirectory or join it
     try:
@@ -337,9 +673,9 @@ if __name__ == "__main__":
     except Exception:
         pass
 
-    spreadsheet_subdirectory = f"./results/spreadsheet/{timestr}_{fileName_No_Suffix}_tripInfo"
+    spreadsheet_subdirectory = f"./results/spreadsheet/{timestr}_{fileName_no_sffix}_tripInfo"
     global images_subdirectory
-    images_subdirectory = f"./results/images/{timestr}_{fileName_No_Suffix}_tripInfo"
+    images_subdirectory = f"./results/images/{timestr}_{fileName_no_sffix}_tripInfo"
 
     try:
         os.mkdir(spreadsheet_subdirectory)
@@ -353,18 +689,18 @@ if __name__ == "__main__":
 
     # set the file name based on increamenting value
     i = 0
-    while os.path.exists(os.path.join(spreadsheet_subdirectory, "%s_fcdout.xml" % format(int(i), '03d'))):
+    while os.path.exists(os.path.join(spreadsheet_subdirectory, f"{i}_fcdout.xml")):
         i += 1
     recnum = format(int(i), '03d')
     # another way to seperate new log files:
     # https://sumo.dlr.de/docs/Simulation/Output/index.html#separating_outputs_of_repeated_runs
 
     # generate route file
-    routeFileName = f"{fileName_No_Suffix}.rou.xml"
+    routeFileName = f"{highway_filename}.rou.xml"
     # inductionLoopFileName = "{}_induction.xml".format(recnum)
 
     # generate additional file
-    additionalFileName = f"{fileName_No_Suffix}.add.xml"
+    additionalFileName = f"{highway_filename}.add.xml"
     # inductionLoopFileName = f"./results/{recnum}_induction.xml"
     # generate_additionalfile(additionalFileName, inductionLoopFileName)
 
@@ -373,7 +709,7 @@ if __name__ == "__main__":
     fcdOutInfoFileName = rf"{spreadsheet_subdirectory}\{recnum}_fcdout.xml"
     amitranInforFileName = rf"{spreadsheet_subdirectory}\{recnum}_amitran.xml"
     # traci starts sumo as a subprocess and then this script connects and runs
-    traci.start([sumoBinary, "-c", f"{fileName_No_Suffix}.sumocfg",
+    traci.start([sumoBinary, "-c", f"{highway_filename}.sumocfg",
                 "--route-files", routeFileName,
                  "--additional-files", additionalFileName,
                  "--device.ssm.probability", "1",
@@ -385,7 +721,8 @@ if __name__ == "__main__":
                  "--quit-on-end"])
     # call the run script. Runs the fuzzy logic
     veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
-        veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL = run(fis_start_time, end_time)
+        veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, \
+        TTL, totalTimeLoss, laneChangeDecision = run(fis_start_time, end_time)
 
     veh1_fitness_sum = sum(veh1_gap_error[fis_start_time:end_time])
     veh2_fitness_sum = sum(veh2_gap_error[fis_start_time:end_time])
@@ -395,6 +732,7 @@ if __name__ == "__main__":
     fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
 
     print(f"The fitness is: {fitness}")
+    print(f"The total time lost was: {sum(totalTimeLoss)}")
 
     # convert new xml file to csv
     xml2csv.main([fcdOutInfoFileName])
@@ -550,3 +888,10 @@ if __name__ == "__main__":
     plotResults(xGapErrorRate, yGapErrorRate, title, 'Time_Step', 'Gap_Error_Rate', title)
 
     # plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
+
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    ax.plot(laneChangeDecision)
+    posFile = f'./{images_subdirectory}/{title}_vehicle_laneChangeDecision.png'
+    if os.path.isfile(posFile):
+        os.unlink(posFile)
+    fig.savefig(f'{posFile}')
