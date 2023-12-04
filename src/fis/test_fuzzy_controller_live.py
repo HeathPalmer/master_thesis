@@ -1,6 +1,4 @@
-import gc
 from matplotlib import pyplot as plt
-from memory_profiler import profile
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
@@ -110,6 +108,102 @@ class FuzzyHWClass:
         # rule1.view()
 
         SUMO_control = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7])
+
+        SUMO = ctrl.ControlSystemSimulation(SUMO_control, flush_after_run=1000)  # using cache=False did not help
+        return SUMO
+
+    def createFuzzyLaneControl(self, membership_function_values):
+
+        # initialize fuzy variables
+        self.avg_time_loss = ctrl.Antecedent(np.arange(0, 100, 1), 'avg-time-loss')
+        self.avg_time_loss_rate = ctrl.Antecedent(np.arange(-2, 1, 0.005), 'avg-time-loss-rate')
+        # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
+
+        # output acceleration
+        self.change_lane_decision = ctrl.Consequent(np.arange(-1, 2, 0.01), 'change-lane-decision')
+
+        # Function for fuzz.trimf(input,left edge, center edge, right edge)
+        self.avg_time_loss['Small'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[0])
+        self.avg_time_loss['Medium'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[1])
+        self.avg_time_loss['Large'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[2])
+        # print(self.platoon_time_loss.view())
+
+        self.avg_time_loss_rate['Small'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[3])
+        self.avg_time_loss_rate['Medium'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[4])
+        self.avg_time_loss_rate['Large'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[5])
+
+        # setup the 12 output membership functions
+        self.change_lane_decision['NoChange'] = fuzz.trimf(self.change_lane_decision.universe, membership_function_values[6])
+        self.change_lane_decision['ChangeLane'] = fuzz.trimf(self.change_lane_decision.universe, membership_function_values[7])
+
+        # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
+        rule1 = ctrl.Rule(antecedent=((self.avg_time_loss['Small'] & self.avg_time_loss_rate['Small']) |
+                                      (self.avg_time_loss['Small'] & self.avg_time_loss_rate['Medium']) |
+                                      (self.avg_time_loss['Medium'] & self.avg_time_loss_rate['Small'])),
+                          consequent=self.change_lane_decision['NoChange'])
+
+        rule2 = ctrl.Rule(antecedent=((self.avg_time_loss['Small'] & self.avg_time_loss_rate['Large']) |
+                                      (self.avg_time_loss['Medium'] & self.avg_time_loss_rate['Medium']) |
+                                      (self.avg_time_loss['Medium'] & self.avg_time_loss_rate['Large']) |
+                                      (self.avg_time_loss['Large'] & self.avg_time_loss_rate['Small']) |
+                                      (self.avg_time_loss['Large'] & self.avg_time_loss_rate['Medium']) |
+                                      (self.avg_time_loss['Large'] & self.avg_time_loss_rate['Large'])),
+                          consequent=self.change_lane_decision['ChangeLane'])
+
+        # rule1.view()
+
+        SUMO_control = ctrl.ControlSystem([rule1, rule2])
+
+        SUMO = ctrl.ControlSystemSimulation(SUMO_control, flush_after_run=1000)  # using cache=False did not help
+        return SUMO
+
+    def createSecondFuzzyLongitudinalControl(self, membership_function_values):
+
+        # initialize fuzy variables
+        self.platoon_gap_error = ctrl.Antecedent(np.arange(-10, 10, 0.01), 'platoon-gap-error-value')
+        self.velocity_error = ctrl.Antecedent(np.arange(-10, 3, 0.01), 'vehicle-error-value')
+        # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
+
+        # output acceleration
+        self.acceleration = ctrl.Consequent(np.arange(-3, 3, 0.01), 'acceleration-value')
+
+        # Function for fuzz.trimf(input,left edge, center edge, right edge)
+        self.platoon_gap_error['Small'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[0])
+        self.platoon_gap_error['Medium'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[1])
+        self.platoon_gap_error['Large'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[2])
+        # print(self.gap_error.view())
+
+        self.velocity_error['Small'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[3])
+        self.velocity_error['Medium'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[4])
+        self.velocity_error['Large'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[5])
+        # self.gap_diff_from_min['Small'] = fuzz.trimf(self.gap_diff_from_min.universe, [-3, -1.5, 0])
+        # self.gap_diff_from_min['Medium'] = fuzz.trimf(self.gap_diff_from_min.universe, [-1.5, 0, 1.5])
+        # self.gap_diff_from_min['Large'] = fuzz.trimf(self.gap_diff_from_min.universe, [0, 1.5, 2])
+
+        # setup the 12 output membership functions
+        self.acceleration['Small'] = fuzz.trimf(self.acceleration.universe, membership_function_values[6])
+        self.acceleration['Medium'] = fuzz.trimf(self.acceleration.universe, membership_function_values[7])
+        self.acceleration['Large'] = fuzz.trimf(self.acceleration.universe, membership_function_values[8])
+
+        # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
+        rule1 = ctrl.Rule(antecedent=((self.platoon_gap_error['Small'] & self.velocity_error['Small']) |
+                                      (self.platoon_gap_error['Small'] & self.velocity_error['Medium']) |
+                                      (self.platoon_gap_error['Medium'] & self.velocity_error['Small']) |
+                                      (self.platoon_gap_error['Large'] & self.velocity_error['Small']) |
+                                      (self.platoon_gap_error['Large'] & self.velocity_error['Medium'])),
+                          consequent=self.acceleration['Small'])
+
+        rule2 = ctrl.Rule(antecedent=((self.platoon_gap_error['Small'] & self.velocity_error['Large']) |
+                                      (self.platoon_gap_error['Medium'] & self.velocity_error['Medium'])),
+                          consequent=self.acceleration['Medium'])
+
+        rule3 = ctrl.Rule(antecedent=((self.platoon_gap_error['Medium'] & self.velocity_error['Large']) |
+                                      (self.platoon_gap_error['Large'] & self.velocity_error['Large'])),
+                          consequent=self.acceleration['Large'])
+
+        # rule1.view()
+
+        SUMO_control = ctrl.ControlSystem([rule1, rule2, rule3])
 
         SUMO = ctrl.ControlSystemSimulation(SUMO_control, flush_after_run=1000)  # using cache=False did not help
         return SUMO
@@ -291,7 +385,7 @@ class FuzzyHWClass:
         return sum(input) / len(list)
 
     # @profile
-    def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed, list_vehicle_gap_errors, SUMO):
+    def calc_Inputs(self, vehicle_id, previous_vehicles_position, previous_gap, vehicle_position, vehicle_speed, list_vehicle_gap_errors, avgTimeLoss, timeLossChangeRate, SUMO, SUMOLANECHANGE):
         # fuzzyFunction = FuzzyHWClass()
         # constants
         ideal_gap = 1  # second
@@ -337,8 +431,17 @@ class FuzzyHWClass:
         # print(f"skfuzzy number of runs is: {SUMO._run}")
 
         result = SUMO.output['acceleration-value']
+
+        # lane change behavior - FIS
+        SUMOLANECHANGE.input['avg-time-loss'] = avgTimeLoss
+        SUMOLANECHANGE.input['avg-time-loss-rate'] = timeLossChangeRate
+
+        SUMOLANECHANGE.compute()
+
+        lane_change_decision = round(SUMOLANECHANGE.output['change-lane-decision'])
         # fuzzyOut = fuzzyFunction.fuzzyHW(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, SUMO)
-        vehicle = [vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate, result]
+        vehicle = [vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate, result, lane_change_decision]
+
         count = count+1
         # del vehicle_acceleration, min_vehicle_gap, list_vehicle_gap_errors, vehicle_gap_error_rate, vehicle_gap_error, \
         #     previous_gap_error, vehicle_gap
