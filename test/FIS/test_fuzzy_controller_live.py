@@ -1,6 +1,4 @@
-import gc
 from matplotlib import pyplot as plt
-from memory_profiler import profile
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
