@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2023-11-29 02:14:13 by Eclipse SUMO sumo Version 1.16.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="highway_2.net.xml"/>
+        <route-files value="highway_2.rou.xml"/>
+        <additional-files value="highway_2.add.xml"/>
+    </input>
+
+    <ssm_device>
+        <device.ssm.probability value="1"/>
+        <device.ssm.file value="./results/spreadsheet/20231127_test_easy_ga_lon1_highway_2_tripInfo\100_ssm.xml"/>
+    </ssm_device>
+
+    <traci_server>
+        <remote-port value="57914"/>
+    </traci_server>
+
+    <gui_only>
+        <quit-on-end value="true"/>
+        <start value="true"/>
+    </gui_only>
+
+</configuration>
+-->
+
+<SSMLog>
+    <globalMeasures ego="0">
+        <timeSpan values=""/>
+        <BRSpan values=""/>
+        <SGAPSpan values=""/>
+        <TGAPSpan values=""/>
+    </globalMeasures>
+    <globalMeasures ego="1">
+        <timeSpan values=""/>
+        <BRSpan values=""/>
+        <SGAPSpan values=""/>
+        <TGAPSpan values=""/>
+    </globalMeasures>
+    <globalMeasures ego="2">
+        <timeSpan values=""/>
+        <BRSpan values=""/>
+        <SGAPSpan values=""/>
+        <TGAPSpan values=""/>
+    </globalMeasures>
+    <globalMeasures ego="3">
+        <timeSpan values=""/>
+        <BRSpan values=""/>
+        <SGAPSpan values=""/>
+        <TGAPSpan values=""/>
+    </globalMeasures>
+    <globalMeasures ego="4">
+        <timeSpan values=""/>
+        <BRSpan values=""/>
+        <SGAPSpan values=""/>
+        <TGAPSpan values=""/>
+    </globalMeasures>
+    <globalMeasures ego="5">
+        <timeSpan values=""/>
+        <BRSpan values=""/>
+        <SGAPSpan values=""/>
+        <TGAPSpan values=""/>
+    </globalMeasures>
+</SSMLog>
