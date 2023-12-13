@@ -163,12 +163,12 @@ def user_def_fitness(chromosome):
         veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
             veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL, totalTimeLoss = run(fis_start_time, end_time, chromosome_array_of_arrays)
 
-        veh1_fitness_sum = sum(veh1_gap_error[fis_start_time:end_time])
-        veh2_fitness_sum = sum(veh2_gap_error[fis_start_time:end_time])
-        veh3_fitness_sum = sum(veh3_gap_error[fis_start_time:end_time])
-        veh4_fitness_sum = sum(veh4_gap_error[fis_start_time:end_time])
+        veh1_fitness_sum = sum(abs(veh1_gap_error[fis_start_time:end_time]))
+        veh2_fitness_sum = sum(abs(veh2_gap_error[fis_start_time:end_time]))
+        veh3_fitness_sum = sum(abs(veh3_gap_error[fis_start_time:end_time]))
+        veh4_fitness_sum = sum(abs(veh4_gap_error[fis_start_time:end_time]))
 
-        fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+        fitness = np.sum(abs([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum]))
         # fitness = sum(totalTimeLoss)
 
     except Exception as e:

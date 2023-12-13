@@ -542,10 +542,7 @@ def run(fis_start_time, end_time):
                     traci.vehicle.changeLane("3", 0, 300)
                     traci.vehicle.changeLane("4", 0, 300)
 
-                    # print(veh1_lane_change_decision[-1], veh2_lane_change_decision[-1], veh3_lane_change_decision[-1], veh4_lane_change_decision[-1])
-
-                    # if veh1_lane_value == 1:
-                    #     traci.vehicle.changeLane("4", 1, 300)
+                    # Lane availability
                     if veh1_lane_change_decision[-1] and veh2_lane_change_decision[-1] and veh3_lane_change_decision[-1] and veh4_lane_change_decision[-1] == 1:  # step > 900:
                         veh_gap_error_max = max([veh1_gap_error[-1], veh2_gap_error[-1], veh3_gap_error[-1], veh4_gap_error[-1]])
                         if veh_gap_error_max < 0.5:
@@ -724,12 +721,12 @@ if __name__ == "__main__":
         veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, \
         TTL, totalTimeLoss, laneChangeDecision = run(fis_start_time, end_time)
 
-    veh1_fitness_sum = sum(veh1_gap_error[fis_start_time:end_time])
-    veh2_fitness_sum = sum(veh2_gap_error[fis_start_time:end_time])
-    veh3_fitness_sum = sum(veh3_gap_error[fis_start_time:end_time])
-    veh4_fitness_sum = sum(veh4_gap_error[fis_start_time:end_time])
+    veh1_fitness_sum = sum(abs(veh1_gap_error[fis_start_time:end_time]))
+    veh2_fitness_sum = sum(abs(veh2_gap_error[fis_start_time:end_time]))
+    veh3_fitness_sum = sum(abs(veh3_gap_error[fis_start_time:end_time]))
+    veh4_fitness_sum = sum(abs(veh4_gap_error[fis_start_time:end_time]))
 
-    fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+    fitness = np.sum(abs([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum]))
 
     print(f"The fitness is: {fitness}")
     print(f"The total time lost was: {sum(totalTimeLoss)}")
