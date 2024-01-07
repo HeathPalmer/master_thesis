@@ -894,10 +894,16 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
         ax.legend()
     ax.set_title(f"{title} Vehcile {yLabel} vs {xLabel}")
     lowerYLabel = yLabel.lower()
+    if yLabel == "Velocity":
+        ax.set_ylim([22, 32])
+    elif yLabel == "Position":
+        ax.set_xlim([550, 1000])
+    else:
+        pass
     posFile = f'./{images_subdirectory}/{title}_vehicle_{lowerYLabel}.png'
     if os.path.isfile(posFile):
         os.unlink(posFile)
-    fig.savefig(f'{posFile}')
+    fig.savefig(f'{posFile}', bbox_inches='tight')
 
 
 # main entry point
@@ -1165,4 +1171,4 @@ if __name__ == "__main__":
     posFile = f'./{images_subdirectory}/{title}_vehicle_laneChangeDecision.png'
     if os.path.isfile(posFile):
         os.unlink(posFile)
-    fig.savefig(f'{posFile}')
+    fig.savefig(f'{posFile}', bbox_inches='tight')
