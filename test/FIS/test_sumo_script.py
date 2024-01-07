@@ -91,7 +91,7 @@ def check_Lane_Change(list):
 
 # contains TraCI control loop
 # @profile
-def run(fis_start_time, end_time):
+def run(control_takeover_start_time, end_time):
     fuzzyLogic = FuzzyHWClass()
     step = 0
 
@@ -512,12 +512,13 @@ def run(fis_start_time, end_time):
                 totalTimeLoss.append(sum(timeLoss))
         # Use the FIS vehicle controller
         else:
-            if 30 < step < fis_start_time + 1:
+            if 30 < step < control_takeover_start_time + 1:
                 for ind in traci.vehicle.getIDList():
-                    veh5_lane = traci.vehicle.getLaneID("5")
-                    # print(veh5_lane)
-                    if veh5_lane != 1:
-                        traci.vehicle.changeLane("5", 1, 3)
+                    if ind == "5":
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -542,7 +543,7 @@ def run(fis_start_time, end_time):
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
                 laneChangeDecision.append(0)
 
-            elif fis_start_time < step < end_time:
+            elif control_takeover_start_time < step < end_time:
                 # is re-creating these variables necessary???????
                 vehPosition = []
                 vehSpeed = []
@@ -976,14 +977,19 @@ if __name__ == "__main__":
     # call the run script. Runs the fuzzy logic
     veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
         veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, \
-        TTL, totalTimeLoss, laneChangeDecision = run(fis_start_time, end_time)
+        TTL, totalTimeLoss, laneChangeDecision = run(control_takeover_start_time, end_time)
 
-    veh1_fitness_sum = sum(abs(veh1_gap_error[fis_start_time:end_time]))
-    veh2_fitness_sum = sum(abs(veh2_gap_error[fis_start_time:end_time]))
-    veh3_fitness_sum = sum(abs(veh3_gap_error[fis_start_time:end_time]))
-    veh4_fitness_sum = sum(abs(veh4_gap_error[fis_start_time:end_time]))
+    abs_veh1_gap_error = list(map(lambda x: abs(x), veh1_gap_error))
+    abs_veh2_gap_error = list(map(lambda x: abs(x), veh2_gap_error))
+    abs_veh3_gap_error = list(map(lambda x: abs(x), veh3_gap_error))
+    abs_veh4_gap_error = list(map(lambda x: abs(x), veh4_gap_error))
 
-    fitness = np.sum(abs([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum]))
+    veh1_fitness_sum = sum(abs_veh1_gap_error[control_takeover_start_time:end_time])
+    veh2_fitness_sum = sum(abs_veh2_gap_error[control_takeover_start_time:end_time])
+    veh3_fitness_sum = sum(abs_veh3_gap_error[control_takeover_start_time:end_time])
+    veh4_fitness_sum = sum(abs_veh4_gap_error[control_takeover_start_time:end_time])
+
+    fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
 
     print(f"The fitness is: {fitness}")
     print(f"The total time lost was: {sum(totalTimeLoss)}")
@@ -1044,7 +1050,7 @@ if __name__ == "__main__":
             veh0Position.append(row["vehicle_x"])
             veh0Velocity.append(row["vehicle_speed"])
             veh0Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
+            # if control_takeover_start_time < row["timestep_time"] <= end_time:
             if len(veh0Acceleration) > 2:
                 acceleration_array_length = len(veh0Acceleration)
                 previous_acceleration_value = veh0Acceleration[acceleration_array_length - 2]
@@ -1056,7 +1062,7 @@ if __name__ == "__main__":
             veh1Position.append(row["vehicle_x"])
             veh1Velocity.append(row["vehicle_speed"])
             veh1Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
+            # if control_takeover_start_time < row["timestep_time"] <= end_time:
             if len(veh1Acceleration) > 2:
                 acceleration_array_length = len(veh1Acceleration)
                 previous_acceleration_value = veh1Acceleration[acceleration_array_length - 2]
@@ -1066,7 +1072,7 @@ if __name__ == "__main__":
             veh2Position.append(row["vehicle_x"])
             veh2Velocity.append(row["vehicle_speed"])
             veh2Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
+            # if control_takeover_start_time < row["timestep_time"] <= end_time:
             if len(veh2Acceleration) > 2:
                 acceleration_array_length = len(veh2Acceleration)
                 previous_acceleration_value = veh2Acceleration[acceleration_array_length - 2]
@@ -1076,7 +1082,7 @@ if __name__ == "__main__":
             veh3Position.append(row["vehicle_x"])
             veh3Velocity.append(row["vehicle_speed"])
             veh3Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
+            # if control_takeover_start_time < row["timestep_time"] <= end_time:
             if len(veh3Acceleration) > 2:
                 acceleration_array_length = len(veh3Acceleration)
                 previous_acceleration_value = veh3Acceleration[acceleration_array_length - 2]
@@ -1086,7 +1092,7 @@ if __name__ == "__main__":
             veh4Position.append(row["vehicle_x"])
             veh4Velocity.append(row["vehicle_speed"])
             veh4Acceleration.append(row["vehicle_acceleration"])
-            # if fis_start_time < row["timestep_time"] <= end_time:
+            # if control_takeover_start_time < row["timestep_time"] <= end_time:
             if len(veh4Acceleration) > 2:
                 acceleration_array_length = len(veh4Acceleration)
                 previous_acceleration_value = veh4Acceleration[acceleration_array_length - 2]
