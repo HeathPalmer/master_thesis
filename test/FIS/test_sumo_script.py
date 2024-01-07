@@ -207,10 +207,11 @@ def run(control_takeover_start_time, end_time):
         if options.krauss:
             if 30 < step < end_time:
                 for ind in traci.vehicle.getIDList():
-                    veh5_lane = traci.vehicle.getLaneID("5")
-                    # print(veh5_lane)
-                    if veh5_lane != 1:
-                        traci.vehicle.changeLane("5", 1, 3)
+                    if ind == "5":
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -492,10 +493,11 @@ def run(control_takeover_start_time, end_time):
                     pass
             else:
                 for ind in traci.vehicle.getIDList():
-                    veh5_lane = traci.vehicle.getLaneID("5")
-                    # print(veh5_lane)
-                    if veh5_lane != 1:
-                        traci.vehicle.changeLane("5", 1, 3)
+                    if ind == "5":
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -554,10 +556,12 @@ def run(control_takeover_start_time, end_time):
                 newVehTimeLoss = []
                 newLaneVehicles = []
                 for ind in traci.vehicle.getIDList():
-                    veh5_lane = traci.vehicle.getLaneID("5")
-                    # print(veh5_lane)
-                    if veh5_lane != 1:
-                        traci.vehicle.changeLane("5", 1, 3)
+                    if ind == "5":
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
+                            traci.vehicle.setSpeed("5", 31)
                     if int(ind) < 5:
                         vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -568,7 +572,6 @@ def run(control_takeover_start_time, end_time):
                         newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
                         newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
                 totalTimeLoss.append(sum(timeLoss))
-                traci.vehicle.setSpeed("5", 31)
                 veh1_lane = traci.vehicle.getLaneID("1")
                 veh1_lane_value = int(veh1_lane[6])
                 if veh1_lane_value == 1:
@@ -802,7 +805,11 @@ def run(control_takeover_start_time, end_time):
                         if veh_gap_error_max < 0.5:
                             # now engage the last FIS
                             # determine if there is enough room to change lanes
-                            newLaneDistanceDiff = [vehPosition[1][0] - traci.vehicle.getPosition("5")[0], vehPosition[2][0] - traci.vehicle.getPosition("5")[0], vehPosition[3][0] - traci.vehicle.getPosition("5")[0], vehPosition[4][0] - traci.vehicle.getPosition("5")[0]]
+                            for ind in traci.vehicle.getIDList():
+                                if ind == "5":
+                                    newLaneDistanceDiff = [vehPosition[1][0] - traci.vehicle.getPosition("5")[0], vehPosition[2][0] - traci.vehicle.getPosition("5")[0], vehPosition[3][0] - traci.vehicle.getPosition("5")[0], vehPosition[4][0] - traci.vehicle.getPosition("5")[0]]
+                                else:
+                                    newLaneDistanceDiff = [vehPosition[1][0], vehPosition[2][0], vehPosition[3][0], vehPosition[4][0]]
                             if all([abs(x) > 250 for x in newLaneDistanceDiff]):
                                 # print(veh1_lane_change_decision)
                                 traci.vehicle.changeLane("1", 1, 300)
