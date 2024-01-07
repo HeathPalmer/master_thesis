@@ -38,8 +38,12 @@ def get_options():
                           version of sumo")
     opt_parser.add_option("--krauss", action="store_true",
                           default=False, help="run the simulation using the human driver model")
-    opt_parser.add_option("--highway_2", action="store_true",
-                          default=False, help="run the simulation using the second highway configuration")
+    opt_parser.add_option("--CACC", action="store_true",
+                          default=False, help="run the simulation using the CACC model")
+    opt_parser.add_option("--GFS", action="store_true",
+                          default=False, help="control platoon with GFS controllers instead of FIS controllers")
+    opt_parser.add_option("--highway_2_mod", action="store_true",
+                          default=False, help="run the simulation using the modified second highway configuration")
     opt_parser.add_option("--slow_down_midway", action="store_true",
                           default=False, help="slows the leading human model vehicle halfway during the sim")
     options, args = opt_parser.parse_args()
@@ -117,75 +121,79 @@ def run(fis_start_time, end_time):
 
     TTL = np.empty((0, 4), int)
 
-    GA_chromosome = [[-1.6240344751828966],[0.8735664638544858],[2.786421006981838],[-1.5360056631852324],[-1.4109936691129998],[2.7760919030749687],[-1.5146609995028424],[0.286111356789177],[0.533014367315769],[2.5437503030955755],[2.681878309479083],[2.7097058149347957],[-1.1954826254870359],[0.34595014308802696],[7],[0.30548234324726],[1.3912850561655268],[5],[1.9672298354813358],[2.271725813193616],[2.8039497198684],[6.516775246756547],[7.86365500161472],[9],[-3.3358267954019674],[1],[8],[-3.069388543029344],[-0.776325465066936],[9.923128903319997],[0.40372338238102223],[1.2133295148870922],[9.338581482690811],[-3.5131368262457343],[-1.0635482340216882],[-0.8120053202249782],[-2.79827706849043],[4.286758833890948],[8.579088170091405],[-5.114797183793154],[0.3113213534794914],[1.5156892599137048],[-5.106525856456598],[1.3213374066030035],[3.58042381890575],[1.8886598151326774],[2.086456315410275],[4.106743549010657],[-4.581403448687182],[-2.1445655539246036],[-1.6059296614388434],[3.4163387350245618],[4.055041509477416],[4.252104769272686],[2.5453547664446967],[3.3785651221906745],[4.104506478012013],[0.1904316537942723],[1.1529647268301189],[1.6532473842039472],[-1.586099831835674],[-1.4449729751873748],[-0.8071520067124034],[4.209897506678502],[4.537169733825274],[4.714573428575184]]
-    # lat_GA_Chromosome = [[7],[71.8232712481126],[73.44574771934484],[9],[42.97549278960961],[88.51370938381592],[26.480593113993702],[34.333598530390944],[97.87627131835028],[-0.08994987703760998],[0.003994405618960042],[0.6124129233504257],[0.12034402394596203],[0.23316119394964663],[0.29640097938129517],[0.2391229754559647],[0.6980126528742496],[0.6994915574987353],[0.2909558499914311],[0.33025519650852836],[0.3716297699772756],[-0.026500933890887646],[0.8560407770469973],[10]]
-    # alt_lat_GA_Chromosome = [[67.6761221512281],[69.83251654757844],[77.76368252882389],[33.97062143232918],[36.332680373664786],[58.947637103181755],[-0.665875480807002],[5.020935566853341],[84.5102309275504],[0.1295196815633867],[0.4524747405064238],[0.5304257536123267],[-0.044061054847725746],[0.4261034949192127],[0.9703554076610142],[0.510278503691667],[0.6033899496234578],[0.6261256068999578],[0.048885670430450806],[0.25171726717588283],[0.35163550672256294],[0.5917424400418568],[0.6148280065175284],[0.6516127105888627]]
-    alt_lat_GA_Chromosome = [[64.5156456435981],[65.10512228655486],[86.17156792350178],[1.5577564837304148],[22.647222415305365],[61.19444125696693],[55.64033218802219],[68.99877267290137],[97.42463342627312],[0.11867881846598133],[0.1267105725894678],[0.13111946765751606],[-0.07648265710199151],[0.18819996154948335],[0.8763376540835236],[-0.0492715826292624],[0.33508165688740355],[0.6119936061062785],[0.3242773308948389],[0.39313456372966255],[1.0730835480996557],[0.8863730287887847],[0.8995946312096776],[0.9170835065528654]]
-    lon2_GA_Chromosome = [[1.5098238860638276],[7],[7.92916396487642],[-4.341434003061262],[8.323253529177837],[8.437866725066886],[-0.45026512051033585],[2.719697720047667],[3.528034862358293],[-1.9281714608667464],[4.649377056952073],[8.444484017261313],[-4.810208847723389],[0.5342624851631741],[8],[-5.344379261896522],[-0.189868052993317],[2],[-3.7325788876367287],[3],[5],[-2.634533342311523],[2.4345164558740184],[8],[-3.3872697156344653],[-1.8550680999661042],[1]]
+    if options.GFS:
+        # OLD GA_chromosome = [[-1.6240344751828966],[0.8735664638544858],[2.786421006981838],[-1.5360056631852324],[-1.4109936691129998],[2.7760919030749687],[-1.5146609995028424],[0.286111356789177],[0.533014367315769],[2.5437503030955755],[2.681878309479083],[2.7097058149347957],[-1.1954826254870359],[0.34595014308802696],[7],[0.30548234324726],[1.3912850561655268],[5],[1.9672298354813358],[2.271725813193616],[2.8039497198684],[6.516775246756547],[7.86365500161472],[9],[-3.3358267954019674],[1],[8],[-3.069388543029344],[-0.776325465066936],[9.923128903319997],[0.40372338238102223],[1.2133295148870922],[9.338581482690811],[-3.5131368262457343],[-1.0635482340216882],[-0.8120053202249782],[-2.79827706849043],[4.286758833890948],[8.579088170091405],[-5.114797183793154],[0.3113213534794914],[1.5156892599137048],[-5.106525856456598],[1.3213374066030035],[3.58042381890575],[1.8886598151326774],[2.086456315410275],[4.106743549010657],[-4.581403448687182],[-2.1445655539246036],[-1.6059296614388434],[3.4163387350245618],[4.055041509477416],[4.252104769272686],[2.5453547664446967],[3.3785651221906745],[4.104506478012013],[0.1904316537942723],[1.1529647268301189],[1.6532473842039472],[-1.586099831835674],[-1.4449729751873748],[-0.8071520067124034],[4.209897506678502],[4.537169733825274],[4.714573428575184]]
+        GA_chromosome = [[-0.14079584097023234],[0.11270081228641576],[2.9766488665849726],[-0.7968246034900783],[0.7063117908380419],[1.1375978923063292],[2.6074376309201206],[2.9412376263955267],[2.9943432067646683],[0.09504768232433936],[0.1783701401248904],[6],[-1.705442967181982],[-1.0755935953680993],[1.1132247258679815],[1.8814937645809588],[1.9983433314264147],[2.421543784262572],[-1.8739282026849529],[0.3424733263199109],[1.0206152568947475],[-9.197623285153119],[-0.4356347982532265],[2.1123564387579137],[3.6386075378401745],[9.444311177890963],[9.753319640637919],[2],[3.3510412049248295],[8],[1.632166411796124],[3.6923293700206608],[9],[-3.620347050784474],[-1.0357009224151548],[6.252244724018345],[-4.983824480026183],[-2.7087125822618345],[-2.446583149899718],[6.314765767088691],[6.53597866764848],[7.410875527069477],[-1.2412528332455022],[-0.3969996523102406],[10],[-0.06018472251536622],[2.6648896634062136],[3.7646575939607985],[0.4103162471225561],[4.617193296051192],[4.9875776001239025],[-0.8567406719965458],[-0.6112740471510157],[3.3634775190872492],[-0.8014949359170229],[0.4804838856359315],[0.8527166292513932],[-0.31638050827810194],[1.0145093302035575],[2.713314107513235],[-4.086329845081814],[-3.147138561916708],[-1.7753375041178239],[-0.6275491648423106],[2.8023001796869735],[3.2841258840333367]]
+        # lat_GA_Chromosome = [[7],[71.8232712481126],[73.44574771934484],[9],[42.97549278960961],[88.51370938381592],[26.480593113993702],[34.333598530390944],[97.87627131835028],[-0.08994987703760998],[0.003994405618960042],[0.6124129233504257],[0.12034402394596203],[0.23316119394964663],[0.29640097938129517],[0.2391229754559647],[0.6980126528742496],[0.6994915574987353],[0.2909558499914311],[0.33025519650852836],[0.3716297699772756],[-0.026500933890887646],[0.8560407770469973],[10]]
+        # alt_lat_GA_Chromosome = [[67.6761221512281],[69.83251654757844],[77.76368252882389],[33.97062143232918],[36.332680373664786],[58.947637103181755],[-0.665875480807002],[5.020935566853341],[84.5102309275504],[0.1295196815633867],[0.4524747405064238],[0.5304257536123267],[-0.044061054847725746],[0.4261034949192127],[0.9703554076610142],[0.510278503691667],[0.6033899496234578],[0.6261256068999578],[0.048885670430450806],[0.25171726717588283],[0.35163550672256294],[0.5917424400418568],[0.6148280065175284],[0.6516127105888627]]
+        alt_lat_GA_Chromosome = [[64.5156456435981],[65.10512228655486],[86.17156792350178],[1.5577564837304148],[22.647222415305365],[61.19444125696693],[55.64033218802219],[68.99877267290137],[97.42463342627312],[0.11867881846598133],[0.1267105725894678],[0.13111946765751606],[-0.07648265710199151],[0.18819996154948335],[0.8763376540835236],[-0.0492715826292624],[0.33508165688740355],[0.6119936061062785],[0.3242773308948389],[0.39313456372966255],[1.0730835480996557],[0.8863730287887847],[0.8995946312096776],[0.9170835065528654]]
+        # OLD lon2_GA_Chromosome = [[1.5098238860638276],[7],[7.92916396487642],[-4.341434003061262],[8.323253529177837],[8.437866725066886],[-0.45026512051033585],[2.719697720047667],[3.528034862358293],[-1.9281714608667464],[4.649377056952073],[8.444484017261313],[-4.810208847723389],[0.5342624851631741],[8],[-5.344379261896522],[-0.189868052993317],[2],[-3.7325788876367287],[3],[5],[-2.634533342311523],[2.4345164558740184],[8],[-3.3872697156344653],[-1.8550680999661042],[1]]
+        lon2_GA_Chromosome = [[0.4521444205839842],[3.680796505941435],[6.697808956477672],[-1.8808150437979556],[1.9656094335819412],[4.291756239289974],[-9.539676389386313],[-6.680852310038657],[-3.8071245707475],[-23.96753843201363],[4.171925408735696],[6.530921501997575],[-6.126570272365562],[-1.6231834676335009],[5.321295326278289],[-4.8691723881227915],[-2.0331603647942917],[5.887849324854059],[1.3698664901894961],[4.239744966068314],[4.483935269160289],[-3.505567840175244],[0.24126394521132433],[2.3408711737956835],[-2.68860110830799],[-1.8173721236563323],[-0.8851835663367584]]
+        first_longitudinal_membership_function_values = parseGAChrmosome(GA_chromosome)
+        # lat_GA_Chromosome = parseGAChrmosome(lat_GA_Chromosome)
+        lane_change_membership_function_values = parseGAChrmosome(alt_lat_GA_Chromosome)
+        second_longitudinal_membership_function_values = parseGAChrmosome(lon2_GA_Chromosome)
+    else:
+        # hand picked FIS parameters
+        first_longitudinal_membership_function_values = np.array([
+                                                [-2, -1, -0.5],
+                                                [-0.6, -0.5, -0.25],
+                                                [-0.5, -0.25, 0],
+                                                [-0.25, 0, 0.25],
+                                                [0, 0.5, 1],
+                                                [0.5, 1, 1.5],
+                                                [1, 1.5, 3],
+                                                # second input mem functions
+                                                [-10, -7.5, -5.6],
+                                                [-6, -5.36, -2.235],
+                                                [-5.36, -2.235, -0.447],
+                                                [-10, -2.235, 0],
+                                                [-0.447, 0, 0.447],
+                                                [0, 0.447, 2.235],
+                                                [0.447, 2.235, 5.36],
+                                                [2.235, 5.36, 10],
+                                                # output membership functions
+                                                [-5, -4.572, -3],
+                                                [-4.572, -3, -1.5],
+                                                [-2.235, -1.5, 0],
+                                                [-1.5, 0, 1.5],
+                                                [0, 1.5, 3],
+                                                [1.5, 3, 4.572],
+                                                [3, 4.572, 5]
+                                                ])
 
-    lon1_GA_Chromosome = parseGAChrmosome(GA_chromosome)
-    # lat_GA_Chromosome = parseGAChrmosome(lat_GA_Chromosome)
-    alt_lat_GA_Chromsome = parseGAChrmosome(alt_lat_GA_Chromosome)
-    lon2_GA_Chromosome = parseGAChrmosome(lon2_GA_Chromosome)
+        lane_change_membership_function_values = np.array([
+                                                [-1, 0, 15],
+                                                [14, 22, 29],
+                                                [25, 50, 100],
+                                                # second input mem functions
+                                                [-0.1, 0, 0.03],
+                                                [0.025, 0.05, 0.07],
+                                                [0.065, 0.1, 1],
+                                                # output membership functions
+                                                [-0.1, 0, 0.49],
+                                                [0.48, 1, 1.1],
+                                                ])
 
-    # hand picked FIS parameters
-    membership_function_values = np.array([
-                                            [-2, -1, -0.5],
-                                            [-0.6, -0.5, -0.25],
-                                            [-0.5, -0.25, 0],
-                                            [-0.25, 0, 0.25],
-                                            [0, 0.5, 1],
-                                            [0.5, 1, 1.5],
-                                            [1, 1.5, 3],
-                                            # second input mem functions
-                                            [-10, -7.5, -5.6],
-                                            [-6, -5.36, -2.235],
-                                            [-5.36, -2.235, -0.447],
-                                            [-10, -2.235, 0],
-                                            [-0.447, 0, 0.447],
-                                            [0, 0.447, 2.235],
-                                            [0.447, 2.235, 5.36],
-                                            [2.235, 5.36, 10],
-                                            # output membership functions
-                                            [-5, -4.572, -3],
-                                            [-4.572, -3, -1.5],
-                                            [-2.235, -1.5, 0],
-                                            [-1.5, 0, 1.5],
-                                            [0, 1.5, 3],
-                                            [1.5, 3, 4.572],
-                                            [3, 4.572, 5]
-                                            ])
+        # hand picked FIS parameters
+        second_longitudinal_membership_function_values = np.array([
+                                                [-10, -1.5, 0],
+                                                [-1.5, 0, 1.5],
+                                                [0, 1.5, 10],
+                                                # second input mem functions
+                                                [-31.292, -2.235, 0],
+                                                [-0.447, 0, 0.447],
+                                                [0, 0.447, 3],
+                                                # output membership functions
+                                                [-3, -1.5, 0],
+                                                [-1.5, 0, 1.5],
+                                                [0, 1.5, 3]
+                                                ])
 
-    lane_change_membership_function_values = np.array([
-                                            [-1, 0, 15],
-                                            [14, 22, 29],
-                                            [25, 50, 100],
-                                            # second input mem functions
-                                            [-0.1, 0, 0.03],
-                                            [0.025, 0.05, 0.07],
-                                            [0.065, 0.1, 1],
-                                            # output membership functions
-                                            [-0.1, 0, 0.49],
-                                            [0.48, 1, 1.1],
-                                            ])
-
-    # hand picked FIS parameters
-    second_longitudinal_membership_function_values = np.array([
-                                            [-10, -1.5, 0],
-                                            [-1.5, 0, 1.5],
-                                            [0, 1.5, 10],
-                                            # second input mem functions
-                                            [-10, -2.235, 0],
-                                            [-0.447, 0, 0.447],
-                                            [0, 0.447, 2.235],
-                                            # output membership functions
-                                            [-2.235, -1.5, 0],
-                                            [-1.5, 0, 1.5],
-                                            [0, 1.5, 3]
-                                            ])
-    SUMO = fuzzyLogic.createFuzzyControl(lon1_GA_Chromosome)
-    SUMOLANECHANGE = fuzzyLogic.createFuzzyLaneControl(alt_lat_GA_Chromsome)
-    SUMOSECONDLONGITUDE = fuzzyLogic.createSecondFuzzyLongitudinalControl(lon2_GA_Chromosome)
+    SUMO = fuzzyLogic.createFuzzyControl(first_longitudinal_membership_function_values)
+    SUMOLANECHANGE = fuzzyLogic.createFuzzyLaneControl(lane_change_membership_function_values)
+    SUMOSECONDLONGITUDE = fuzzyLogic.createSecondFuzzyLongitudinalControl(second_longitudinal_membership_function_values)
+    veh1_lane_state = False
 
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
@@ -212,17 +220,262 @@ def run(fis_start_time, end_time):
                         newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
                         newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
-                traci.vehicle.setSpeed("5", 31)
-                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
-                veh1_gap_error.append(veh1Previous_Gap-1)
-                veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
-                veh2_gap_error.append(veh2Previous_Gap-1)
-                veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
-                veh3_gap_error.append(veh3Previous_Gap-1)
-                veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
-                veh4_gap_error.append(veh4Previous_Gap-1)
+                veh1_lane = traci.vehicle.getLaneID("1")
+                veh1_lane_value = int(veh1_lane[6])
+                if veh1_lane_value == 1:
+                    veh1_lane_state = True
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1_gap_error.append(0)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
 
+                    totalTimeLoss.append(sum(timeLoss))
+                elif veh1_lane_state:
+                    veh1_lane_state = True
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1_gap_error.append(0)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+                else:
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
+                    veh1_gap_error.append(veh1Previous_Gap-1)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+
+                time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                TTL = np.vstack([TTL, np.array(time_to_collision)])
+
+                if options.slow_down_midway:
+                    if 525 < step < 615:
+                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        # traci.vehicle.setSpeed("0", 20.1168)
+                    elif 614 < step < 675:
+                        traci.vehicle.slowDown("0", 31.292, 60)
+                    else:
+                        pass
+                else:
+                    pass
+            else:
+                for ind in traci.vehicle.getIDList():
+                    if ind == "5":
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                veh1_gap_error.append(np.nan)
+                veh2_gap_error.append(np.nan)
+                veh3_gap_error.append(np.nan)
+                veh4_gap_error.append(np.nan)
                 totalTimeLoss.append(sum(timeLoss))
+        elif options.CACC:
+            if 30 < step < control_takeover_start_time + 1:
+                for ind in traci.vehicle.getIDList():
+                    if ind == "5":
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                veh1_lane = traci.vehicle.getLaneID("1")
+                veh2_lane = traci.vehicle.getLaneID("2")
+                veh3_lane = traci.vehicle.getLaneID("3")
+                veh4_lane = traci.vehicle.getLaneID("4")
+                veh1_lane_value = int(veh1_lane[6])
+                veh2_lane_value = int(veh2_lane[6])
+                veh3_lane_value = int(veh3_lane[6])
+                veh4_lane_value = int(veh4_lane[6])
+                if veh1_lane_value == 1:
+                    veh1_lane_state = True
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1_gap_error.append(0)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+                elif veh2_lane_value == 1:
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
+                    veh1_gap_error.append(veh1Previous_Gap-1)
+                    veh2_gap_error.append(0)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+                elif veh1_lane_state:
+                    veh1_lane_state = True
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1_gap_error.append(0)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+                else:
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
+                    veh1_gap_error.append(veh1Previous_Gap-1)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+
+                time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                TTL = np.vstack([TTL, np.array(time_to_collision)])
+
+                if options.slow_down_midway:
+                    if 525 < step < 615:
+                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        # traci.vehicle.setSpeed("0", 20.1168)
+                    elif 614 < step < 675:
+                        traci.vehicle.slowDown("0", 31.292, 60)
+                    else:
+                        pass
+                else:
+                    pass
+            elif control_takeover_start_time < step < end_time:
+                traci.vehicle.setType("1", "Car04")
+                traci.vehicle.setType("2", "Car04")
+                traci.vehicle.setType("3", "Car04")
+                traci.vehicle.setType("4", "Car04")
+                for ind in traci.vehicle.getIDList():
+                    if ind == "5":
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                veh1_lane = traci.vehicle.getLaneID("1")
+                veh2_lane = traci.vehicle.getLaneID("2")
+                veh3_lane = traci.vehicle.getLaneID("3")
+                veh4_lane = traci.vehicle.getLaneID("4")
+                veh1_lane_value = int(veh1_lane[6])
+                veh2_lane_value = int(veh2_lane[6])
+                veh3_lane_value = int(veh3_lane[6])
+                veh4_lane_value = int(veh4_lane[6])
+                if veh1_lane_value == 1:
+                    veh1_lane_state = True
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1_gap_error.append(0)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+                elif veh2_lane_value == 1:
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
+                    veh1_gap_error.append(veh1Previous_Gap-1)
+                    veh2_gap_error.append(0)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+                elif veh1_lane_state:
+                    veh1_lane_state = True
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1_gap_error.append(0)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
+                else:
+                    for ind in traci.vehicle.getIDList():
+                        if ind == "5":
+                            traci.vehicle.setSpeed("5", 31)
+                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
+                    veh1_gap_error.append(veh1Previous_Gap-1)
+                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                    veh2_gap_error.append(veh2Previous_Gap-1)
+                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                    veh3_gap_error.append(veh3Previous_Gap-1)
+                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                    totalTimeLoss.append(sum(timeLoss))
 
                 time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
@@ -652,9 +905,13 @@ if __name__ == "__main__":
         sumoBinary = checkBinary('sumo-gui')
     fileName = ntpath.basename(__file__).split('.')[0]
 
-    highway_filename = "highway_2"
+    if options.highway_2_mod:
+        highway_filename = "highway_2_mod"
+    else:
+        highway_filename = "highway_2"
+
     fileName_no_sffix = f"{fileName}_{highway_filename}"
-    fis_start_time = 300
+    control_takeover_start_time = 300
     end_time = 2000
 
     timestr = time.strftime("%Y%m%d_%H%M%S")
@@ -742,6 +999,10 @@ if __name__ == "__main__":
 
     if options.krauss:
         title = "Krauss"
+    elif options.CACC:
+        title = "CACC"
+    elif options.GFS:
+        title = "GFS"
     else:
         title = "FIS"
     df_FCD = pd.read_csv(fcdOutCSV)  # './results/spreadsheet/20230306_highway_1_tripInfo/000_fcdout.csv')
