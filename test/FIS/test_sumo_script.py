@@ -837,7 +837,7 @@ def run(control_takeover_start_time, end_time):
 
                 if options.slow_down_midway:
                     if 525 < step < 615:
-                        traci.vehicle.slowDown("0", 10, 90)
+                        traci.vehicle.slowDown("0", 24.5872, 90)
                         # traci.vehicle.setSpeed("0", 20.1168)
                     elif 614 < step < 675:
                         traci.vehicle.slowDown("0", 31.292, 60)
