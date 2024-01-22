@@ -57,7 +57,6 @@ def calculateTimeToCollision(vehSpeed, vehPosition):  # gap_distance - units: me
 
     time_to_collision = []
     for indx, speed_diff in enumerate(veh_speed_diff):
-        # print(indx)
         if speed_diff > 0:
             gap_distance = vehPosition[indx][0] - 5 - vehPosition[indx+1][0]
             time_to_collision.append(gap_distance / veh_speed_diff[indx])
@@ -205,7 +204,7 @@ def run(control_takeover_start_time, end_time):
         newVehTimeLoss = []
         # use the Krauss vehicle controller
         if options.krauss:
-            if 30 < step < end_time:
+            if 30 < step < control_takeover_start_time + 1:
                 for ind in traci.vehicle.getIDList():
                     if ind == "5":
                         veh5_lane = traci.vehicle.getLaneID("5")
@@ -267,6 +266,140 @@ def run(control_takeover_start_time, end_time):
                     totalTimeLoss.append(sum(timeLoss))
 
                 time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                TTL = np.vstack([TTL, np.array(time_to_collision)])
+
+                if options.slow_down_midway:
+                    if 525 < step < 615:
+                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        # traci.vehicle.setSpeed("0", 20.1168)
+                    elif 614 < step < 675:
+                        traci.vehicle.slowDown("0", 31.292, 60)
+                    else:
+                        pass
+                else:
+                    pass
+            elif control_takeover_start_time < step < end_time:
+                traci.vehicle.changeLane("0", 0, 3)
+
+                for ind in traci.vehicle.getIDList():
+                    if ind == "5":
+                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # print(veh5_lane)
+                        if veh5_lane != 1:
+                            traci.vehicle.changeLane("5", 1, 3)
+                    if int(ind) < 5:
+                        vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        if int(ind) > 0:
+                            timeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                    else:
+                        newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
+                        newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
+                        newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                if options.highway_2_mod:
+                    pass
+                else:
+                    lane_1 = []
+                    for items in ["gneE0_1", "gneE1_1", "gneE3_1"]:
+                        vehicles_in_lane = traci.lane.getLastStepVehicleIDs(items)
+                        for veh in vehicles_in_lane:
+                            lane_1.append(int(veh))
+
+                lane_0 = []
+                for items in ["gneE0_0", "gneE1_0", "gneE3_0"]:
+                    vehicles_in_lane = traci.lane.getLastStepVehicleIDs(items)
+                    for veh in vehicles_in_lane:
+                        lane_0.append(int(veh))
+
+                # print(list(traci.lane.getLastStepVehicleIDs(["gneE0_0", "gneE1_0", "gneE3_0"])))
+                # print(traci.lane.getLastStepVehicleIDs("gneE1_0"))
+                # print(traci.lane.getLastStepVehicleIDs("gneE3_0"))
+                veh1_lane = traci.vehicle.getLaneID("1")
+                veh2_lane = traci.vehicle.getLaneID("2")
+                veh3_lane = traci.vehicle.getLaneID("3")
+                veh4_lane = traci.vehicle.getLaneID("4")
+                veh1_lane_value = int(veh1_lane[6])
+                veh2_lane_value = int(veh2_lane[6])
+                veh3_lane_value = int(veh3_lane[6])
+                veh4_lane_value = int(veh4_lane[6])
+                time_to_collision = [np.nan, np.nan, np.nan, np.nan]
+                # print(lane_0)
+                # print(lane_1)
+                if options.highway_2_mod:
+                    pass
+                else:
+                    lane_1 = lane_1[: : -1]
+                    for ind, veh in enumerate(lane_1):
+                        if veh == 0:
+                            pass
+                        else:
+                            if ind == 0:
+                                time_to_collision[veh-1] = np.nan
+                            else:
+                                veh_speed_diff = (vehSpeed[veh] - vehSpeed[lane_1[ind-1]])
+                                gap_distance = vehPosition[lane_1[ind-1]][0] - 5 - vehPosition[veh][0]
+                                if veh_speed_diff > 0:
+                                    time_to_collision[veh-1] = (gap_distance / veh_speed_diff)
+                            if veh == 1:
+                                veh1_gap_error.append(0)
+                            elif veh == 2:
+                                if ind == 0:
+                                    veh2_gap_error.append(0)
+                                else:
+                                    veh2Previous_Gap = (vehPosition[lane_1[ind-1]][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                                    veh2_gap_error.append(veh2Previous_Gap-1)
+                            elif veh == 3:
+                                if ind == 0:
+                                    veh3_gap_error.append(0)
+                                else:
+                                    veh3Previous_Gap = (vehPosition[lane_1[ind-1]][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                                    veh3_gap_error.append(veh3Previous_Gap-1)
+                            elif veh == 4:
+                                if ind == 0:
+                                    veh4_gap_error.append(0)
+                                else:
+                                    veh4Previous_Gap = (vehPosition[lane_1[ind-1]][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                                    veh4_gap_error.append(veh4Previous_Gap-1)
+
+                lane_0 = lane_0[: : -1]
+                for ind, veh in enumerate(lane_0):
+                    if veh == 0:
+                        pass
+                    else:
+                        if ind == 0:
+                            time_to_collision[veh-1] = np.nan
+                        else:
+                            veh_speed_diff = vehSpeed[veh] - vehSpeed[lane_0[ind-1]]
+                            gap_distance = vehPosition[lane_0[ind-1]][0] - 5 - vehPosition[veh][0]
+                            if veh_speed_diff > 0:
+                                time_to_collision[veh-1] = (gap_distance / veh_speed_diff)
+
+                        if veh == 1:
+                            if ind == 0:
+                                veh1_gap_error.append(np.nan)
+                            else:
+                                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
+                                veh1_gap_error.append(veh1Previous_Gap-1)
+                        elif veh == 2:
+                            if ind == 0:
+                                veh2_gap_error.append(np.nan)
+                            else:
+                                veh2Previous_Gap = (vehPosition[lane_0[ind-1]][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                                veh2_gap_error.append(veh2Previous_Gap-1)
+                        elif veh == 3:
+                            if ind == 0:
+                                veh3_gap_error.append(np.nan)
+                            else:
+                                veh3Previous_Gap = (vehPosition[lane_0[ind-1]][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                                veh3_gap_error.append(veh3Previous_Gap-1)
+                        elif veh == 4:
+                            if ind == 0:
+                                veh4_gap_error.append(np.nan)
+                            else:
+                                veh4Previous_Gap = (vehPosition[lane_0[ind-1]][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                                veh4_gap_error.append(veh4Previous_Gap-1)
+
+                totalTimeLoss.append(sum(timeLoss))
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
 
                 if options.slow_down_midway:
@@ -395,6 +528,8 @@ def run(control_takeover_start_time, end_time):
                 else:
                     pass
             elif control_takeover_start_time < step < end_time:
+                traci.vehicle.changeLane("0", 0, 3)
+
                 traci.vehicle.setType("1", "Car04")
                 traci.vehicle.setType("2", "Car04")
                 traci.vehicle.setType("3", "Car04")
@@ -414,6 +549,24 @@ def run(control_takeover_start_time, end_time):
                         newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                         newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
                         newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
+                if options.highway_2_mod:
+                    pass
+                else:
+                    lane_1 = []
+                    for items in ["gneE0_1", "gneE1_1", "gneE3_1"]:
+                        vehicles_in_lane = traci.lane.getLastStepVehicleIDs(items)
+                        for veh in vehicles_in_lane:
+                            lane_1.append(int(veh))
+
+                lane_0 = []
+                for items in ["gneE0_0", "gneE1_0", "gneE3_0"]:
+                    vehicles_in_lane = traci.lane.getLastStepVehicleIDs(items)
+                    for veh in vehicles_in_lane:
+                        lane_0.append(int(veh))
+
+                # print(list(traci.lane.getLastStepVehicleIDs(["gneE0_0", "gneE1_0", "gneE3_0"])))
+                # print(traci.lane.getLastStepVehicleIDs("gneE1_0"))
+                # print(traci.lane.getLastStepVehicleIDs("gneE3_0"))
                 veh1_lane = traci.vehicle.getLaneID("1")
                 veh2_lane = traci.vehicle.getLaneID("2")
                 veh3_lane = traci.vehicle.getLaneID("3")
@@ -422,63 +575,166 @@ def run(control_takeover_start_time, end_time):
                 veh2_lane_value = int(veh2_lane[6])
                 veh3_lane_value = int(veh3_lane[6])
                 veh4_lane_value = int(veh4_lane[6])
-                if veh1_lane_value == 1:
-                    veh1_lane_state = True
-                    for ind in traci.vehicle.getIDList():
-                        if ind == "5":
-                            traci.vehicle.setSpeed("5", 31)
-                    veh1_gap_error.append(0)
-                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
-                    veh2_gap_error.append(veh2Previous_Gap-1)
-                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
-                    veh3_gap_error.append(veh3Previous_Gap-1)
-                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
-                    veh4_gap_error.append(veh4Previous_Gap-1)
+                # if veh1_lane_value == 1:
+                #     veh1_lane_state = True
+                #     for ind in traci.vehicle.getIDList():
+                #         if ind == "5":
+                #             traci.vehicle.setSpeed("5", 31)
+                #     veh1_gap_error.append(0)
+                #     veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                #     veh2_gap_error.append(veh2Previous_Gap-1)
+                #     veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                #     veh3_gap_error.append(veh3Previous_Gap-1)
+                #     veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                #     veh4_gap_error.append(veh4Previous_Gap-1)
 
-                    totalTimeLoss.append(sum(timeLoss))
-                elif veh2_lane_value == 1:
-                    for ind in traci.vehicle.getIDList():
-                        if ind == "5":
-                            traci.vehicle.setSpeed("5", 31)
-                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
-                    veh1_gap_error.append(veh1Previous_Gap-1)
-                    veh2_gap_error.append(0)
-                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
-                    veh3_gap_error.append(veh3Previous_Gap-1)
-                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
-                    veh4_gap_error.append(veh4Previous_Gap-1)
+                #     totalTimeLoss.append(sum(timeLoss))
+                # elif veh2_lane_value == 1:
+                #     for ind in traci.vehicle.getIDList():
+                #         if ind == "5":
+                #             traci.vehicle.setSpeed("5", 31)
+                #     veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]
+                #     veh1_gap_error.append(veh1Previous_Gap-1)
+                #     veh2_gap_error.append(0)
+                #     veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                #     veh3_gap_error.append(veh3Previous_Gap-1)
+                #     veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                #     veh4_gap_error.append(veh4Previous_Gap-1)
 
-                    totalTimeLoss.append(sum(timeLoss))
-                elif veh1_lane_state:
-                    veh1_lane_state = True
-                    for ind in traci.vehicle.getIDList():
-                        if ind == "5":
-                            traci.vehicle.setSpeed("5", 31)
-                    veh1_gap_error.append(0)
-                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
-                    veh2_gap_error.append(veh2Previous_Gap-1)
-                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
-                    veh3_gap_error.append(veh3Previous_Gap-1)
-                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
-                    veh4_gap_error.append(veh4Previous_Gap-1)
+                #     totalTimeLoss.append(sum(timeLoss))
+                # elif veh1_lane_state:
+                #     veh1_lane_state = True
+                #     for ind in traci.vehicle.getIDList():
+                #         if ind == "5":
+                #             traci.vehicle.setSpeed("5", 31)
+                #     veh1_gap_error.append(0)
+                #     veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                #     veh2_gap_error.append(veh2Previous_Gap-1)
+                #     veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                #     veh3_gap_error.append(veh3Previous_Gap-1)
+                #     veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                #     veh4_gap_error.append(veh4Previous_Gap-1)
 
-                    totalTimeLoss.append(sum(timeLoss))
+                #     totalTimeLoss.append(sum(timeLoss))
+                # else:
+                #     for ind in traci.vehicle.getIDList():
+                #         if ind == "5":
+                #             traci.vehicle.setSpeed("5", 31)
+                #     veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
+                #     veh1_gap_error.append(veh1Previous_Gap-1)
+                #     veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                #     veh2_gap_error.append(veh2Previous_Gap-1)
+                #     veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                #     veh3_gap_error.append(veh3Previous_Gap-1)
+                #     veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                #     veh4_gap_error.append(veh4Previous_Gap-1)
+
+                #     totalTimeLoss.append(sum(timeLoss))
+                # lane_0 = [0]
+                # lane_1 = []
+                # veh_lane_list = [veh1_lane_value, veh2_lane_value, veh3_lane_value, veh4_lane_value]
+                # if veh1_lane_value == 0:
+                #     lane_0.append(1)
+                # else:
+                #     lane_1.append(1)
+
+                # if veh2_lane_value == 0:
+                #     lane_0.append(2)
+                # else:
+                #     lane_1.append(2)
+
+                # if veh3_lane_value == 0:
+                #     lane_0.append(3)
+                # else:
+                #     lane_1.append(3)
+
+                # if veh4_lane_value == 0:
+                #     lane_0.append(4)
+                # else:
+                #     lane_1.append(4)
+
+                # for ind, items in enumerate(veh_lane_list):
+                #     if items == 0:
+                #         lane_0.append(veh_lane_list[ind])
+                #     else:
+                #         lane_1.append(veh_lane_list[ind])
+                time_to_collision = [np.nan, np.nan, np.nan, np.nan]
+                # print(lane_0)
+                # print(lane_1)
+                if options.highway_2_mod:
+                    pass
                 else:
-                    for ind in traci.vehicle.getIDList():
-                        if ind == "5":
-                            traci.vehicle.setSpeed("5", 31)
-                    veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
-                    veh1_gap_error.append(veh1Previous_Gap-1)
-                    veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
-                    veh2_gap_error.append(veh2Previous_Gap-1)
-                    veh3Previous_Gap = (vehPosition[2][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
-                    veh3_gap_error.append(veh3Previous_Gap-1)
-                    veh4Previous_Gap = (vehPosition[3][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
-                    veh4_gap_error.append(veh4Previous_Gap-1)
+                    lane_1 = lane_1[: : -1]
+                    for ind, veh in enumerate(lane_1):
+                        if veh == 0:
+                            pass
+                        else:
+                            if ind == 0:
+                                time_to_collision[veh-1] = np.nan
+                            else:
+                                veh_speed_diff = (vehSpeed[veh] - vehSpeed[lane_1[ind-1]])
+                                gap_distance = vehPosition[lane_1[ind-1]][0] - 5 - vehPosition[veh][0]
+                                if veh_speed_diff > 0:
+                                    time_to_collision[veh-1] = (gap_distance / veh_speed_diff)
+                            if veh == 1:
+                                veh1_gap_error.append(0)
+                            elif veh == 2:
+                                if ind == 0:
+                                    veh2_gap_error.append(0)
+                                else:
+                                    veh2Previous_Gap = (vehPosition[lane_1[ind-1]][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                                    veh2_gap_error.append(veh2Previous_Gap-1)
+                            elif veh == 3:
+                                if ind == 0:
+                                    veh3_gap_error.append(0)
+                                else:
+                                    veh3Previous_Gap = (vehPosition[lane_1[ind-1]][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                                    veh3_gap_error.append(veh3Previous_Gap-1)
+                            elif veh == 4:
+                                if ind == 0:
+                                    veh4_gap_error.append(0)
+                                else:
+                                    veh4Previous_Gap = (vehPosition[lane_1[ind-1]][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                                    veh4_gap_error.append(veh4Previous_Gap-1)
 
-                    totalTimeLoss.append(sum(timeLoss))
+                lane_0 = lane_0[: : -1]
+                for ind, veh in enumerate(lane_0):
+                    if veh == 0:
+                        pass
+                    else:
+                        if ind == 0:
+                            time_to_collision[veh-1] = np.nan
+                        else:
+                            veh_speed_diff = vehSpeed[veh] - vehSpeed[lane_0[ind-1]]
+                            gap_distance = vehPosition[lane_0[ind-1]][0] - 5 - vehPosition[veh][0]
+                            if veh_speed_diff > 0:
+                                time_to_collision[veh-1] = (gap_distance / veh_speed_diff)
+                        if veh == 1:
+                            if ind == 0:
+                                veh1_gap_error.append(np.nan)
+                            else:
+                                veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
+                                veh1_gap_error.append(veh1Previous_Gap-1)
+                        elif veh == 2:
+                            if ind == 0:
+                                veh2_gap_error.append(np.nan)
+                            else:
+                                veh2Previous_Gap = (vehPosition[lane_0[ind-1]][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
+                                veh2_gap_error.append(veh2Previous_Gap-1)
+                        elif veh == 3:
+                            if ind == 0:
+                                veh3_gap_error.append(np.nan)
+                            else:
+                                veh3Previous_Gap = (vehPosition[lane_0[ind-1]][0] - 5 - vehPosition[3][0]) / vehSpeed[3]
+                                veh3_gap_error.append(veh3Previous_Gap-1)
+                        elif veh == 4:
+                            if ind == 0:
+                                veh4_gap_error.append(np.nan)
+                            else:
+                                veh4Previous_Gap = (vehPosition[lane_0[ind-1]][0] - 5 - vehPosition[4][0]) / vehSpeed[4]
+                                veh4_gap_error.append(veh4Previous_Gap-1)
 
-                time_to_collision = calculateTimeToCollision(vehSpeed, vehPosition)
+                totalTimeLoss.append(sum(timeLoss))
                 TTL = np.vstack([TTL, np.array(time_to_collision)])
 
                 if options.slow_down_midway:
@@ -645,14 +901,14 @@ def run(control_takeover_start_time, end_time):
                         SUMOSECONDLONGITUDE.compute()
                         result = SUMOSECONDLONGITUDE.output['acceleration-value']
                         veh1Speed = veh1Speed + result
-                        vehicleGapErrors.append(0)
+                        vehicleGapErrors.append(np.nan)
 
                         # timeLoss.append(traci.vehicle.getTimeLoss("1"))
                         timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
                         previousTimeLoss = timeLoss
                         traci.vehicle.setSpeed("1", veh1Speed)
 
-                        time_to_collision[0] = 0
+                        time_to_collision[0] = np.nan
                         TTL = np.vstack([TTL, np.array(time_to_collision)])
                     else:
                         veh_id_to_slow_down = []
@@ -726,13 +982,13 @@ def run(control_takeover_start_time, end_time):
                         SUMOSECONDLONGITUDE.compute()
                         result = SUMOSECONDLONGITUDE.output['acceleration-value']
                         veh1Speed = veh1Speed + result
-                        vehicleGapErrors.append(0)
+                        vehicleGapErrors.append(np.nan)
 
                         # timeLoss.append(traci.vehicle.getTimeLoss("1"))
                         timeLossChangeRate = sum([a - b for a, b in zip(timeLoss, previousTimeLoss)])/4
                         previousTimeLoss = timeLoss
 
-                        time_to_collision[0] = 0
+                        time_to_collision[0] = np.nan
                         TTL = np.vstack([TTL, np.array(time_to_collision)])
 
                 else:
@@ -811,13 +1067,17 @@ def run(control_takeover_start_time, end_time):
                                 else:
                                     newLaneDistanceDiff = [vehPosition[1][0], vehPosition[2][0], vehPosition[3][0], vehPosition[4][0]]
                             if all([abs(x) > 250 for x in newLaneDistanceDiff]):
-                                # print(veh1_lane_change_decision)
-                                traci.vehicle.changeLane("1", 1, 300)
-                                traci.vehicle.changeLane("2", 1, 300)
-                                traci.vehicle.changeLane("3", 1, 300)
-                                traci.vehicle.changeLane("4", 1, 300)
+                                if options.highway_2_mod:
+                                    traci.vehicle.changeLane("1", 0, 300)
+                                    traci.vehicle.changeLane("2", 0, 300)
+                                    traci.vehicle.changeLane("3", 0, 300)
+                                    traci.vehicle.changeLane("4", 0, 300)
+                                else:
+                                    traci.vehicle.changeLane("1", 1, 300)
+                                    traci.vehicle.changeLane("2", 1, 300)
+                                    traci.vehicle.changeLane("3", 1, 300)
+                                    traci.vehicle.changeLane("4", 1, 300)
                                 laneChangeDecision.append(1)
-                                # print(traci.vehicle.getLaneID("1"))
                             else:
                                 laneChangeDecision.append(0)
                         else:
@@ -876,12 +1136,18 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
     xLength = len(x)
     for i in range(xLength):
         if i == 0:
-            if yLabel == "Gap_Error" or yLabel == "Gap_Error_Rate" or yLabel == "TTL_seconds":
-                ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle")
+            if yLabel == "Gap_Error" or yLabel == "Gap_Error_Rate" or yLabel == "TTC_seconds":
+                if yLabel == "TTC_seconds":
+                    ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}", marker='o', linestyle='')
+                else:
+                    ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}")
             else:
                 ax.plot(x[i], y[i], label="Lead Krauss Vehicle")
         else:
-            ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}")
+            if yLabel == "TTC_seconds":
+                ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}", marker='o', linestyle='')
+            else:
+                ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}")
     if plotModification:
         exec(plotModification[0])
     else:
@@ -890,6 +1156,8 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
     ax.set_ylabel(f'{yLabel}')
     if yLabel == "Jerk":
         ax.legend(loc='upper right')
+    elif yLabel == "TTC_seconds":
+        ax.legend(loc='lower right')
     else:
         ax.legend()
     ax.set_title(f"{title} Vehcile {yLabel} vs {xLabel}")
@@ -898,6 +1166,8 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
         ax.set_ylim([22, 32])
     elif yLabel == "Position":
         ax.set_xlim([550, 1000])
+    elif yLabel == "TTC_seconds":
+        ax.set_ylim([0, 70])
     else:
         pass
     posFile = f'./{images_subdirectory}/{title}_vehicle_{lowerYLabel}.png'
@@ -990,7 +1260,7 @@ if __name__ == "__main__":
     # call the run script. Runs the fuzzy logic
     veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
         veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, \
-        TTL, totalTimeLoss, laneChangeDecision = run(control_takeover_start_time, end_time)
+        TTC, totalTimeLoss, laneChangeDecision = run(control_takeover_start_time, end_time)
 
     abs_veh1_gap_error = list(map(lambda x: abs(x), veh1_gap_error))
     abs_veh2_gap_error = list(map(lambda x: abs(x), veh2_gap_error))
@@ -1002,10 +1272,11 @@ if __name__ == "__main__":
     veh3_fitness_sum = sum(abs_veh3_gap_error[control_takeover_start_time:end_time])
     veh4_fitness_sum = sum(abs_veh4_gap_error[control_takeover_start_time:end_time])
 
-    fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
+    fitness = np.nansum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
 
-    print(f"The fitness is: {fitness}")
+    print(f"The total gap error (fitness) is: {fitness}")
     print(f"The total time lost was: {sum(totalTimeLoss)}")
+    print(f"The min TTC was {np.nanmin(TTC[control_takeover_start_time:end_time])}")
 
     # convert new xml file to csv
     xml2csv.main([fcdOutInfoFileName])
@@ -1129,8 +1400,9 @@ if __name__ == "__main__":
     xGapErrorRate = [range(len(veh1_gap_error_rate)), range(len(veh2_gap_error_rate)), range(len(veh3_gap_error_rate)), range(len(veh4_gap_error_rate))]
     yGapErrorRate = [veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate]
 
-    xTTL = [range(len(TTL[:, 0])), range(len(TTL[:, 1])), range(len(TTL[:, 2])), range(len(TTL[:, 3]))]
-    yTTL = [TTL[:, 0], TTL[:, 1], TTL[:, 2], TTL[:, 3]]
+    xTTL = [range(len(TTC[:, 0])), range(len(TTC[:, 1])), range(len(TTC[:, 2])), range(len(TTC[:, 3]))]
+    yTTL = [TTC[:, 0], TTC[:, 1], TTC[:, 2], TTC[:, 3]]
+    print(yTTL)
 
     xGapErrorTranspose = list(zip(*xGapError))
     yGapErrorTranspose = list(zip(*yGapError))
@@ -1148,26 +1420,30 @@ if __name__ == "__main__":
         csv_writer.writerow(titleGapErrorRate)
         csv_writer.writerows(yGapErrorRateTranspose)
 
-    plotResults(x, yPosition, title, 'Time_Step', 'Position', title)
+    plotResults(x, yPosition, title, 'Time Step (s)', 'Position', title)
 
-    plotResults(x, yVelocity, title, 'Time_Step', 'Velocity', title)
+    plotResults(x, yVelocity, title, 'Time Step (s)', 'Velocity (m/s)', title)
 
     modAcceleration = "ax.axhline(y = 2, color = 'r', linestyle = '-')"
-    plotResults(x, yAcceleration, title, 'Time_Step', 'Acceleration', title, str(modAcceleration))
+    plotResults(x, yAcceleration, title, 'Time Step (s)', 'Acceleration (m/$s^2$)', title, str(modAcceleration))
 
-    plotResults(xJerk, yJerkCalculation, title, 'Time_Step', 'Jerk', title)
+    plotResults(xJerk, yJerkCalculation, title, 'Time Step (s)', 'Jerk (m/$s^3$)', title)
 
     # modTTL = "ax.ticklabel_format(axis = \"y\", style = \"sci\", scilimits=(0,2))"
-    plotResults(xTTL, yTTL, title, 'Time_Step', 'TTL_seconds', title)
+    modTTL = "ax.axhline(y = 3, color = 'r', linestyle = '--')"
+    plotResults(xTTL, yTTL, title, 'Time Step (s)', 'TTC (s)', title, str(modTTL))
 
-    plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
+    plotResults(xGapError, yGapError, title, 'Time Step (s)', 'Gap Error (s)', title)
 
-    plotResults(xGapErrorRate, yGapErrorRate, title, 'Time_Step', 'Gap_Error_Rate', title)
+    plotResults(xGapErrorRate, yGapErrorRate, title, 'Time Step (s)', 'Gap Error Rate', title)
 
     # plotResults(xGapError, yGapError, title, 'Time_Step', 'Gap_Error', title)
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(laneChangeDecision)
+    ax.set_xlabel("Time Step (s)")
+    ax.set_ylabel("Decision to Change Lanes")
+    ax.set_title("Decision to Change Lanes vs Simulation Time")
     posFile = f'./{images_subdirectory}/{title}_vehicle_laneChangeDecision.png'
     if os.path.isfile(posFile):
         os.unlink(posFile)

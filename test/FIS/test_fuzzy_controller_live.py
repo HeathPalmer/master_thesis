@@ -24,7 +24,8 @@ class FuzzyHWClass:
         self.gap_error['Medium'] = fuzz.trimf(self.gap_error.universe, membership_function_values[4])
         self.gap_error['Large'] = fuzz.trimf(self.gap_error.universe, membership_function_values[5])
         self.gap_error['ExtraLarge'] = fuzz.trimf(self.gap_error.universe, membership_function_values[6])
-        # print(self.gap_error.view())
+        # self.gap_error.view()
+        # input("Press Enter to continue...")
 
         self.gap_error_rate['ExtraExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[7])
         self.gap_error_rate['ExtraExtraSmall'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[8])
@@ -34,6 +35,8 @@ class FuzzyHWClass:
         self.gap_error_rate['Large'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[12])
         self.gap_error_rate['ExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[13])
         self.gap_error_rate['ExtraExtraLarge'] = fuzz.trimf(self.gap_error_rate.universe, membership_function_values[14])
+        # self.gap_error_rate.view()
+        # input("Press Enter to continue...")
 
         # self.gap_diff_from_min['Small'] = fuzz.trimf(self.gap_diff_from_min.universe, [-3, -1.5, 0])
         # self.gap_diff_from_min['Medium'] = fuzz.trimf(self.gap_diff_from_min.universe, [-1.5, 0, 1.5])
@@ -47,6 +50,8 @@ class FuzzyHWClass:
         self.acceleration['Large'] = fuzz.trimf(self.acceleration.universe, membership_function_values[19])
         self.acceleration['ExtraLarge'] = fuzz.trimf(self.acceleration.universe, membership_function_values[20])
         self.acceleration['ExtraExtraLarge'] = fuzz.trimf(self.acceleration.universe, membership_function_values[21])
+        # self.acceleration.view()
+        # input("Press Enter to continue...")
 
         # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
         rule1 = ctrl.Rule(antecedent=((self.gap_error['ExtraExtraSmall'] & self.gap_error_rate['ExtraExtraSmall']) |
@@ -126,15 +131,20 @@ class FuzzyHWClass:
         self.avg_time_loss['Small'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[0])
         self.avg_time_loss['Medium'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[1])
         self.avg_time_loss['Large'] = fuzz.trimf(self.avg_time_loss.universe, membership_function_values[2])
-        # print(self.platoon_time_loss.view())
+        # self.avg_time_loss.view()
+        # input("Press Enter to continue...")
 
         self.avg_time_loss_rate['Small'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[3])
         self.avg_time_loss_rate['Medium'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[4])
         self.avg_time_loss_rate['Large'] = fuzz.trimf(self.avg_time_loss_rate.universe, membership_function_values[5])
+        # self.avg_time_loss_rate.view()
+        # input("Press Enter to continue...")
 
         # setup the 12 output membership functions
         self.change_lane_decision['NoChange'] = fuzz.trimf(self.change_lane_decision.universe, membership_function_values[6])
         self.change_lane_decision['ChangeLane'] = fuzz.trimf(self.change_lane_decision.universe, membership_function_values[7])
+        # self.change_lane_decision.view()
+        # input("Press Enter to continue...")
 
         # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
         rule1 = ctrl.Rule(antecedent=((self.avg_time_loss['Small'] & self.avg_time_loss_rate['Small']) |
@@ -161,7 +171,7 @@ class FuzzyHWClass:
 
         # initialize fuzy variables
         self.platoon_gap_error = ctrl.Antecedent(np.arange(-10, 10, 0.01), 'platoon-gap-error-value')
-        self.velocity_error = ctrl.Antecedent(np.arange(-10, 3, 0.01), 'vehicle-error-value')
+        self.velocity_error = ctrl.Antecedent(np.arange(-31.292, 3, 0.01), 'vehicle-error-value')
         # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
 
         # output acceleration
@@ -171,11 +181,14 @@ class FuzzyHWClass:
         self.platoon_gap_error['Small'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[0])
         self.platoon_gap_error['Medium'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[1])
         self.platoon_gap_error['Large'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[2])
-        # print(self.gap_error.view())
+        # self.platoon_gap_error.view()
+        # input("Press Enter to continue...")
 
         self.velocity_error['Small'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[3])
         self.velocity_error['Medium'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[4])
         self.velocity_error['Large'] = fuzz.trimf(self.velocity_error.universe, membership_function_values[5])
+        # self.velocity_error.view()
+        # input("Press Enter to continue...")
         # self.gap_diff_from_min['Small'] = fuzz.trimf(self.gap_diff_from_min.universe, [-3, -1.5, 0])
         # self.gap_diff_from_min['Medium'] = fuzz.trimf(self.gap_diff_from_min.universe, [-1.5, 0, 1.5])
         # self.gap_diff_from_min['Large'] = fuzz.trimf(self.gap_diff_from_min.universe, [0, 1.5, 2])
@@ -184,6 +197,8 @@ class FuzzyHWClass:
         self.acceleration['Small'] = fuzz.trimf(self.acceleration.universe, membership_function_values[6])
         self.acceleration['Medium'] = fuzz.trimf(self.acceleration.universe, membership_function_values[7])
         self.acceleration['Large'] = fuzz.trimf(self.acceleration.universe, membership_function_values[8])
+        # self.acceleration.view()
+        # input("Press Enter to continue...")
 
         # STAGE TWO: DEFINE RULE BASE AND INFERENCE USING SCALED OUTPUT APPROACH
         rule1 = ctrl.Rule(antecedent=((self.platoon_gap_error['Small'] & self.velocity_error['Small']) |
@@ -414,11 +429,11 @@ class FuzzyHWClass:
         if len(list_vehicle_gap_errors) == 0:
             list_vehicle_gap_errors.append(vehicle_gap_error)
             # average_vehicle_gaps = fuzzyFunction.average(list_vehicle_gap_errors)
-            min_vehicle_gap = min(list_vehicle_gap_errors)
+            min_vehicle_gap = np.nanmin(list_vehicle_gap_errors)
             ego_gap_diff_from_min = vehicle_gap_error - min_vehicle_gap
         else:
             # average_vehicle_gaps = fuzzyFunction.average(list_vehicle_gap_errors)
-            min_vehicle_gap = min(list_vehicle_gap_errors)
+            min_vehicle_gap = np.nanmin(list_vehicle_gap_errors)
             ego_gap_diff_from_min = vehicle_gap_error - min_vehicle_gap
 
         # vehicle_acceleration = fuzzyFunction.vehicle_fuzzy(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, SUMO)
