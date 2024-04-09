@@ -2,8 +2,9 @@
 
 import csv
 import gc
+import matplotlib
 import matplotlib.pyplot as plt
-from memory_profiler import profile
+# from memory_profiler import profile
 import ntpath
 import numpy as np
 import os
@@ -303,7 +304,7 @@ def run(control_takeover_start_time, end_time):
 
                 if options.slow_down_midway:
                     if 525 < step < 615:
-                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        traci.vehicle.slowDown("0", 24.5872, 90)
                         # traci.vehicle.setSpeed("0", 20.1168)
                     elif 614 < step < 675:
                         traci.vehicle.slowDown("0", 31.292, 60)
@@ -437,7 +438,7 @@ def run(control_takeover_start_time, end_time):
 
                 if options.slow_down_midway:
                     if 525 < step < 615:
-                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        traci.vehicle.slowDown("0", 24.5872, 90)
                         # traci.vehicle.setSpeed("0", 20.1168)
                     elif 614 < step < 675:
                         traci.vehicle.slowDown("0", 31.292, 60)
@@ -552,7 +553,7 @@ def run(control_takeover_start_time, end_time):
 
                 if options.slow_down_midway:
                     if 525 < step < 615:
-                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        traci.vehicle.slowDown("0", 24.5872, 90)
                         # traci.vehicle.setSpeed("0", 20.1168)
                     elif 614 < step < 675:
                         traci.vehicle.slowDown("0", 31.292, 60)
@@ -772,7 +773,7 @@ def run(control_takeover_start_time, end_time):
 
                 if options.slow_down_midway:
                     if 525 < step < 615:
-                        traci.vehicle.slowDown("0", 20.1168, 90)
+                        traci.vehicle.slowDown("0", 24.5872, 90)
                         # traci.vehicle.setSpeed("0", 20.1168)
                     elif 614 < step < 675:
                         traci.vehicle.slowDown("0", 31.292, 60)
@@ -1161,35 +1162,44 @@ def run(control_takeover_start_time, end_time):
     sys.stdout.flush()
     # del fuzzyLogic
     # gc.collect()
-    return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL, totalTimeLoss, laneChangeDecision
+    return veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL, totalTimeLoss, laneChangeDecision, veh1_gap, veh2_gap, veh3_gap, veh4_gap
 
 
 def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
+
+    rc = {"font.family": "serif", "mathtext.fontset": "stix"}
+    plt.rcParams.update(rc)
+    plt.rcParams["font.serif"] = ["Times New Roman"] + plt.rcParams["font.serif"]
+
     xLength = len(x)
     for i in range(xLength):
         if i == 0:
-            if yLabel == "Gap_Error" or yLabel == "Gap_Error_Rate" or yLabel == "TTC_seconds":
-                if yLabel == "TTC_seconds":
-                    ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}", marker='o', linestyle='')
+            if yLabel == "Gap Error" or yLabel == "Gap Error Rate" or yLabel == "TTC":
+                if yLabel == "TTC":
+                    ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i+1}", marker='o', linestyle='')
                 else:
-                    ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}")
+                    ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i+1}")
             else:
                 ax.plot(x[i], y[i], label="Lead Krauss Vehicle")
         else:
-            if yLabel == "TTC_seconds":
-                ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}", marker='o', linestyle='')
+            if yLabel == "TTC":
+                ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i+1}", marker='o', linestyle='')
+            elif yLabel == "Gap Error" or yLabel == "Gap Error Rate" or yLabel == "Gap":
+                ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i+1}")
             else:
                 ax.plot(x[i], y[i], label=f"Follower {modelType} Vehicle {i}")
     if plotModification:
         exec(plotModification[0])
     else:
         pass
-    ax.set_xlabel(f'{xLabel}')
+    ax.set_xlabel(f'{xLabel} (s)')
     ax.set_ylabel(f'{yLabel}')
     if yLabel == "Jerk":
+        ax.set_ylabel("Jerk ($m/s^3$)")
         ax.legend(loc='upper right')
-    elif yLabel == "TTC_seconds":
+    elif yLabel == "TTC":
+        ax.set_ylabel("TTC (s)")
         ax.legend(loc='lower right')
     else:
         ax.legend()
@@ -1197,10 +1207,18 @@ def plotResults(x, y, title, xLabel, yLabel, modelType, *plotModification):
     lowerYLabel = yLabel.lower()
     if yLabel == "Velocity":
         ax.set_ylim([22, 32])
+        ax.set_ylabel("Velocity ($m/s$)")
+    elif yLabel == "Velocity (mph)":
+        ax.set_ylim([50, 75])
+        ax.set_ylabel("Velocity (mph)")
     elif yLabel == "Position":
         ax.set_xlim([550, 1000])
-    elif yLabel == "TTC_seconds":
+    elif yLabel == "TTC":
         ax.set_ylim([0, 70])
+    elif yLabel == "Acceleration":
+        ax.set_ylabel("Acceleration ($m/s^2$)")
+    elif yLabel == "Gap Error":
+        ax.set_ylabel("Gap Error (s)")
     else:
         pass
     posFile = f'./{images_subdirectory}/{title}_vehicle_{lowerYLabel}.png'
@@ -1293,7 +1311,7 @@ if __name__ == "__main__":
     # call the run script. Runs the fuzzy logic
     veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
         veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, \
-        TTC, totalTimeLoss, laneChangeDecision = run(control_takeover_start_time, end_time)
+        TTC, totalTimeLoss, laneChangeDecision, veh1_gap, veh2_gap, veh3_gap, veh4_gap = run(control_takeover_start_time, end_time)
 
     abs_veh1_gap_error = list(map(lambda x: abs(x), veh1_gap_error))
     abs_veh2_gap_error = list(map(lambda x: abs(x), veh2_gap_error))
@@ -1360,6 +1378,8 @@ if __name__ == "__main__":
     veh3Jerk = []
     veh4Jerk = []
 
+    veh1Gap = veh2Gap = veh3Gap = veh4Gap = []
+
     for index, row in df_FCD.iterrows():
         # print(row["vehicle_id"], row["vehicle_pos"])
         if row["vehicle_id"] == 0:
@@ -1422,20 +1442,27 @@ if __name__ == "__main__":
     x = [time0, time1, time2, time3, time4]
     yPosition = [veh0Position, veh1Position, veh2Position, veh3Position, veh4Position]
     yVelocity = [veh0Velocity, veh1Velocity, veh2Velocity, veh3Velocity, veh4Velocity]
+    # yVelovityMPH = [i * 2.23694 for i in yVelocity]
+    yVelovityMPH = [[x * 2.23694 for x in sublist] for sublist in yVelocity]
+    # yVelovityMPH = []
+    # for i in yVelocity:
+    #     yVelovityMPH.append(i * 2.23694)
     yAcceleration = [veh0Acceleration, veh1Acceleration, veh2Acceleration, veh3Acceleration, veh4Acceleration]
 
-    xJerk = [range(len(veh0Jerk)), range(len(veh1Jerk)), range(len(veh2Jerk)), range(len(veh3Jerk)), range(len(veh4Jerk))]
+    xJerk = [list(map(lambda x: x+control_takeover_start_time, range(len(veh0Jerk)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh1Jerk)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh2Jerk)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh3Jerk)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh4Jerk))))]
     yJerkCalculation = [veh0Jerk, veh1Jerk, veh2Jerk, veh3Jerk, veh4Jerk]
 
-    xGapError = [range(len(veh1_gap_error)), range(len(veh2_gap_error)), range(len(veh3_gap_error)), range(len(veh4_gap_error))]
-    yGapError = [veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error]
+    xGap = [range(len(veh1_gap)), list(map(lambda x: x+control_takeover_start_time, range(len(veh2_gap)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh3_gap)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh4_gap))))]
+    yGap = [veh1_gap, veh2_gap, veh3_gap, veh4_gap]
 
-    xGapErrorRate = [range(len(veh1_gap_error_rate)), range(len(veh2_gap_error_rate)), range(len(veh3_gap_error_rate)), range(len(veh4_gap_error_rate))]
+    xGapError = [range(len(abs_veh1_gap_error)), range(len(abs_veh2_gap_error)), range(len(abs_veh3_gap_error)), range(len(abs_veh4_gap_error))]
+    yGapError = [abs_veh1_gap_error, abs_veh2_gap_error, abs_veh3_gap_error, abs_veh4_gap_error]
+
+    xGapErrorRate = [list(map(lambda x: x+control_takeover_start_time, range(len(veh1_gap_error_rate)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh2_gap_error_rate)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh3_gap_error_rate)))), list(map(lambda x: x+control_takeover_start_time, range(len(veh4_gap_error_rate))))]
     yGapErrorRate = [veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate]
 
-    xTTL = [range(len(TTC[:, 0])), range(len(TTC[:, 1])), range(len(TTC[:, 2])), range(len(TTC[:, 3]))]
+    xTTL = [list(map(lambda x: x+control_takeover_start_time, range(len(TTC[:, 0])))), list(map(lambda x: x+control_takeover_start_time, range(len(TTC[:, 1])))), list(map(lambda x: x+control_takeover_start_time, range(len(TTC[:, 2])))), list(map(lambda x: x+control_takeover_start_time, range(len(TTC[:, 3]))))]
     yTTL = [TTC[:, 0], TTC[:, 1], TTC[:, 2], TTC[:, 3]]
-    print(yTTL)
 
     xGapErrorTranspose = list(zip(*xGapError))
     yGapErrorTranspose = list(zip(*yGapError))
@@ -1453,9 +1480,20 @@ if __name__ == "__main__":
         csv_writer.writerow(titleGapErrorRate)
         csv_writer.writerows(yGapErrorRateTranspose)
 
+    # Customize matplotlib
+    matplotlib.rcParams.update(
+        {
+            'text.usetex': False,
+            'font.family': 'stixgeneral',
+            'mathtext.fontset': 'stix',
+        }
+    )
+
     plotResults(x, yPosition, title, 'Time Step', 'Position', title)
 
     plotResults(x, yVelocity, title, 'Time Step', 'Velocity', title)
+
+    plotResults(x, yVelovityMPH, title, 'Time Step', 'Velocity (mph)', title)
 
     modAcceleration = "ax.axhline(y = 2, color = 'r', linestyle = '-')"
     plotResults(x, yAcceleration, title, 'Time Step', 'Acceleration', title, str(modAcceleration))
@@ -1466,6 +1504,8 @@ if __name__ == "__main__":
     modTTL = "ax.axhline(y = 3, color = 'r', linestyle = '--')"
     plotResults(xTTL, yTTL, title, 'Time Step', 'TTC', title, str(modTTL))
 
+    plotResults(xGap, yGap, title, 'Time Step', 'Gap', title)
+
     plotResults(xGapError, yGapError, title, 'Time Step', 'Gap Error', title)
 
     plotResults(xGapErrorRate, yGapErrorRate, title, 'Time Step', 'Gap Error Rate', title)
@@ -1474,7 +1514,7 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots()  # Create a figure containing a single axes.
     ax.plot(laneChangeDecision)
-    ax.set_xlabel("Time Step (s)")
+    ax.set_xlabel("Time Step")
     ax.set_ylabel("Decision to Change Lanes")
     ax.set_title("Decision to Change Lanes vs Simulation Time")
     posFile = f'./{images_subdirectory}/{title}_vehicle_laneChangeDecision.png'
