@@ -10,7 +10,7 @@ class FuzzyHWClass:
 
         # initialize fuzy variables
         self.gap_error = ctrl.Antecedent(np.arange(-2, 3, 0.01), 'gap-error-value')
-        self.gap_error_rate = ctrl.Antecedent(np.arange(-6, 10, 0.001), 'gap-error-change-rate-value')
+        self.gap_error_rate = ctrl.Antecedent(np.arange(-1, 1, 0.001), 'gap-error-change-rate-value')
         # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
 
         # output acceleration
@@ -175,7 +175,7 @@ class FuzzyHWClass:
         # self.gap_diff_from_min = ctrl.Antecedent(np.arange(-3, 3, 0.01), 'gap-diff-from-avg')
 
         # output acceleration
-        self.acceleration = ctrl.Consequent(np.arange(-3, 3, 0.01), 'acceleration-value')
+        self.acceleration = ctrl.Consequent(np.arange(-5, 5.1, 0.01), 'acceleration-value')
 
         # Function for fuzz.trimf(input,left edge, center edge, right edge)
         self.platoon_gap_error['Small'] = fuzz.trimf(self.platoon_gap_error.universe, membership_function_values[0])
@@ -421,7 +421,7 @@ class FuzzyHWClass:
         vehicle_gap_error = vehicle_gap-ideal_gap
 
         # unit: m/s
-        vehicle_gap_error_rate = (vehicle_gap_error-previous_gap_error) * vehicle_speed  # updated 1/4/2023
+        vehicle_gap_error_rate = (vehicle_gap_error-previous_gap_error) # * vehicle_speed  # updated 1/4/2023
 
         # print(count)
         # print(vehicle_id, vehicle_gap, vehicle_gap_error, vehicle_gap_error_rate)
@@ -439,7 +439,7 @@ class FuzzyHWClass:
         # vehicle_acceleration = fuzzyFunction.vehicle_fuzzy(vehicle_id, vehicle_gap_error, vehicle_gap_error_rate, SUMO)
         # fuzzyOut = float
         SUMO.input['gap-error-value'] = vehicle_gap_error
-        SUMO.input['gap-error-change-rate-value'] = vehicle_gap_error_rate
+        SUMO.input['gap-error-change-rate-value'] = (vehicle_gap_error_rate * 30)
         # SUMO.input['gap-diff-from-avg'] = inputs[3]
 
         SUMO.compute()
