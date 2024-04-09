@@ -12,7 +12,7 @@
 		<vehicle id="4" type="Car03" route="route03" depart="0" departLane="0" color="0,1,1"/>
 	
 	<vType vClass = "passenger" id="Car04" length="5.0"
-              maxSpeed="31.292" tau = "1" carFollowModel = "CACC" lcAssertive="3"/>
+              maxSpeed="31.292" tau = "1" carFollowModel = "CACC" lcAssertive="3" lcCooperative="1" lcStrategic = "10"/>
 
 	<!-- <vType vClass = "passenger" id="Car02" length="5.0"
               maxSpeed="31.292" tau = "1" />
