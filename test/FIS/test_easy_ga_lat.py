@@ -163,13 +163,18 @@ def user_def_fitness(chromosome):
         veh1_gap_error, veh2_gap_error, veh3_gap_error, veh4_gap_error, \
             veh1_gap_error_rate, veh2_gap_error_rate, veh3_gap_error_rate, veh4_gap_error_rate, TTL, totalTimeLoss = run(fis_start_time, end_time, chromosome_array_of_arrays)
 
-        veh1_fitness_sum = sum(veh1_gap_error[fis_start_time:end_time])
-        veh2_fitness_sum = sum(veh2_gap_error[fis_start_time:end_time])
-        veh3_fitness_sum = sum(veh3_gap_error[fis_start_time:end_time])
-        veh4_fitness_sum = sum(veh4_gap_error[fis_start_time:end_time])
+        abs_veh1_gap_error = [abs(number) for number in veh1_gap_error]
+        abs_veh2_gap_error = [abs(number) for number in veh2_gap_error]
+        abs_veh3_gap_error = [abs(number) for number in veh3_gap_error]
+        abs_veh4_gap_error = [abs(number) for number in veh4_gap_error]
+
+        veh1_fitness_sum = sum(abs_veh1_gap_error[fis_start_time:end_time])
+        veh2_fitness_sum = sum(abs_veh2_gap_error[fis_start_time:end_time])
+        veh3_fitness_sum = sum(abs_veh3_gap_error[fis_start_time:end_time])
+        veh4_fitness_sum = sum(abs_veh4_gap_error[fis_start_time:end_time])
 
         # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
-        fitness = sum(totalTimeLoss)
+        fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
 
     except Exception as e:
         # fitness = np.sum([veh1_fitness_sum, veh2_fitness_sum, veh3_fitness_sum, veh4_fitness_sum])
@@ -398,9 +403,9 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                                                 [-10, -7.5, -5.6],
                                                 [-6, -5.36, -2.235],
                                                 [-5.36, -2.235, -0.447],
-                                                [-10, -2.235, 0],
-                                                [-0.447, 0, 0.447],
-                                                [0, 0.447, 2.235],
+                                                [-0.5, -0.02, 0],
+                                                [-0.01, 0, 0.01],
+                                                [0, 0.02, 0.5],
                                                 [0.447, 2.235, 5.36],
                                                 [2.235, 5.36, 10],
                                                 # output membership functions
@@ -456,10 +461,10 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
             if options.krauss:
                 if 30 < step < end_time:
                     for ind in traci.vehicle.getIDList():
-                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # veh5_lane = traci.vehicle.getLaneID("5")
                         # print(veh5_lane)
-                        if veh5_lane != 1:
-                            traci.vehicle.changeLane("5", 1, 3)
+                        # if veh5_lane != 1:
+                        #     traci.vehicle.changeLane("5", 1, 3)
                         if int(ind) < 5:
                             vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                             vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -469,7 +474,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                             newVehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                             newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
                             newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
-                    traci.vehicle.setSpeed("5", 31)
+                    # traci.vehicle.setSpeed("5", 31)
                     veh1Previous_Gap = (vehPosition[0][0] - 5 - vehPosition[1][0]) / vehSpeed[1]  # gap with previous car units: seconds
                     veh1_gap_error.append(veh1Previous_Gap-1)
                     veh2Previous_Gap = (vehPosition[1][0] - 5 - vehPosition[2][0]) / vehSpeed[2]
@@ -495,10 +500,10 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                         pass
                 else:
                     for ind in traci.vehicle.getIDList():
-                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # veh5_lane = traci.vehicle.getLaneID("5")
                         # print(veh5_lane)
-                        if veh5_lane != 1:
-                            traci.vehicle.changeLane("5", 1, 3)
+                        # if veh5_lane != 1:
+                        #     traci.vehicle.changeLane("5", 1, 3)
                         if int(ind) < 5:
                             vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                             vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -517,10 +522,10 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
             else:
                 if 30 < step < fis_start_time + 1:
                     for ind in traci.vehicle.getIDList():
-                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # veh5_lane = traci.vehicle.getLaneID("5")
                         # print(veh5_lane)
-                        if veh5_lane != 1:
-                            traci.vehicle.changeLane("5", 1, 3)
+                        # if veh5_lane != 1:
+                        #     traci.vehicle.changeLane("5", 1, 3)
                         if int(ind) < 5:
                             vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                             vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -555,10 +560,10 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                     newVehTimeLoss = []
                     newLaneVehicles = []
                     for ind in traci.vehicle.getIDList():
-                        veh5_lane = traci.vehicle.getLaneID("5")
+                        # veh5_lane = traci.vehicle.getLaneID("5")
                         # print(veh5_lane)
-                        if veh5_lane != 1:
-                            traci.vehicle.changeLane("5", 1, 3)
+                        # if veh5_lane != 1:
+                        #     traci.vehicle.changeLane("5", 1, 3)
                         if int(ind) < 5:
                             vehPosition.append(traci.vehicle.getPosition(f"{ind}"))
                             vehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
@@ -569,7 +574,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                             newVehSpeed.append(traci.vehicle.getSpeed(f"{ind}"))
                             newVehTimeLoss.append(traci.vehicle.getTimeLoss(f"{ind}"))
 
-                    traci.vehicle.setSpeed("5", 31)
+                    # traci.vehicle.setSpeed("5", 31)
                     veh1_lane = traci.vehicle.getLaneID("1")
                     veh1_lane_value = int(veh1_lane[6])
                     if veh1_lane_value == 1:
@@ -808,7 +813,7 @@ def run(fis_start_time, end_time, chromosome_array_of_arrays):
                             if veh_gap_error_max < 0.5:
                                 # now engage the last FIS
                                 # determine if there is enough room to change lanes
-                                newLaneDistanceDiff = [vehPosition[1][0] - traci.vehicle.getPosition("5")[0], vehPosition[2][0] - traci.vehicle.getPosition("5")[0], vehPosition[3][0] - traci.vehicle.getPosition("5")[0], vehPosition[4][0] - traci.vehicle.getPosition("5")[0]]
+                                newLaneDistanceDiff = [vehPosition[1][0], vehPosition[2][0], vehPosition[3][0], vehPosition[4][0]]
                                 if all([abs(x) > 250 for x in newLaneDistanceDiff]):
                                     # print(veh1_lane_change_decision)
                                     traci.vehicle.changeLane("1", 1, 300)
