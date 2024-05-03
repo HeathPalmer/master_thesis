@@ -24,7 +24,6 @@ This is a record of research work conducted for the completion of a Master's of 
 -->
 [![Contributors][contributors-shield]][contributors-url]
 [![Issues][issues-shield]][issues-url]
-[![LinkedIn][linkedin-shield]](www.linkedin.com/in/heath-palmer)
 
 
 <!-- PROJECT LOGO -->
