@@ -116,7 +116,7 @@ This section lists any major modules used during the develop the project.
 - [x] Train longitudinal controller using a genetic algorithm (GA)
 - [x] Train latitudinal controller using a genetic algorithm (GA)
 - [x] Compare controllers developed in this research to controllers existing in SUMO traffic simulation software
-- [ ] Add README
+- [x] Add README
 - [ ] Extend latitudinal control to center in lane
 - [ ] Extend controllers to handle large platoons
 
